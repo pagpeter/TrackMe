@@ -1,0 +1,131 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>TrackMe | Home</title>
+        <meta name="description" content="A small website to showoff server-side tracking technology.">
+        <style>
+            body {
+                margin: 2em;
+            }
+            * {
+                font-family: Arial, Helvetica, sans-serif;
+            }
+            h4 {
+                margin: 0 10px 10px 0;
+            }
+            code {
+                font-family: Consolas, "Liberation Mono", Courier, monospace;
+            }
+            button {
+                font-size: 15px;
+                padding: 8px;
+                border-radius: 5px;
+                border: none;
+                background-color: #a1f24f;
+                color: black;
+                cursor: pointer;
+            }
+            h1, h2 , h3, h4 {
+                display: inline-block;
+            }
+        </style>
+
+        <script>
+            const insert = r => {
+                const http = r.http1 || r.http2;
+                let html = `
+            <details>
+            <summary><h2>TLS</h2></summary>
+            <p>TLS version used: <code>${r.tls.version}</code></p>
+            <p>TLS versions supported by your browser: <code>${r.tls.supported_versions.join(", ")}</code></p>
+            <p>JA3 (WIP): <code>${r.tls.ja3.ja3}</code></p>
+            <p>JA3 hash (WIP): <code>${r.tls.ja3.ja3_hash}</code></p>
+
+            <details><summary><h4>Cipher suites</h4></summary>
+            <code>
+            ${r.tls.cipher_suites.join("<br>")}
+            </code>
+            </details>
+
+            <details><summary><h4>TLS extensions</h4></summary>
+            <code>
+            ${r.tls.extensions.join("<br>")}
+            </code>
+            </details>
+
+            <details><summary><h4>TLS curves</h4></summary>
+            <code>
+            ${r.tls.supported_curves.join("<br>")}
+            </code>
+            </details>
+
+            </details>
+
+            <details>
+            <summary><h2>HTTP</h2></summary>
+            <p>HTTP version used: <code>${r.http_version}</code></p>
+            <p>HTTP versions supported by your browser: <code>${r.tls.supported_protocols.join(", ")}</code></p>
+                `;
+
+                if (r.http2) {
+                    html += `<p><a href="https://www.blackhat.com/docs/eu-17/materials/eu-17-Shuster-Passive-Fingerprinting-Of-HTTP2-Clients-wp.pdf">Akamai fingerprint:</a><code> ${http.akamai_fingerprint || "None"}</code></p>`;
+                    html += `<p>Total frames send: <code>${r.http2.sent_frames.length}</code></p>`;
+                    r.http2.sent_frames.forEach(frame => {
+                        html += `
+                        <details><summary><h3>Sent frame (${frame.frame_type})</h3></summary>
+                        <p>Stream ID: <code>${frame.stream_id || "0"}</code></p>`;
+                        console.log(frame);
+                        if (frame.frame_type === "HEADERS") {
+                            html += `
+                            <p>Headers (order preserved):<br> <code>${frame.headers.join("<br>")}</code></p>`;
+                        }
+                        if (frame.frame_type === "WINDOW_UPDATE") {
+                            html += `
+                            <p>Window size increment: <code>${frame.increment}</code></p>`;
+                        }
+                        if (frame.frame_type === "SETTINGS") {
+                            try {
+                                html += `
+                            <p>Settings:<br> <code>${frame.settings.join("<br>")}</code></p>`;
+                            } catch {
+
+                            }
+                            
+                        }
+                        if (frame.frame_type === "PRIORITY") {
+                            html += `
+                            <p>Stream dependency: <code>${frame.depends_on}</code></p>
+                            <p>Weight: <code>${frame.weight}</code></p>`;
+                        }
+                        html += `</details>`;
+                    });
+                } else {
+                    html += `<p>Headers: (order preserved):<br> <code>${http.headers.join("<br>")}</code></p>`;
+                }
+                console.log(r)
+                document.getElementById("info").innerHTML = html;
+            }
+
+            const track = () => {
+                fetch("/api/all")
+                    .then(res => res.json())
+                    .then(data => insert(data))
+            }
+        </script>
+    </head>
+
+    <body>
+        <h1>Server-side fingerprinting demo</h1>
+        <p>This is a demo to show how much services like akamai and cloudflare can do with only serverside tracking.</p>
+        <p>You can click on the different headers to get more information.</p>
+        <button onclick="track()">Track me</button>
+        <br><br>
+        <div id="info">
+        </div>
+        <details>
+            <summary><h2>API</h2></summary>
+            <p><code>/api/all</code> - all of the information that can be pulled from the request. Supports http1.x and h2.</p>
+        </details>
+    </body>
+</html>
