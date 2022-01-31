@@ -27,9 +27,6 @@ func parseHTTP1(request []byte) Response {
 		}
 	}
 
-	// j := <-Channel
-	// log.Println(j)
-
 	return Response{
 		HTTPVersion: firstLine[2],
 		Path:        firstLine[1],
@@ -37,7 +34,7 @@ func parseHTTP1(request []byte) Response {
 		Http1: &Http1Details{
 			Headers: headers,
 		},
-		// TLS: <-Channel,
+		TLS: <-Channel,
 	}
 }
 
@@ -145,9 +142,6 @@ func handleHTTP2(conn net.Conn) {
 		}
 	}
 
-	// j := <-Channel
-	// log.Println(j)
-
 	resp := Response{
 		HTTPVersion: "h2",
 		Path:        path,
@@ -156,7 +150,7 @@ func handleHTTP2(conn net.Conn) {
 			SendFrames:        frames,
 			AkamaiFingerprint: GetAkamaiFingerprint(frames),
 		},
-		// TLS: <-Channel,
+		TLS: <-Channel,
 	}
 
 	res, ctype := Router(path, resp)

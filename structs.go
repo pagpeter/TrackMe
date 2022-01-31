@@ -5,23 +5,23 @@ import (
 	"log"
 )
 
-type JA3Info struct {
-	JA3      string `json:"ja3"`
-	JA3_Hash string `json:"ja3_hash"`
-}
+// type JA3Info struct {
+// 	JA3      string `json:"ja3"`
+// 	JA3_Hash string `json:"ja3_hash"`
+// }
 
-type TLS struct {
-	Version            string   `json:"version"`
-	CipherSuites       []string `json:"cipher_suites"`
-	JA3                JA3Info  `json:"ja3"`
-	ServerName         string   `json:"server_name"`
-	SupportedCurves    []string `json:"supported_curves"`
-	SupportedPoints    []string `json:"supported_points"`
-	SupportedProtocols []string `json:"supported_protocols"`
-	SupportedVersions  []uint16 `json:"supported_versions"`
-	Extensions         []string `json:"extensions"`
-	// SignatureSchemes   []uint16 `json:"signature_schemes"`
-}
+// type TLS struct {
+// 	Version      string   `json:"version"`
+// 	CipherSuites []string `json:"cipher_suites"`
+// 	JA3          JA3Info  `json:"ja3"`
+// 	// ServerName         string   `json:"server_name"`
+// 	SupportedCurves    []string `json:"supported_curves"`
+// 	SupportedPoints    []string `json:"supported_points"`
+// 	SupportedProtocols []string `json:"supported_protocols"`
+// 	SupportedVersions  []uint16 `json:"supported_versions"`
+// 	Extensions         []string `json:"extensions"`
+// 	// SignatureSchemes   []uint16 `json:"signature_schemes"`
+// }
 
 type Http1Details struct {
 	Headers []string `json:"headers"`
@@ -33,12 +33,12 @@ type Http2Details struct {
 }
 
 type Response struct {
-	HTTPVersion string        `json:"http_version"`
-	Path        string        `json:"path"`
-	Method      string        `json:"method"`
-	TLS         TLS           `json:"tls"`
-	Http1       *Http1Details `json:"http1,omitempty"`
-	Http2       *Http2Details `json:"http2,omitempty"`
+	HTTPVersion string         `json:"http_version"`
+	Path        string         `json:"path"`
+	Method      string         `json:"method"`
+	TLS         JA3Calculating `json:"tls"`
+	Http1       *Http1Details  `json:"http1,omitempty"`
+	Http2       *Http2Details  `json:"http2,omitempty"`
 }
 
 func (res Response) ToJson() string {

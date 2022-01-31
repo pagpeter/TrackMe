@@ -3,7 +3,6 @@ package main
 import (
 	og "crypto/tls"
 	"fmt"
-	"log"
 	"strconv"
 	"strings"
 
@@ -27,7 +26,11 @@ type JA3Calculating struct {
 	JA3Points      []string `json:"-"`
 	ReadablePoints []string `json:"points"`
 
-	Version string `json:"version"`
+	Version           string   `json:"version"`
+	ReadableProtocols []string `json:"protocols"`
+	ReadableVersions  []string `json:"versions"`
+	JA3               string   `json:"ja3"`
+	JA3Hash           string   `json:"ja3_hash"`
 }
 
 func (j *JA3Calculating) Parse() {
@@ -95,7 +98,7 @@ func (j *JA3Calculating) Parse() {
 	}
 }
 
-func (j *JA3Calculating) Calculate() (string, string) {
+func (j *JA3Calculating) Calculate() {
 	// Returns the ja3 and the ja3_hash
 	// TLSVersion,Ciphers,Extensions,EllipticCurves,EllipticCurvePointFormats
 	ja3 := j.Version + ","
@@ -103,27 +106,31 @@ func (j *JA3Calculating) Calculate() (string, string) {
 	ja3 += strings.Join(j.JA3Extensions, "-") + ","
 	ja3 += strings.Join(j.JA3Curves, "-") + ","
 	ja3 += strings.Join(j.JA3Points, "-")
-	return ja3, GetMD5Hash(ja3)
+	j.JA3 = ja3
+	j.JA3Hash = GetMD5Hash(ja3)
 }
 
-func Ja3handler(clientHello *tls.ClientHelloInfo) (*tls.Certificate, error) {
+func FingerprintMSG(clientHello *tls.ClientHelloInfo) (*tls.Certificate, error) {
 	// We need to start a new goroutine to calculate the ja3, because
 	// we cant block the main thread.
-	log.Println("test")
-	log.Println(clientHello.JA3())
-
 	go func() {
+		versions := make([]string, len(clientHello.SupportedVersions))
+		for i, version := range clientHello.SupportedVersions {
+			versions[i] = fmt.Sprintf("%v", version)
+		}
 		j := JA3Calculating{
-			AllCiphers:    clientHello.CipherSuites,
-			AllCurves:     clientHello.SupportedCurves,
-			AllPoints:     clientHello.SupportedPoints,
-			AllExtensions: clientHello.Extensions,
-			Version:       fmt.Sprint(clientHello.Version),
+			AllCiphers:        clientHello.CipherSuites,
+			AllCurves:         clientHello.SupportedCurves,
+			AllPoints:         clientHello.SupportedPoints,
+			AllExtensions:     clientHello.Extensions,
+			Version:           fmt.Sprint(clientHello.Version),
+			ReadableProtocols: clientHello.SupportedProtos,
+			ReadableVersions:  versions,
 		}
 		j.Parse()
-		log.Println(j)
+		j.Calculate()
 		Channel <- j
 	}()
 
-	return &cert, fmt.Errorf("123")
+	return &cert, nil
 }
