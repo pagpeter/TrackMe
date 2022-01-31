@@ -27,6 +27,9 @@ func parseHTTP1(request []byte) Response {
 		}
 	}
 
+	// j := <-Channel
+	// log.Println(j)
+
 	return Response{
 		HTTPVersion: firstLine[2],
 		Path:        firstLine[1],
@@ -34,7 +37,7 @@ func parseHTTP1(request []byte) Response {
 		Http1: &Http1Details{
 			Headers: headers,
 		},
-		TLS: <-Channel,
+		// TLS: <-Channel,
 	}
 }
 
@@ -49,7 +52,9 @@ func handleConnection(conn net.Conn) {
 
 	_, err := conn.Read(request)
 	if err != nil {
-		log.Println("Error reading request", err)
+		if !strings.Contains(err.Error(), "unknown certificate") {
+			log.Println("Error reading request", err)
+		}
 		conn.Close()
 		return
 	}
@@ -81,11 +86,11 @@ func handleHTTP1(conn net.Conn, resp Response) {
 	// log.Println("Request:", resp.ToJson())
 	// log.Println(len(resp.ToJson()))
 
-	res1 := Router(resp.Path, resp)
+	res1, ctype := Router(resp.Path, resp)
 
 	res := "HTTP/1.1 200 OK\r\n"
 	res += "Content-Length: " + fmt.Sprintf("%v\r\n", len(res1))
-	res += "Content-Type: text/html; charset=utf-8\r\n"
+	res += "Content-Type: " + ctype + "; charset=utf-8\r\n"
 	res += "Server: TrackMe.peet.ws\r\n"
 	res += "\r\n"
 	res += string(res1)
@@ -140,6 +145,9 @@ func handleHTTP2(conn net.Conn) {
 		}
 	}
 
+	// j := <-Channel
+	// log.Println(j)
+
 	resp := Response{
 		HTTPVersion: "h2",
 		Path:        path,
@@ -148,10 +156,10 @@ func handleHTTP2(conn net.Conn) {
 			SendFrames:        frames,
 			AkamaiFingerprint: GetAkamaiFingerprint(frames),
 		},
-		TLS: <-Channel,
+		// TLS: <-Channel,
 	}
 
-	res := Router(path, resp)
+	res, ctype := Router(path, resp)
 
 	// Prepare HEADERS
 	hbuf := bytes.NewBuffer([]byte{})
@@ -159,7 +167,7 @@ func handleHTTP2(conn net.Conn) {
 	encoder.WriteField(hpack.HeaderField{Name: ":status", Value: "200"})
 	encoder.WriteField(hpack.HeaderField{Name: "server", Value: "TrackMe.peet.ws"})
 	encoder.WriteField(hpack.HeaderField{Name: "content-length", Value: strconv.Itoa(len(res))})
-	encoder.WriteField(hpack.HeaderField{Name: "content-type", Value: "text/html"})
+	encoder.WriteField(hpack.HeaderField{Name: "content-type", Value: ctype})
 
 	// Write HEADERS frame
 	err := fr.WriteHeaders(http2.HeadersFrameParam{StreamID: frame.Stream, BlockFragment: hbuf.Bytes(), EndHeaders: true})

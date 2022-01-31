@@ -25,6 +25,7 @@ var GREASE = []string{
 	"0xDADA",
 	"0xEAEA",
 	"0xFAFA",
+	"0xA0A",
 }
 
 func isGrease(cipher string) bool {

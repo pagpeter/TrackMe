@@ -50,6 +50,21 @@ func (res Response) ToJson() string {
 	return string(j)
 }
 
+type SmallResponse struct {
+	JA3     string `json:"ja3"`
+	JA3Hash string `json:"ja3_hash"`
+	Akamai  string `json:"akamai"`
+}
+
+func (res SmallResponse) ToJson() string {
+	j, err := json.MarshalIndent(res, "", "  ")
+	if err != nil {
+		log.Println("Error marshalling response", err)
+		return ""
+	}
+	return string(j)
+}
+
 type ParsedFrame struct {
 	Type      string   `json:"frame_type,omitempty"`
 	Stream    uint32   `json:"stream_id,omitempty"`

@@ -3,15 +3,15 @@ package main
 import (
 	"log"
 
-	"github.com/honeytrap/honeytrap/services/ja3/crypto/tls"
+	tls "github.com/honeytrap/honeytrap/services/ja3/crypto/tls"
 )
 
 const port = ":443"
-const host = "localhost"
+const host = "0.0.0.0"
 const TLScert = "cert.pem"
 const TLSkey = "key.pem"
 
-var Channel = make(chan TLS)
+var Channel = make(chan JA3Calculating)
 
 var cert tls.Certificate
 
@@ -29,15 +29,16 @@ func main() {
 	config := tls.Config{
 		Certificates: []tls.Certificate{cert},
 		ServerName:   host,
+		// GetCertificate:     Ja3handler,
+		GetCertificate:     FingerprintMSG,
+		InsecureSkipVerify: true,
 		NextProtos: []string{
 			// "http/0.9",
 			// "http/1.0",
-			"http/1.1",
+			// "http/1.1",
 			// "http/1.2",
 			"h2",
 		},
-		InsecureSkipVerify: true,
-		GetCertificate:     FingerprintMSG,
 	}
 
 	// Start listening

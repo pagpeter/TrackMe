@@ -1,4 +1,6 @@
 *.zip
-key.pem
-cert.pem
+*.key
+*.pem
+*.crt
 main
+TrackMe
