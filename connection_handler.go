@@ -75,6 +75,7 @@ func handleConnection(conn net.Conn) {
 
 		// Parse and handle the request
 		details := parseHTTP1(request)
+		details.IP = conn.RemoteAddr().String()
 		handleHTTP1(conn, details)
 	}
 }
@@ -143,6 +144,7 @@ func handleHTTP2(conn net.Conn) {
 	}
 
 	resp := Response{
+		IP:          conn.RemoteAddr().String(),
 		HTTPVersion: "h2",
 		Path:        path,
 		Method:      method,

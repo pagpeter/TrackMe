@@ -15,7 +15,7 @@ func SaveRequest(req Response) {
 	doc.Set("akamai", req.Http2.AkamaiFingerprint)
 	doc.Set("headers", headers)
 
-	res, err := db.InsertOne("requests", doc)
+	_, err := db.InsertOne("requests", doc)
 	if err != nil {
 		fmt.Println("Error saving request", err)
 	}

@@ -16,6 +16,7 @@ type Http2Details struct {
 }
 
 type Response struct {
+	IP          string         `json:"ip"`
 	HTTPVersion string         `json:"http_version"`
 	Path        string         `json:"path"`
 	Method      string         `json:"method"`

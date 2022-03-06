@@ -1,7 +1,6 @@
 package main
 
 import (
-	og "crypto/tls"
 	"fmt"
 	"strconv"
 	"strings"
@@ -36,7 +35,7 @@ type JA3Calculating struct {
 func (j *JA3Calculating) Parse() {
 	// Ciphers
 	for _, cipher := range j.AllCiphers {
-		name := og.CipherSuiteName(cipher)
+		name := GetCipherSuiteName(cipher)
 		g := false
 		// if the cipher isnt in the cipher list, its probably a GREASE cipher
 		if len(name) == 6 {
