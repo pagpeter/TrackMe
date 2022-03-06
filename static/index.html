@@ -37,26 +37,26 @@
                 let html = `
             <details>
             <summary><h2>TLS</h2></summary>
-            <p>TLS version used: <code>${r.tls.version}</code></p>
-            <p>TLS versions supported by your browser: <code>${r.tls.supported_versions.join(", ")}</code></p>
-            <p>JA3 (WIP): <code>${r.tls.ja3.ja3}</code></p>
-            <p>JA3 hash (WIP): <code>${r.tls.ja3.ja3_hash}</code></p>
+            <p>TLS version used: <code>${r.tls.version || "Error"}</code></p>
+            <p>TLS versions supported by your browser: <code>${r.tls.versions?.join(", ")  || "Error"}</code></p>
+            <p>JA3 (WIP): <code>${r.tls.ja3  || "Error"}</code></p>
+            <p>JA3 hash (WIP): <code>${r.tls.ja3_hash  || "Error"}</code></p>
 
             <details><summary><h4>Cipher suites</h4></summary>
             <code>
-            ${r.tls.cipher_suites.join("<br>")}
+            ${r.tls.ciphers?.join("<br>")  || "Error"}
             </code>
             </details>
 
             <details><summary><h4>TLS extensions</h4></summary>
             <code>
-            ${r.tls.extensions.join("<br>")}
+            ${r.tls.extensions?.join("<br>")  || "Error"}
             </code>
             </details>
 
             <details><summary><h4>TLS curves</h4></summary>
             <code>
-            ${r.tls.supported_curves.join("<br>")}
+            ${r.tls.curves?.join("<br>" ) || "Error"}
             </code>
             </details>
 
@@ -65,7 +65,7 @@
             <details>
             <summary><h2>HTTP</h2></summary>
             <p>HTTP version used: <code>${r.http_version}</code></p>
-            <p>HTTP versions supported by your browser: <code>${r.tls.supported_protocols.join(", ")}</code></p>
+            <p>HTTP versions supported by your browser: <code>${r.tls.protocols?.join(", ")  || "Error"}</code></p>
                 `;
 
                 if (r.http2) {
@@ -95,7 +95,7 @@
                         }
                         if (frame.frame_type === "PRIORITY") {
                             html += `
-                            <p>Stream dependency: <code>${frame.depends_on}</code></p>
+                            <p>Stream dependency: <code>${frame.depends_on || "0"}</code></p>
                             <p>Weight: <code>${frame.weight}</code></p>`;
                         }
                         html += `</details>`;
@@ -125,7 +125,9 @@
         </div>
         <details>
             <summary><h2>API</h2></summary>
-            <p><code>/api/all</code> - all of the information that can be pulled from the request. Supports http1.x and h2.</p>
+            <p><code>/api/all</code> - All of the information that can be pulled from the request. Supports http1.x and h2.</p>
+            <p><code>/api/clean</code> - Only ja3, ja3 hash and akamai.</p>
+            <p><code>/api/tls</code> - Only TLS information</p>
         </details>
     </body>
 </html>

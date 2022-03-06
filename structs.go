@@ -28,8 +28,9 @@ type Http1Details struct {
 }
 
 type Http2Details struct {
-	AkamaiFingerprint string        `json:"akamai_fingerprint"`
-	SendFrames        []ParsedFrame `json:"sent_frames"`
+	AkamaiFingerprint     string        `json:"akamai_fingerprint"`
+	AkamaiFingerprintHash string        `json:"akamai_fingerprint_hash"`
+	SendFrames            []ParsedFrame `json:"sent_frames"`
 }
 
 type Response struct {
@@ -51,9 +52,10 @@ func (res Response) ToJson() string {
 }
 
 type SmallResponse struct {
-	JA3     string `json:"ja3"`
-	JA3Hash string `json:"ja3_hash"`
-	Akamai  string `json:"akamai"`
+	JA3        string `json:"ja3"`
+	JA3Hash    string `json:"ja3_hash"`
+	Akamai     string `json:"akamai"`
+	AkamaiHash string `json:"akamai_hash"`
 }
 
 func (res SmallResponse) ToJson() string {

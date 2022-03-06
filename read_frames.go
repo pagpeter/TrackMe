@@ -9,6 +9,8 @@ import (
 	"golang.org/x/net/http2/hpack"
 )
 
+var debug = true
+
 func readHTTP2Frames(f *http2.Framer, c chan ParsedFrame) {
 	for {
 		frame, err := f.ReadFrame()
@@ -18,6 +20,10 @@ func readHTTP2Frames(f *http2.Framer, c chan ParsedFrame) {
 			}
 			log.Println("Error reading frame", err)
 			return
+		}
+
+		if debug {
+			log.Println(frame)
 		}
 
 		p := ParsedFrame{}
@@ -53,10 +59,14 @@ func readHTTP2Frames(f *http2.Framer, c chan ParsedFrame) {
 			}
 
 			for _, h := range h2Headers {
+				if debug {
+					log.Println(h)
+				}
 				h := fmt.Sprintf("%q: %q", h.Name, h.Value)
 				h = strings.Trim(h, "\"")
 				h = strings.Replace(h, "\": \"", ": ", -1)
 				p.Headers = append(p.Headers, h)
+
 			}
 		case *http2.DataFrame:
 			// DATA

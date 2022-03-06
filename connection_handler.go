@@ -34,7 +34,7 @@ func parseHTTP1(request []byte) Response {
 		Http1: &Http1Details{
 			Headers: headers,
 		},
-		TLS: <-Channel,
+		TLS: Gja3,
 	}
 }
 
@@ -147,10 +147,11 @@ func handleHTTP2(conn net.Conn) {
 		Path:        path,
 		Method:      method,
 		Http2: &Http2Details{
-			SendFrames:        frames,
-			AkamaiFingerprint: GetAkamaiFingerprint(frames),
+			SendFrames:            frames,
+			AkamaiFingerprint:     GetAkamaiFingerprint(frames),
+			AkamaiFingerprintHash: GetMD5Hash(GetAkamaiFingerprint(frames)),
 		},
-		TLS: <-Channel,
+		TLS: Gja3,
 	}
 
 	res, ctype := Router(path, resp)

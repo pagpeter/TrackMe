@@ -129,7 +129,7 @@ func FingerprintMSG(clientHello *tls.ClientHelloInfo) (*tls.Certificate, error) 
 		}
 		j.Parse()
 		j.Calculate()
-		Channel <- j
+		Gja3 = j
 	}()
 
 	return &cert, nil

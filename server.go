@@ -7,11 +7,11 @@ import (
 )
 
 const port = ":443"
-const host = "localhost"
+const host = "0.0.0.0"
 const TLScert = "cert.pem"
 const TLSkey = "key.pem"
 
-var Channel = make(chan JA3Calculating)
+var Gja3 JA3Calculating
 
 var cert tls.Certificate
 
@@ -27,14 +27,15 @@ func main() {
 	}
 	// Create a TLS configuration
 	config := tls.Config{
-		Certificates: []tls.Certificate{cert},
-		ServerName:   host,
+		//Certificates: []tls.Certificate{cert},
+		ServerName: host,
 		NextProtos: []string{
-			"http/1.1",
+			// "http/1.0",
+			//	"http/1.1",
 			"h2",
 		},
-		InsecureSkipVerify: true,
-		GetCertificate:     FingerprintMSG,
+		//InsecureSkipVerify: true,
+		GetCertificate: FingerprintMSG,
 	}
 
 	// Start listening
@@ -46,7 +47,6 @@ func main() {
 	defer listener.Close()
 
 	// Listen for connections
-
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
