@@ -8,7 +8,7 @@ import (
 )
 
 const port = ":443"
-const host = "0.0.0.0"
+const host = ""
 const TLScert = "cert.pem"
 const TLSkey = "key.pem"
 
@@ -52,6 +52,8 @@ func main() {
 	}
 
 	defer listener.Close()
+
+	go StartRedirectServer()
 
 	// Listen for connections
 	for {
