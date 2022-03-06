@@ -9,7 +9,7 @@ import (
 
 const port = ":443"
 const host = ""
-const TLScert = "cert.pem"
+const TLScert = "chain.pem"
 const TLSkey = "key.pem"
 
 var Gja3 JA3Calculating

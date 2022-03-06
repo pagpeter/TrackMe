@@ -9,7 +9,7 @@ It returns the ja3, akamai h2 fingerprint, header + header order, h2 frames, and
 You first need to generate the certificate.pem and the key.pem files.
 
 ```bash
-openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -sha256 -days 365 -nodes
+openssl req -x509 -newkey rsa:4096 -keyout key.pem -out chain.pem -sha256 -days 365 -nodes
 ```
 
 You can make a binary by running `go build -o TrackMe *.go`
