@@ -34,7 +34,6 @@ func main() {
 	}
 	// Create a TLS configuration
 	config := tls.Config{
-		//Certificates: []tls.Certificate{cert},
 		ServerName: host,
 		NextProtos: []string{
 			// "http/1.0",
