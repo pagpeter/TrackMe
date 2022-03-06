@@ -1,7 +1,11 @@
 package main
 
+import "log"
+
 // returns bytes and content type that should be sent to the client
 func Router(path string, res Response) ([]byte, string) {
+	log.Println(res.HTTPVersion, res.Path, res.Method, res.TLS.JA3Hash)
+	SaveRequest(res)
 	switch path {
 	case "/":
 		return ReadFile("static/index.html"), "text/html"

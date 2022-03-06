@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"github.com/honeytrap/honeytrap/services/ja3/crypto/tls"
+	c "github.com/ostafen/clover"
 )
 
 const port = ":443"
@@ -14,6 +15,12 @@ const TLSkey = "key.pem"
 var Gja3 JA3Calculating
 
 var cert tls.Certificate
+var db *c.DB
+
+func init() {
+	db, _ = c.Open("requests-db")
+	db.CreateCollection("requests")
+}
 
 func main() {
 	log.Println("Starting server...")
@@ -52,7 +59,6 @@ func main() {
 		if err != nil {
 			log.Println("Error accepting connection", err)
 		}
-
 		go handleConnection(conn)
 	}
 

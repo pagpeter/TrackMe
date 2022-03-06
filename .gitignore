@@ -4,3 +4,5 @@
 *.crt
 main
 TrackMe
+.DS_Store
+requests-db/

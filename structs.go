@@ -5,24 +5,6 @@ import (
 	"log"
 )
 
-// type JA3Info struct {
-// 	JA3      string `json:"ja3"`
-// 	JA3_Hash string `json:"ja3_hash"`
-// }
-
-// type TLS struct {
-// 	Version      string   `json:"version"`
-// 	CipherSuites []string `json:"cipher_suites"`
-// 	JA3          JA3Info  `json:"ja3"`
-// 	// ServerName         string   `json:"server_name"`
-// 	SupportedCurves    []string `json:"supported_curves"`
-// 	SupportedPoints    []string `json:"supported_points"`
-// 	SupportedProtocols []string `json:"supported_protocols"`
-// 	SupportedVersions  []uint16 `json:"supported_versions"`
-// 	Extensions         []string `json:"extensions"`
-// 	// SignatureSchemes   []uint16 `json:"signature_schemes"`
-// }
-
 type Http1Details struct {
 	Headers []string `json:"headers"`
 }

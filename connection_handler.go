@@ -58,10 +58,10 @@ func handleConnection(conn net.Conn) {
 
 	// Check if the first line is HTTP/2
 	if string(request) == "PRI * HTTP/2.0\r\n\r\nSM\r\n\r\n" {
-		log.Println("HTTP/2 request")
+		// log.Println("HTTP/2 request")
 		handleHTTP2(conn)
 	} else {
-		log.Println("HTTP/1 request")
+		// log.Println("HTTP/1 request")
 
 		// Read the rest of the request
 		r2 := make([]byte, 1024-l)

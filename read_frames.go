@@ -9,7 +9,7 @@ import (
 	"golang.org/x/net/http2/hpack"
 )
 
-var debug = true
+var debug = false
 
 func readHTTP2Frames(f *http2.Framer, c chan ParsedFrame) {
 	for {
