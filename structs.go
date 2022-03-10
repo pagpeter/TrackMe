@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 )
 
@@ -62,4 +63,55 @@ type ParsedFrame struct {
 	Weight    int      `json:"weight,omitempty"`
 	DependsOn int      `json:"depends_on,omitempty"`
 	Exclusive int      `json:"exclusive,omitempty"`
+}
+
+type Config struct {
+	LogToDB  bool   `json:"log_to_db"`
+	TLSPort  string `json:"tls_port"`
+	HTTPPort string `json:"http_port"`
+	CertFile string `json:"cert_file"`
+	KeyFile  string `json:"key_file"`
+	Host     string `json:"host"`
+}
+
+func (c *Config) LoadFromFile() error {
+	data, err := ReadFile("config.json")
+	fmt.Println(string(data))
+	if err != nil {
+		fmt.Println("No config file found: generating one", err)
+		c.MakeDefault()
+		return c.WriteToFile("config.json")
+	}
+	var tmp Config
+	err = json.Unmarshal(data, &tmp)
+	if err != nil {
+		return err
+	}
+
+	c.LogToDB = tmp.LogToDB
+	c.Host = tmp.Host
+	c.TLSPort = tmp.TLSPort
+	c.HTTPPort = tmp.HTTPPort
+	c.CertFile = tmp.CertFile
+	c.KeyFile = tmp.KeyFile
+
+	return nil
+}
+
+func (c *Config) WriteToFile(file string) error {
+	j, err := json.MarshalIndent(c, "", "  ")
+	if err != nil {
+		log.Println("Error marshalling config", err)
+		return err
+	}
+	return WriteToFile(file, j)
+}
+
+func (c *Config) MakeDefault() {
+	c.LogToDB = true
+	c.Host = ""
+	c.TLSPort = ":443"
+	c.HTTPPort = ":80"
+	c.CertFile = "chain.pem"
+	c.KeyFile = "key.pem"
 }

@@ -5,10 +5,10 @@ import "log"
 // returns bytes and content type that should be sent to the client
 func Router(path string, res Response) ([]byte, string) {
 	log.Println(res.IP, "-", res.HTTPVersion, res.Method, res.Path, res.TLS.JA3Hash)
-	SaveRequest(res)
+	if c.LogToDB {
+		SaveRequest(res)
+	}
 	switch path {
-	case "/":
-		return ReadFile("static/index.html"), "text/html"
 	case "/api/all":
 		return []byte(res.ToJson()), "application/json"
 	case "/api/tls":
@@ -29,5 +29,6 @@ func Router(path string, res Response) ([]byte, string) {
 			AkamaiHash: hash,
 		}.ToJson()), "application/json"
 	}
-	return ReadFile("static/index.html"), "text/html"
+	b, _ := ReadFile("static/index.html")
+	return b, "text/html"
 }

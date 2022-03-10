@@ -4,37 +4,39 @@ import (
 	"log"
 
 	"github.com/honeytrap/honeytrap/services/ja3/crypto/tls"
-	c "github.com/ostafen/clover"
+	clover "github.com/ostafen/clover"
 )
-
-const port = ":443"
-const host = ""
-const TLScert = "chain.pem"
-const TLSkey = "key.pem"
 
 var Gja3 JA3Calculating
 
 var cert tls.Certificate
-var db *c.DB
+var db *clover.DB
+var c *Config = &Config{}
 
 func init() {
-	db, _ = c.Open("requests-db")
-	db.CreateCollection("requests")
+	err := c.LoadFromFile()
+	if err != nil {
+		log.Fatal(err)
+	}
+	if c.LogToDB {
+		db, _ = clover.Open("requests-db")
+		db.CreateCollection("requests")
+	}
 }
 
 func main() {
 	log.Println("Starting server...")
-	log.Println("Listening on " + host + port)
+	log.Println("Listening on " + c.Host + c.TLSPort)
 
 	// Load the TLS certificates
 	var err error
-	cert, err = tls.LoadX509KeyPair(TLScert, TLSkey)
+	cert, err = tls.LoadX509KeyPair(c.CertFile, c.KeyFile)
 	if err != nil {
 		log.Fatal("Error loading TLS certificates", err)
 	}
 	// Create a TLS configuration
 	config := tls.Config{
-		ServerName: host,
+		ServerName: c.Host,
 		NextProtos: []string{
 			// "http/1.0",
 			//	"http/1.1",
@@ -45,7 +47,7 @@ func main() {
 	}
 
 	// Start listening
-	listener, err := tls.Listen("tcp", host+port, &config)
+	listener, err := tls.Listen("tcp", c.Host+c.TLSPort, &config)
 	if err != nil {
 		log.Fatal("Error starting tcp listener", err)
 	}

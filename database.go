@@ -3,11 +3,11 @@ package main
 import (
 	"fmt"
 
-	c "github.com/ostafen/clover"
+	clover "github.com/ostafen/clover"
 )
 
 func SaveRequest(req Response) {
-	doc := c.NewDocument()
+	doc := clover.NewDocument()
 
 	var headers []string
 	if req.HTTPVersion == "h2" {
