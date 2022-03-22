@@ -29,11 +29,11 @@ func parseHTTP1(request []byte) Response {
 
 	if len(firstLine) != 3 {
 		return Response{
-			Status:  "400 Bad Request",
-			Headers: nil,
+			HTTPVersion: "--",
+			Method:      "--",
+			Path:        "--",
 		}
 	}
-
 	return Response{
 		HTTPVersion: firstLine[2],
 		Path:        firstLine[1],
