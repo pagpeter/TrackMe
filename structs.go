@@ -72,6 +72,7 @@ type Config struct {
 	CertFile string `json:"cert_file"`
 	KeyFile  string `json:"key_file"`
 	Host     string `json:"host"`
+	MongoURL string `json:"mongoURL"`
 }
 
 func (c *Config) LoadFromFile() error {
@@ -94,7 +95,7 @@ func (c *Config) LoadFromFile() error {
 	c.HTTPPort = tmp.HTTPPort
 	c.CertFile = tmp.CertFile
 	c.KeyFile = tmp.KeyFile
-
+	c.MongoURL = tmp.MongoURL
 	return nil
 }
 
@@ -110,8 +111,9 @@ func (c *Config) WriteToFile(file string) error {
 func (c *Config) MakeDefault() {
 	c.LogToDB = true
 	c.Host = ""
-	c.TLSPort = ":443"
-	c.HTTPPort = ":80"
-	c.CertFile = "chain.pem"
-	c.KeyFile = "key.pem"
+	c.TLSPort = "443"
+	c.HTTPPort = "80"
+	c.CertFile = "certs/chain.pem"
+	c.KeyFile = "certs/key.pem"
+	c.MongoURL = ""
 }

@@ -45,6 +45,66 @@ func parseHTTP1(request []byte) Response {
 	}
 }
 
+func parseHTTP2(f *http2.Framer, c chan ParsedFrame) {
+	for {
+		frame, err := f.ReadFrame()
+		if err != nil {
+			if strings.HasSuffix(err.Error(), "use of closed network connection") {
+				return
+			}
+			log.Println("Error reading frame", err)
+			return
+		}
+
+		p := ParsedFrame{}
+		p.Type = frame.Header().Type.String()
+		p.Stream = frame.Header().StreamID
+		p.Length = frame.Header().Length
+
+		switch frame := frame.(type) {
+		case *http2.SettingsFrame:
+			p.Settings = []string{}
+			frame.ForeachSetting(func(s http2.Setting) error {
+				setting := fmt.Sprintf("%q", s)
+				setting = strings.Replace(setting, "\"", "", -1)
+				setting = strings.Replace(setting, "[", "", -1)
+				setting = strings.Replace(setting, "]", "", -1)
+
+				p.Settings = append(p.Settings, setting)
+				return nil
+			})
+		case *http2.HeadersFrame:
+			d := hpack.NewDecoder(4096, func(hf hpack.HeaderField) {})
+			d.SetEmitEnabled(true)
+			h2Headers, err := d.DecodeFull(frame.HeaderBlockFragment())
+			if err != nil {
+				log.Println("Error decoding headers", err)
+				return
+			}
+
+			for _, h := range h2Headers {
+				h := fmt.Sprintf("%q: %q", h.Name, h.Value)
+				h = strings.Trim(h, "\"")
+				h = strings.Replace(h, "\": \"", ": ", -1)
+				p.Headers = append(p.Headers, h)
+			}
+		case *http2.DataFrame:
+			p.Payload = frame.Data()
+		case *http2.WindowUpdateFrame:
+			p.Increment = frame.Increment
+		case *http2.PriorityFrame:
+			// I really dont know why we need +1 here, but its one less than the actual value
+			p.Weight = int(frame.PriorityParam.Weight + 1)
+			p.DependsOn = int(frame.PriorityParam.StreamDep)
+			if frame.PriorityParam.Exclusive {
+				p.Exclusive = 1
+			}
+		}
+
+		c <- p
+	}
+}
+
 func handleConnection(conn net.Conn) {
 	// Read the first line of the request
 	// We only read the first line to determine if the connection is HTTP1 or HTTP2
@@ -96,14 +156,13 @@ func handleHTTP1(conn net.Conn, resp Response) {
 	res := "HTTP/1.1 200 OK\r\n"
 	res += "Content-Length: " + fmt.Sprintf("%v\r\n", len(res1))
 	res += "Content-Type: " + ctype + "; charset=utf-8\r\n"
-	res += "Server: TrackMe.peet.ws\r\n"
+	res += "Server: TrackMe\r\n"
 	res += "\r\n"
 	res += string(res1)
 	res += "\r\n\r\n"
 
 	conn.Write([]byte(res))
 	conn.Close()
-
 }
 
 // https://stackoverflow.com/questions/52002623/golang-tcp-server-how-to-write-http2-data
@@ -127,7 +186,7 @@ func handleHTTP2(conn net.Conn) {
 	)
 
 	var frame ParsedFrame
-	go readHTTP2Frames(fr, c)
+	go parseHTTP2(fr, c)
 	for {
 		frame = <-c
 		// log.Println(frame)

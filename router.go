@@ -5,7 +5,7 @@ import "log"
 // returns bytes and content type that should be sent to the client
 func Router(path string, res Response) ([]byte, string) {
 	log.Println(res.IP, "-", res.HTTPVersion, res.Method, res.Path, res.TLS.JA3Hash)
-	if c.LogToDB {
+	if c.LogToDB && res.Path != "/favicon.ico" {
 		SaveRequest(res)
 	}
 	switch path {
