@@ -6,7 +6,28 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"strings"
 )
+
+func GetUserAgent(res Response) string {
+	var headers []string
+	var ua string
+
+	if res.HTTPVersion == "h2" {
+		headers = res.Http2.SendFrames[len(res.Http2.SendFrames)-1].Headers
+	} else {
+		headers = res.Http1.Headers
+	}
+
+	for _, header := range headers {
+		lower := strings.ToLower(header)
+		if strings.HasPrefix(lower, "user-agent: ") {
+			ua = strings.Split(header, ": ")[1]
+		}
+	}
+
+	return ua
+}
 
 func GetMD5Hash(text string) string {
 	hash := md5.Sum([]byte(text))

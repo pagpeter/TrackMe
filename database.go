@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"strings"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -23,22 +22,13 @@ func SaveRequest(req Response) {
 	reqLog := RequestLog{
 		Ja3: req.TLS.JA3}
 
-	var headers []string
 	if req.HTTPVersion == "h2" {
-		headers = req.Http2.SendFrames[len(req.Http2.SendFrames)-1].Headers
 		reqLog.H2 = req.Http2.AkamaiFingerprint
 	} else if req.HTTPVersion == "http/1.1" {
-		headers = req.Http1.Headers
 		reqLog.H2 = "-"
 	}
 
-	for _, header := range headers {
-		lower := strings.ToLower(header)
-		if strings.HasPrefix(lower, "user-agent: ") {
-			reqLog.UserAgent = strings.Split(header, ": ")[1]
-		}
-	}
-
+	reqLog.UserAgent = GetUserAgent(req)
 	reqLog.Hash = GetMD5Hash(reqLog.UserAgent + reqLog.H2 + reqLog.Ja3)
 
 	filter := bson.M{
