@@ -235,7 +235,8 @@ func handleHTTP2(conn net.Conn) {
 	// Write HEADERS frame
 	err := fr.WriteHeaders(http2.HeadersFrameParam{StreamID: frame.Stream, BlockFragment: hbuf.Bytes(), EndHeaders: true})
 	if err != nil {
-		log.Fatal("could not write headers: ", err)
+		log.Println("could not write headers: ", err)
+		return
 	}
 	fr.WriteData(frame.Stream, true, res)
 	conn.Close()
