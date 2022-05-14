@@ -14,7 +14,8 @@
       }
       * {
         font-family: Arial, Helvetica, sans-serif;
-      }
+      }https://tls.peet.ws/ is online again and should stay online now
+
       h4 {
         margin: 0 10px 10px 0;
       }
@@ -48,8 +49,8 @@
             <p>TLS versions supported by your browser: <code>${
               r.tls.versions?.join(', ') || 'Error'
             }</code></p>
-            <p>JA3 (WIP): <code>${r.tls.ja3 || 'Error'}</code></p>
-            <p>JA3 hash (WIP): <code>${r.tls.ja3_hash || 'Error'}</code></p>
+            <p>JA3:<code>${r.tls.ja3 || 'Error'}</code></p>
+            <p>JA3 hash: <code>${r.tls.ja3_hash || 'Error'}</code></p>
 
             <details><summary><h4>Cipher suites</h4></summary>
             <code>
