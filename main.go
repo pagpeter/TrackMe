@@ -5,6 +5,8 @@ import (
 	"log"
 	"net"
 
+	// tls "github.com/wwhtrbbtt/crypto-tls"
+
 	"github.com/honeytrap/honeytrap/services/ja3/crypto/tls"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"

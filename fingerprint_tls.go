@@ -1,10 +1,12 @@
 package main
 
 import (
+	//	"crypto/tls"
 	"fmt"
 	"strconv"
 	"strings"
 
+	//tls "github.com/wwhtrbbtt/crypto-tls"
 	"github.com/honeytrap/honeytrap/services/ja3/crypto/tls"
 )
 
