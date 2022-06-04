@@ -15,7 +15,7 @@ func GetUserAgent(res Response) string {
 
 	if res.HTTPVersion == "h2" {
 		headers = res.Http2.SendFrames[len(res.Http2.SendFrames)-1].Headers
-	} else if res.HTTPVersion = "http/1.1" {
+	} else if res.HTTPVersion == "http/1.1" {
 		if res.Http1 == nil {
 			return ""
 		}
