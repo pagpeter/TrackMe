@@ -6,4 +6,4 @@ main
 TrackMe
 .DS_Store
 requests-db/
-*.json
+config.json
