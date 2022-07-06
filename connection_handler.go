@@ -60,6 +60,7 @@ func parseHTTP2(f *http2.Framer, c chan ParsedFrame) {
 		p.Type = frame.Header().Type.String()
 		p.Stream = frame.Header().StreamID
 		p.Length = frame.Header().Length
+		p.Flags = GetAllFlags(frame)
 
 		switch frame := frame.(type) {
 		case *http2.SettingsFrame:

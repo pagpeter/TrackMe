@@ -55,7 +55,6 @@ func (res SmallResponse) ToJson() string {
 type ParsedFrame struct {
 	Type      string   `json:"frame_type,omitempty"`
 	Stream    uint32   `json:"stream_id,omitempty"`
-	Flags     uint8    `json:"flags,omitempty"`
 	Length    uint32   `json:"length,omitempty"`
 	Payload   []byte   `json:"payload,omitempty"`
 	Headers   []string `json:"headers,omitempty"`
@@ -64,6 +63,7 @@ type ParsedFrame struct {
 	Weight    int      `json:"weight,omitempty"`
 	DependsOn int      `json:"depends_on,omitempty"`
 	Exclusive int      `json:"exclusive,omitempty"`
+	Flags     []string `json:"flags"`
 }
 
 type Config struct {
