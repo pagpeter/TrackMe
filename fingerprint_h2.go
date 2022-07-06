@@ -55,7 +55,7 @@ func getPriorityFingerprint(frames []ParsedFrame) string {
 
 	for _, frame := range frames {
 		if frame.Type == "PRIORITY" {
-			pfp += fmt.Sprintf("%v:%v:%v:%v", frame.Stream, frame.Exclusive, frame.DependsOn, frame.Weight)
+			pfp += fmt.Sprintf("%v:%v:%v:%v", frame.Stream, frame.Priority.Exclusive, frame.Priority.DependsOn, frame.Priority.Weight)
 			pfp += ","
 		}
 	}

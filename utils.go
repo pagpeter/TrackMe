@@ -64,6 +64,7 @@ func GetAllFlags(frame http2.Frame) []string {
 			}
 		}
 	}
+
 	return flagsArray
 }
 

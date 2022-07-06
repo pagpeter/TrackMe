@@ -52,18 +52,22 @@ func (res SmallResponse) ToJson() string {
 	return string(j)
 }
 
+type Priority struct {
+	Weight    int `json:"weight"`
+	DependsOn int `json:"depends_on"`
+	Exclusive int `json:"exclusive"`
+}
+
 type ParsedFrame struct {
-	Type      string   `json:"frame_type,omitempty"`
-	Stream    uint32   `json:"stream_id,omitempty"`
-	Length    uint32   `json:"length,omitempty"`
-	Payload   []byte   `json:"payload,omitempty"`
-	Headers   []string `json:"headers,omitempty"`
-	Settings  []string `json:"settings,omitempty"`
-	Increment uint32   `json:"increment,omitempty"`
-	Weight    int      `json:"weight,omitempty"`
-	DependsOn int      `json:"depends_on,omitempty"`
-	Exclusive int      `json:"exclusive,omitempty"`
-	Flags     []string `json:"flags"`
+	Type      string    `json:"frame_type,omitempty"`
+	Stream    uint32    `json:"stream_id,omitempty"`
+	Length    uint32    `json:"length,omitempty"`
+	Payload   []byte    `json:"payload,omitempty"`
+	Headers   []string  `json:"headers,omitempty"`
+	Settings  []string  `json:"settings,omitempty"`
+	Increment uint32    `json:"increment,omitempty"`
+	Flags     []string  `json:"flags,omitempty"`
+	Priority  *Priority `json:"priority,omitempty"`
 }
 
 type Config struct {
