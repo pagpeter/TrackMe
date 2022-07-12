@@ -79,8 +79,6 @@ func GetUserAgent(res Response) string {
 			return ""
 		}
 		headers = res.Http1.Headers
-	} else {
-		return ""
 	}
 
 	for _, header := range headers {
