@@ -6,9 +6,9 @@ import "log"
 func Router(path string, res Response) ([]byte, string) {
 	res.Donate = "Please consider donating to keep this API running."
 	log.Println(res.IP, "-", res.HTTPVersion, res.Method, res.Path, res.TLS.JA3Hash)
-	if GetUserAgent(res) == "" {
-		return []byte("no useragent"), "text/html"
-	}
+	//if GetUserAgent(res) == "" {
+	//	return []byte("no useragent"), "text/html"
+	//}
 	if c.LogToDB && res.Path != "/favicon.ico" {
 		SaveRequest(res)
 	}
