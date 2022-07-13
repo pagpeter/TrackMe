@@ -107,7 +107,7 @@ func parseHTTP2(f *http2.Framer, c chan ParsedFrame) {
 
 			prio := Priority{}
 			p.Priority = &prio
-			// 6.2: Weight: An 8-bit weight for the stream; Add one to the value to obtain a weight between 1 and 256
+			// 6.3: Weight: An 8-bit weight for the stream; Add one to the value to obtain a weight between 1 and 256
 			p.Priority.Weight = int(frame.PriorityParam.Weight) + 1
 			p.Priority.DependsOn = int(frame.PriorityParam.StreamDep)
 			if frame.PriorityParam.Exclusive {
