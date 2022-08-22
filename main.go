@@ -123,6 +123,7 @@ func main() {
 			fmt.Println("Blocked")
 			conn.Write([]byte("Don't waste proxies"))
 			conn.Close()
+			return
 		}
 
 		go HandleTLSConnection(conn)
