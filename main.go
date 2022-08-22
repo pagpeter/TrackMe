@@ -123,7 +123,7 @@ func main() {
 			conn.Write([]byte("Don't waste proxies"))
 			conn.Close()
 		} else {
-			go HandleTLSConnection(conn)
+			HandleTLSConnection(conn)
 		}
 
 	}

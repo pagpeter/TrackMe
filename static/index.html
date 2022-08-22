@@ -72,7 +72,7 @@
         }
 
         const track = () => {
-        fetch('https://tls.peet.ws/api/all')
+        fetch('/api/all')
           .then((res) => res.json())
           .then((data) => insert(data));
       };
