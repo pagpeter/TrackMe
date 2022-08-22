@@ -12,6 +12,8 @@ import (
 	"golang.org/x/net/http2/hpack"
 )
 
+const HTTP2_PREAMBLE = "PRI * HTTP/2.0\r\n\r\nSM\r\n\r\n"
+
 func parseHTTP1(request []byte) Response {
 	// Split the request into lines
 	lines := strings.Split(string(request), "\r\n")
@@ -119,31 +121,26 @@ func parseHTTP2(f *http2.Framer, c chan ParsedFrame) {
 	}
 }
 
-func handleConnection(conn net.Conn) {
+func HandleTLSConnection(conn net.Conn) {
 	// Read the first line of the request
 	// We only read the first line to determine if the connection is HTTP1 or HTTP2
 	// If we know that it isnt HTTP2, we can read the rest of the request and then start processing it
 	// If we know that it is HTTP2, we start the HTTP2 handler
 
-	l := len([]byte("PRI * HTTP/2.0\r\n\r\nSM\r\n\r\n"))
+	l := len([]byte(HTTP2_PREAMBLE))
 	request := make([]byte, l)
 
 	_, err := conn.Read(request)
 	if err != nil {
-		if !strings.Contains(err.Error(), "unknown certificate") {
-			log.Println("Error reading request", err)
-		}
+		log.Println("Error reading request", err)
 		conn.Close()
 		return
 	}
 
 	// Check if the first line is HTTP/2
-	if string(request) == "PRI * HTTP/2.0\r\n\r\nSM\r\n\r\n" {
-		// log.Println("HTTP/2 request")
+	if string(request) == HTTP2_PREAMBLE {
 		handleHTTP2(conn)
 	} else {
-		// log.Println("HTTP/1 request")
-
 		// Read the rest of the request
 		r2 := make([]byte, 1024-l)
 		_, err := conn.Read(r2)
@@ -157,11 +154,11 @@ func handleConnection(conn net.Conn) {
 		// Parse and handle the request
 		details := parseHTTP1(request)
 		details.IP = conn.RemoteAddr().String()
-		handleHTTP1(conn, details)
+		respondToHTTP1(conn, details)
 	}
 }
 
-func handleHTTP1(conn net.Conn, resp Response) {
+func respondToHTTP1(conn net.Conn, resp Response) {
 	// log.Println("Request:", resp.ToJson())
 	// log.Println(len(resp.ToJson()))
 

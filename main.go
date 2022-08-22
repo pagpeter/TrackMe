@@ -22,6 +22,8 @@ var ctx = context.TODO()
 var client *mongo.Client
 
 func init() {
+	// Loads the config and connects to database (if enabled)
+
 	err := c.LoadFromFile()
 	if err != nil {
 		log.Fatal(err)
@@ -52,6 +54,8 @@ func init() {
 }
 
 func StartRedirectServer(host, port string) {
+	// Starts a HTTP server on port 80 that redirects to the HTTPS server on port 443
+
 	log.Println("Starting Redirect Server")
 	log.Println("Listening on", host+":"+port)
 
@@ -108,7 +112,7 @@ func main() {
 		if err != nil {
 			log.Println("Error accepting connection", err)
 		}
-		go handleConnection(conn)
+		go HandleTLSConnection(conn)
 	}
 
 }

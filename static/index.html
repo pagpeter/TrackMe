@@ -88,20 +88,19 @@
 
     <div class="flex flex-wrap">
       <div
-        class="bg-gray-100 dark:bg-gray-900 rounded-md shadow p-3 m-3 hover:bg-gray-50 dark:hover:bg-black min-w-fit grow"
+        class="bg-gray-100 dark:bg-gray-900 rounded-md shadow p-3 m-3 hover:bg-gray-50 dark:hover:bg-black min-w-fit max-w-full grow"
       >
         <h1 class="font-bold">Ja3 (without padding)</h1>
-        <p class="text-2xl" id="ja3-hash">Loading...</p>
-        <p class="text-sm" id="ja3">Loading...</p>
+        <p class="text-2xl break-all" id="ja3-hash">Loading...</p>
+        <p class="text-sm break-all" id="ja3">Loading...</p>
       </div>
       <div
-        class="bg-gray-100 dark:bg-gray-900 rounded-md shadow p-3 m-3 hover:bg-gray-50 dark:hover:bg-black min-w-fit grow"
+        class="bg-gray-100 dark:bg-gray-900 rounded-md shadow p-3 m-3 hover:bg-gray-50 dark:hover:bg-black min-w-fit max-w-full grow"
         
       >
         <h1 class="font-bold">Akamai http/2 fingerprint</h1>
-        <p class="text-2xl" id="akamai-hash">Loading...</p>
-        <p class="text-sm" id="akamai">Loading...</p>
-      </div>
+        <p class="text-2xl break-all" id="akamai-hash">Loading...</p>
+        <p class="text-sm break-all" id="akamai">Loading...</p>
       </div>
     </div>
 
@@ -128,7 +127,7 @@
         <h1 class="font-bold">Total http/2 frames</h1>
         <p class="text-2xl" id="h2-frames">Loading...</p>
       </div>
-            <div
+      <div
         class="bg-sky-100 dark:bg-sky-900 dark:hover:bg-sky-800 rounded-md shadow p-3 m-3 hover:bg-sky-50 min-w-fit grow"
         
       >
@@ -178,13 +177,84 @@
       </div>
     </div>
 
+    <h1 class="text-2xl pt-5">Other useful sites</h1>
+    <hr class="pb-5"/>
+
+    <div class="flex flex-wrap">
+      <a
+        class="bg-blue-100 dark:bg-blue-900 dark:hover:bg-blue-800 rounded-md shadow p-3 m-3 hover:bg-blue-50 min-w-fit grow"
+        href="https://tls13.xargs.org/"
+        >
+        TLS 1.3, every byte explained
+      </a>
+      <a
+        class="bg-blue-100 dark:bg-blue-900 dark:hover:bg-blue-800 rounded-md shadow p-3 m-3 hover:bg-blue-50 min-w-fit grow"
+        href="https://engineering.salesforce.com/tls-fingerprinting-with-ja3-and-ja3s-247362855967/"
+        >
+        Ja3 explanation - Salesforce
+      </a>
+      <a
+        class="bg-blue-100 dark:bg-blue-900 dark:hover:bg-blue-800 rounded-md shadow p-3 m-3 hover:bg-blue-50 min-w-fit grow"
+        href="https://kronoz.dev/articles/tls"
+        >
+        "A very simple article about TLS."
+      </a>
+      <a
+        class="bg-blue-100 dark:bg-blue-900 dark:hover:bg-blue-800 rounded-md shadow p-3 m-3 hover:bg-blue-50 min-w-fit grow"
+        href="https://www.fastly.com/blog/the-state-of-tls-fingerprinting-whats-working-what-isnt-and-whats-next"
+        >
+        State of TLS fingerprinting - fastly
+      </a>
+      <a
+        class="bg-blue-100 dark:bg-blue-900 dark:hover:bg-blue-800 rounded-md shadow p-3 m-3 hover:bg-blue-50 min-w-fit grow"
+        href="https://lwthiker.com/networks/2022/06/17/tls-fingerprinting.html"
+        >
+        TLS fingerprinting - lwthiker
+      </a>
+      <a
+        class="bg-teal-100 dark:bg-teal-900 dark:hover:bg-teal-800 rounded-md shadow p-3 m-3 hover:bg-teal-50 min-w-fit grow"
+        href="https://http2-explained.haxx.se/en/part1"
+        >
+        HTTP2 Explained - haxx.se
+      </a>
+       <a
+        class="bg-teal-100 dark:bg-teal-900 dark:hover:bg-teal-800 rounded-md shadow p-3 m-3 hover:bg-teal-50 min-w-fit grow"
+        href="https://www.blackhat.com/docs/eu-17/materials/eu-17-Shuster-Passive-Fingerprinting-Of-HTTP2-Clients-wp.pdf"
+        >
+        Akamai - HTTP2 fingerprinting
+      </a>
+       <a
+        class="bg-teal-100 dark:bg-teal-900 dark:hover:bg-teal-800 rounded-md shadow p-3 m-3 hover:bg-teal-50 min-w-fit grow"
+        href="https://privacycheck.sec.lrz.de/passive/fp_h2/fp_http2.html"
+        >
+        Fingerprinting HTTP2 - privacycheck.sec.lrz.de
+      </a>
+       <a
+        class="bg-teal-100 dark:bg-teal-900 dark:hover:bg-teal-800 rounded-md shadow p-3 m-3 hover:bg-teal-50 min-w-fit grow"
+        href="https://lwthiker.com/networks/2022/06/17/http2-fingerprinting.html"
+        >
+        HTTP2 Fingerprinting - lwthiker
+      </a>
+       <a
+        class="bg-emerald-100 dark:bg-emerald-900 dark:hover:bg-emerald-800 rounded-md shadow p-3 m-3 hover:bg-emerald-50 min-w-fit grow"
+        href="https://en.wikipedia.org/wiki/TCP/IP_stack_fingerprinting"
+        >
+        TCP fingerprinting wikipedia (german version is better)
+      </a>
+       <a
+        class="bg-emerald-100 dark:bg-emerald-900 dark:hover:bg-emerald-800 rounded-md shadow p-3 m-3 hover:bg-emerald-50 min-w-fit grow"
+        href="https://en-academic.com/dic.nsf/enwiki/868408"
+        >
+        TCP/IP stack fingerprinting (lots of links)
+      </a>
+    </div>
+
     <h1 class="text-2xl pt-5">Donate</h1>
     <hr class="pb-5"/>
     <p>This API is free for you, but cost's me money and time to operate. If you find it useful, please consider donating via crypto.</p>
     <div class="flex flex-wrap">
       <div
-        class="bg-blue-100 dark:bg-blue-900 dark:hover:bg-blue-800  rounded-md shadow p-3 m-3 hover:bg-blue-50 min-w-fit grow"
-        data-clipboard-target="#btc"
+        class="bg-blue-100 dark:bg-blue-900 dark:hover:bg-blue-800 rounded-md shadow p-3 m-3 hover:bg-blue-50 min-w-fit grow"
       >
         <h1 class="font-bold">Bitcoin (BTC)</h1>
         <p class="text-xl break-all" id="btc">bc1qc2av8uc7fdzr9696uqcqtdf2hl25rgmnvm9ys4</p>
@@ -197,7 +267,7 @@
         <p class="text-xl break-all" id="sol">DCCuNLirA9hXPHJGmCVhrkG6Kh4E2w8Bu6HHnXLbm78L</p>
       </div>
       <div
-        class="bg-green-100 dark:bg-green-900 dark:hover:bg-green-800  rounded-md shadow p-3 m-3 hover:bg-green-50 min-w-fit grow"
+        class="bg-green-100 dark:bg-green-900 dark:hover:bg-green-800 rounded-md shadow p-3 m-3 hover:bg-green-50 min-w-fit grow"
         data-clipboard-target="#eth"
       >
         <h1 class="font-bold">Ethereum (ETH)</h1>
@@ -205,7 +275,7 @@
       </div>
             
     <div
-        class="copy bg-violet-100 dark:bg-violet-900 dark:hover:bg-violet-800  rounded-md shadow p-3 m-3 hover:bg-violet-50 min-w-fit grow"
+        class="copy bg-violet-100 dark:bg-violet-900 dark:hover:bg-violet-800 rounded-md shadow p-3 m-3 hover:bg-violet-50 min-w-fit grow"
         data-clipboard-target="#xmr"
         >
         <h1 class="font-bold">Monero (XMR)</h1>
