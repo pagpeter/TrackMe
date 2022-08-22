@@ -118,9 +118,8 @@ func main() {
 		if addr, ok := conn.RemoteAddr().(*net.TCPAddr); ok {
 			ip = addr.IP.String()
 		}
-		fmt.Println("Request from IP", ip)
 		if (IsIPBlocked(ip)) {
-			fmt.Println("Blocked")
+			fmt.Println("Request from IP", ip, "blocked")
 			conn.Write([]byte("Don't waste proxies"))
 			conn.Close()
 			return
