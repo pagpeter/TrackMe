@@ -122,10 +122,10 @@ func main() {
 			fmt.Println("Request from IP", ip, "blocked")
 			conn.Write([]byte("Don't waste proxies"))
 			conn.Close()
-			return
+		} else {
+			go HandleTLSConnection(conn)
 		}
 
-		go HandleTLSConnection(conn)
 	}
 
 }
