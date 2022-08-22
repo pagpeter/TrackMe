@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net"
 
@@ -112,6 +113,18 @@ func main() {
 		if err != nil {
 			log.Println("Error accepting connection", err)
 		}
+
+		var ip string 
+		if addr, ok := conn.RemoteAddr().(*net.TCPAddr); ok {
+			ip = addr.IP.String()
+		}
+		fmt.Println("Request from IP", ip)
+		if (IsIPBlocked(ip)) {
+			fmt.Println("Blocked")
+			conn.Write([]byte("Don't waste proxies"))
+			conn.Close()
+		}
+
 		go HandleTLSConnection(conn)
 	}
 

@@ -119,3 +119,19 @@ func WriteToFile(filename string, data []byte) error {
 
 	return nil
 }
+
+func IsIPBlocked(ip string) bool {
+	rawIPs, err := ReadFile("blockedIPs")
+	if err != nil {
+		WriteToFile("blockedIPs", []byte(""))
+		return false
+	}
+	ips := strings.Split(string(rawIPs), "\n")
+
+	for _, i := range ips {
+		if ip == i { 
+			return true
+		}
+	}
+	return false
+}
