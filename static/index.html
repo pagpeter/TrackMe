@@ -1,168 +1,239 @@
+<!DOCTYPE html>
 <html>
   <head>
-    <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
       content="A small website and API to show off server-side tracking technology."
     />
     <meta name="og:site_name" content="TrackMe" />
+    <meta charset="utf-8" />
     <title>TrackMe | Home</title>
-    <style>
-      body {
-        margin: 2em;
-      }
-      * {
-        font-family: Arial, Helvetica, sans-serif;
-      }https://tls.peet.ws/ is online again and should stay online now
+    <script src="https://cdn.tailwindcss.com"></script>
 
-      h4 {
-        margin: 0 10px 10px 0;
-      }
-      code {
-        font-family: Consolas, 'Liberation Mono', Courier, monospace;
-      }
-      button {
-        font-size: 15px;
-        padding: 8px;
-        border-radius: 5px;
-        border: none;
-        background-color: #a1f24f;
-        color: black;
-        cursor: pointer;
-      }
-      h1,
-      h2,
-      h3,
-      h4 {
-        display: inline-block;
+    <style>
+      * {
+        transition-property: all;
+        transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+        transition-duration: 150ms;
       }
     </style>
-
     <script>
-      const insert = (r) => {
-        const http = r.http1 || r.http2;
-        let html = `
-            <details>
-            <summary><h2>TLS</h2></summary>
-            <p>TLS version used: <code>${r.tls.version || 'Error'}</code></p>
-            <p>TLS versions supported by your browser: <code>${
-              r.tls.versions?.join(', ') || 'Error'
-            }</code></p>
-            <p>JA3: <code>${r.tls.ja3 || 'Error'}</code></p>
-            <p>JA3 hash: <code>${r.tls.ja3_hash || 'Error'}</code></p>
 
-            <details><summary><h4>Cipher suites</h4></summary>
-            <code>
-            ${r.tls.ciphers?.join('<br>') || 'Error'}
-            </code>
-            </details>
+        const insert = data => {
+            console.log(data)
 
-            <details><summary><h4>TLS extensions</h4></summary>
-            <code>
-            ${r.tls.extensions?.join('<br>') || 'Error'}
-            </code>
-            </details>
+            d = document
 
-            <details><summary><h4>TLS curves</h4></summary>
-            <code>
-            ${r.tls.curves?.join('<br>') || 'Error'}
-            </code>
-            </details>
+            d.getElementById('ja3-hash').innerText = data.tls.ja3_hash;
+            d.getElementById('ja3').innerText = data.tls.ja3;
 
-            </details>
+            d.getElementById('akamai-hash').innerText = data.http2.akamai_fingerprint_hash;
+            d.getElementById('akamai').innerText = data.http2.akamai_fingerprint;
 
-            <details>
-            <summary><h2>HTTP</h2></summary>
-            <p>HTTP version used: <code>${r.http_version}</code></p>
-            <p>HTTP versions supported by your browser: <code>${
-              r.tls.protocols?.join(', ') || 'Error'
-            }</code></p>
-                `;
-
-        if (r.http2) {
-          html += `<p><a href="https://www.blackhat.com/docs/eu-17/materials/eu-17-Shuster-Passive-Fingerprinting-Of-HTTP2-Clients-wp.pdf">Akamai fingerprint:</a><code> ${
-            http.akamai_fingerprint || 'None'
-          }</code></p>`;
-          html += `<p>Total frames send: <code>${r.http2.sent_frames.length}</code></p>`;
-          r.http2.sent_frames.forEach((frame) => {
-            html += `
-                        <details><summary><h3>Sent frame (${
-                          frame.frame_type
-                        })</h3></summary>
-                        <p>Stream ID: <code>${
-                          frame.stream_id || '0'
-                        }</code></p>`;
-            console.log(frame);
-            if (frame.frame_type === 'HEADERS') {
-              html += `
-                            <p>Headers (order preserved):<br> <code>${frame.headers.join(
-                              '<br>'
-                            )}</code></p>`;
+            d.getElementById("tls-version").innerText = data.tls.version;
+            d.getElementById("http-version").innerText = (data.http_version == "h2" ? "HTTP/2" : "HTTP/1.1");
+            d.getElementById("tls-versions").innerText = data.tls.versions.join(", ");
+            d.getElementById("http-versions").innerText = data.tls.protocols.join(", ");
+            if (data.http_version == "h2") {
+                d.getElementById("h2-frames").innerText = data.http2.sent_frames.length;
+            } else {
+                d.getElementById("h2-frames").innerText = "N/A";
             }
-            if (frame.frame_type === 'WINDOW_UPDATE') {
-              html += `
-                            <p>Window size increment: <code>${frame.increment}</code></p>`;
-            }
-            if (frame.frame_type === 'SETTINGS') {
-              try {
-                html += `
-                            <p>Settings:<br> <code>${frame.settings.join(
-                              '<br>'
-                            )}</code></p>`;
-              } catch {}
-            }
-            if (frame.frame_type === 'PRIORITY') {
-              html += `
-                            <p>Stream dependency: <code>${
-                              frame.depends_on || '0'
-                            }</code></p>
-                            <p>Weight: <code>${frame.weight}</code></p>`;
-            }
-            html += `</details>`;
-          });
-        } else {
-          html += `<p>Headers: (order preserved):<br> <code>${http.headers.join(
-            '<br>'
-          )}</code></p>`;
+
+            // Cipher suites
+            cipherTable = d.getElementById("cipher-suites");
+            data.tls.ciphers.forEach((suite, i) => {
+                cipherTable.insertRow(i+1).innerHTML = `<td>${suite}</td>`;
+            });
+
+            // tls extensions
+            extTable = d.getElementById("tls-extensions");
+            data.tls.extensions.forEach((ext, i) => {
+                extTable.insertRow(i+1).innerHTML = `<td>${ext}</td>`;
+            });
+
+            // tls curves
+            curveTable = d.getElementById("tls-curves");
+            data.tls.curves.forEach((curve, i) => {
+                curveTable.insertRow(i+1).innerHTML = `<td>${curve}</td>`;
+            });
+
         }
-        console.log(r);
-        document.getElementById('info').innerHTML = html;
-      };
 
-      const track = () => {
-        fetch('/api/all')
+        const toggleTheme = () => {
+            const html = document.querySelector('html');
+            const theme = html.getAttribute('data-theme');
+            if (theme === 'dark') {
+                html.setAttribute('data-theme', 'light');
+            } else {
+                html.setAttribute('data-theme', 'dark');
+            }
+        }
+
+        const track = () => {
+        fetch('https://tls.peet.ws/api/all')
           .then((res) => res.json())
           .then((data) => insert(data));
       };
+
     </script>
   </head>
 
-  <body onload="track()">
-    <h1>Server-side fingerprinting demo</h1>
-    <p>
-      This is a demo to show how much services like akamai and cloudflare can
-      track without even using javascript.
-    </p>
+  <body class="m-5 dark:bg-gray-800 dark:text-gray-50" onload="track()">
+    <h1 class="text-4xl mb-3 font-black">TrackMe</h1>
 
-    <p>You can click on the different categories to get more information.</p>
-    <br /><br />
-  <div id="info"></div>
-      <details>
-      <summary><h2>Donate</h2></summary>
-      <p>This API is free, but costs me money and time to operate. If you find it useful, please consider donating.</p>
-      <p>BTC: bc1qc2av8uc7fdzr9696uqcqtdf2hl25rgmnvm9ys4</p>
-      <p>XMR: 45jQVd3NnUxPVqDxqdYzA9hbfUDfygLhTiSY1c9mjiYEKL2YcLk4G9E48mRpA2Nd3m4hLxqwy8Y6TBJaAjAiyFazK5SpV1g</p>
-      <p>ETH: 0x3dEe894fd880816b1205dE915A00a42c85C44502</p>
-    </details>
-    <details>
-      <summary><h2>API</h2></summary>
-      <p>
-        <code>/api/all</code> - All of the information that can be pulled from
-        the request. Supports http1.x and h2.
-      </p>
-      <p><code>/api/clean</code> - Only ja3, ja3 hash and akamai.</p>
-      <p><code>/api/tls</code> - Only TLS information</p>
-    </details>
+    <h1 class="text-2xl pt-5">Your fingerprints</h1>
+    <hr class="pb-5"/>
+
+    <div class="flex flex-wrap">
+      <div
+        class="bg-gray-100 dark:bg-gray-900 rounded-md shadow p-3 m-3 hover:bg-gray-50 dark:hover:bg-black min-w-fit grow"
+      >
+        <h1 class="font-bold">Ja3 (without padding)</h1>
+        <p class="text-2xl" id="ja3-hash">Loading...</p>
+        <p class="text-sm" id="ja3">Loading...</p>
+      </div>
+      <div
+        class="bg-gray-100 dark:bg-gray-900 rounded-md shadow p-3 m-3 hover:bg-gray-50 dark:hover:bg-black min-w-fit grow"
+        
+      >
+        <h1 class="font-bold">Akamai http/2 fingerprint</h1>
+        <p class="text-2xl" id="akamai-hash">Loading...</p>
+        <p class="text-sm" id="akamai">Loading...</p>
+      </div>
+      </div>
+    </div>
+
+    <h1 class="text-2xl pt-5">Request details</h1>
+    <hr class="pb-5"/>
+
+    <div class="flex flex-wrap">
+      <div
+        class="bg-blue-100 dark:bg-blue-900 dark:hover:bg-blue-800 rounded-md shadow p-3 m-3 hover:bg-blue-50 min-w-fit grow"
+        onclick="CopyToClipboard('tls-version')"
+        >
+        <h1 class="font-bold">Used TLS version</h1>
+        <p class="text-2xl" id="tls-version" >Loading...</p>
+      </div>
+      <div
+        class="bg-red-100 dark:bg-red-900 dark:hover:bg-red-800 rounded-md shadow p-3 m-3 hover:bg-red-50 min-w-fit grow"
+      >
+        <h1 class="font-bold">Used HTTP version</h1>
+        <p class="text-2xl" id="http-version">Loading...</p>
+      </div>
+      <div
+        class="bg-green-100 dark:bg-green-900 dark:hover:bg-green-800 rounded-md shadow p-3 m-3 hover:bg-green-50 min-w-fit grow"
+      >
+        <h1 class="font-bold">Total http/2 frames</h1>
+        <p class="text-2xl" id="h2-frames">Loading...</p>
+      </div>
+            <div
+        class="bg-sky-100 dark:bg-sky-900 dark:hover:bg-sky-800 rounded-md shadow p-3 m-3 hover:bg-sky-50 min-w-fit grow"
+        
+      >
+        <h1 class="font-bold">Supported HTTP versions</h1>
+        <p class="text-2xl" id="http-versions">Loading...</p>
+      </div>
+      <div
+        class="bg-violet-100 dark:bg-violet-900 dark:hover:bg-violet-800 rounded-md shadow p-3 m-3 hover:bg-violet-50 min-w-fit grow"
+        
+      >
+        <h1 class="font-bold">Supported TLS versions</h1>
+        <p class="text-2xl" id="tls-versions">Loading...</p>
+      </div>
+    </div>
+
+    <div class="flex flex-wrap">
+      <div
+        class="bg-gray-100 dark:bg-gray-900 rounded-md shadow p-3 m-3 hover:bg-gray-50 dark:hover:bg-black min-w-fit grow"
+      >
+        <table class="table-auto" id="cipher-suites">
+          <thead>
+            <th>TLS cipher suites</th>
+          </thead>
+         
+        </table>
+      </div>
+      <div
+        class="bg-gray-100 dark:bg-gray-900 rounded-md shadow p-3 m-3 hover:bg-gray-50 dark:hover:bg-black min-w-fit grow"
+      >
+        <table class="table-auto" id="tls-extensions">
+          <thead>
+            <th>TLS extensions</th>
+          </thead>
+      
+        </table>
+      </div>
+      <div
+        class="bg-gray-100 dark:bg-gray-900 rounded-md shadow p-3 m-3 hover:bg-gray-50 dark:hover:bg-black min-w-fit"
+      >
+        <table class="table-auto" id="tls-curves">
+          <thead>
+            <th>TLS curves</th>
+          </thead>
+      
+          
+        </table>
+      </div>
+    </div>
+
+    <h1 class="text-2xl pt-5">Donate</h1>
+    <hr class="pb-5"/>
+    <p>This API is free for you, but cost's me money and time to operate. If you find it useful, please consider donating via crypto.</p>
+    <div class="flex flex-wrap">
+      <div
+        class="bg-blue-100 dark:bg-blue-900 dark:hover:bg-blue-800  rounded-md shadow p-3 m-3 hover:bg-blue-50 min-w-fit grow"
+        data-clipboard-target="#btc"
+      >
+        <h1 class="font-bold">Bitcoin (BTC)</h1>
+        <p class="text-xl break-all" id="btc">bc1qc2av8uc7fdzr9696uqcqtdf2hl25rgmnvm9ys4</p>
+      </div>
+      <div
+        class="bg-red-100 dark:bg-red-900 dark:hover:bg-red-800 rounded-md shadow p-3 m-3 hover:bg-red-50 min-w-fit grow"
+        data-clipboard-target="#sol"
+      >
+        <h1 class="font-bold">Solana (SOL)</h1>
+        <p class="text-xl break-all" id="sol">DCCuNLirA9hXPHJGmCVhrkG6Kh4E2w8Bu6HHnXLbm78L</p>
+      </div>
+      <div
+        class="bg-green-100 dark:bg-green-900 dark:hover:bg-green-800  rounded-md shadow p-3 m-3 hover:bg-green-50 min-w-fit grow"
+        data-clipboard-target="#eth"
+      >
+        <h1 class="font-bold">Ethereum (ETH)</h1>
+        <p class="text-xl break-all" id="eth">0x3dEe894fd880816b1205dE915A00a42c85C44502</p>
+      </div>
+            
+    <div
+        class="copy bg-violet-100 dark:bg-violet-900 dark:hover:bg-violet-800  rounded-md shadow p-3 m-3 hover:bg-violet-50 min-w-fit grow"
+        data-clipboard-target="#xmr"
+        >
+        <h1 class="font-bold">Monero (XMR)</h1>
+        <p class="text-xl break-all" id="xmr">45jQVd3NnUxPVqDxqdYzA9hbfUDfygLhTiSY1c9mjiYEKL2YcLk4G9E48mRpA2Nd3m4hLxqwy8Y6TBJaAjAiyFazK5SpV1g</p>
+      </div>
+
+    </div>
+
+    <h1 class="text-2xl pt-5">Contact</h1>
+    <hr class="pb-5"/>
+    <p>Please don't contact me for general programming help.</p>
+    <div class="flex flex-wrap">
+      <div
+        class="bg-blue-100 dark:bg-blue-900 dark:hover:bg-blue-800 rounded-md shadow p-3 m-3 hover:bg-blue-50 min-w-fit grow"
+        
+      >
+        <h1 class="font-bold">Discord</h1>
+        <p class="text-xl break-all">Peet#4245</p>
+      </div>
+      <div
+        class="bg-yellow-100 dark:bg-sky-900 dark:hover:bg-sky-800  rounded-md shadow p-3 m-3 hover:bg-yellow-50 min-w-fit grow"
+        
+      >
+        <h1 class="font-bold">E-Mail</h1>
+        <p class="text-xl break-all">tls@peet.ws</p>
+      </div>
+
+    </div>
+</p>
   </body>
 </html>
