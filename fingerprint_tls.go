@@ -1,13 +1,12 @@
 package main
 
 import (
-	//	"crypto/tls"
+	"crypto/tls"
 	"fmt"
 	"strconv"
 	"strings"
-
 	//tls "github.com/wwhtrbbtt/crypto-tls"
-	"github.com/honeytrap/honeytrap/services/ja3/crypto/tls"
+	// "github.com/honeytrap/honeytrap/services/ja3/crypto/tls"
 )
 
 type JA3Calculating struct {

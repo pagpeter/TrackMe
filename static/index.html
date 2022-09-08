@@ -4,9 +4,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="A small website and API to show off server-side tracking technology."
+      content="A small website and API to show off server-side tracking technology, that also provides an API for TLS (ja3) )and http2 fingerprinting"
     />
-    <meta name="og:site_name" content="TrackMe" />
+    <meta name="keywords" content="ja3, ja3 fingerprinting api, tls fingerprinting, http2 fingerprinting, akamai fingerprinting, cloudflare fingerprinting, bypass ja3, spoof ja3">
+    <meta name="og:site_name" content="TrackMe - ja3 API" />
     <meta charset="utf-8" />
     <title>TrackMe | Home</title>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -81,16 +82,16 @@
   </head>
 
   <body class="m-5 dark:bg-gray-800 dark:text-gray-50" onload="track()">
-    <h1 class="text-4xl mb-3 font-black">TrackMe</h1>
+    <h1 class="text-4xl mb-3 font-black">TrackMe - fingerprinting API</h1>
 
-    <h1 class="text-2xl pt-5">Your fingerprints</h1>
+    <h2 class="text-2xl pt-5">Your fingerprints</h2>
     <hr class="pb-5"/>
 
     <div class="flex flex-wrap">
       <div
         class="bg-gray-100 dark:bg-gray-900 rounded-md shadow p-3 m-3 hover:bg-gray-50 dark:hover:bg-black min-w-fit max-w-full grow"
       >
-        <h1 class="font-bold">Ja3 (without padding)</h1>
+        <h2 class="font-bold">Ja3 (without padding)</h2>
         <p class="text-2xl break-all" id="ja3-hash">Loading...</p>
         <p class="text-sm break-all" id="ja3">Loading...</p>
       </div>
@@ -98,13 +99,13 @@
         class="bg-gray-100 dark:bg-gray-900 rounded-md shadow p-3 m-3 hover:bg-gray-50 dark:hover:bg-black min-w-fit max-w-full grow"
         
       >
-        <h1 class="font-bold">Akamai http/2 fingerprint</h1>
+        <h2 class="font-bold">Akamai http/2 fingerprint</h2>
         <p class="text-2xl break-all" id="akamai-hash">Loading...</p>
         <p class="text-sm break-all" id="akamai">Loading...</p>
       </div>
     </div>
 
-    <h1 class="text-2xl pt-5">Request details</h1>
+    <h2 class="text-2xl pt-5">Request details</h2>
     <hr class="pb-5"/>
 
     <div class="flex flex-wrap">
@@ -112,33 +113,33 @@
         class="bg-blue-100 dark:bg-blue-900 dark:hover:bg-blue-800 rounded-md shadow p-3 m-3 hover:bg-blue-50 min-w-fit grow"
         onclick="CopyToClipboard('tls-version')"
         >
-        <h1 class="font-bold">Used TLS version</h1>
+        <h2 class="font-bold">Used TLS version</h2>
         <p class="text-2xl" id="tls-version" >Loading...</p>
       </div>
       <div
         class="bg-red-100 dark:bg-red-900 dark:hover:bg-red-800 rounded-md shadow p-3 m-3 hover:bg-red-50 min-w-fit grow"
       >
-        <h1 class="font-bold">Used HTTP version</h1>
+        <h2 class="font-bold">Used HTTP version</h2>
         <p class="text-2xl" id="http-version">Loading...</p>
       </div>
       <div
         class="bg-green-100 dark:bg-green-900 dark:hover:bg-green-800 rounded-md shadow p-3 m-3 hover:bg-green-50 min-w-fit grow"
       >
-        <h1 class="font-bold">Total http/2 frames</h1>
+        <h2 class="font-bold">Total http/2 frames</h2>
         <p class="text-2xl" id="h2-frames">Loading...</p>
       </div>
       <div
         class="bg-sky-100 dark:bg-sky-900 dark:hover:bg-sky-800 rounded-md shadow p-3 m-3 hover:bg-sky-50 min-w-fit grow"
         
       >
-        <h1 class="font-bold">Supported HTTP versions</h1>
+        <h2 class="font-bold">Supported HTTP versions</h2>
         <p class="text-2xl" id="http-versions">Loading...</p>
       </div>
       <div
         class="bg-violet-100 dark:bg-violet-900 dark:hover:bg-violet-800 rounded-md shadow p-3 m-3 hover:bg-violet-50 min-w-fit grow"
         
       >
-        <h1 class="font-bold">Supported TLS versions</h1>
+        <h2 class="font-bold">Supported TLS versions</h2>
         <p class="text-2xl" id="tls-versions">Loading...</p>
       </div>
     </div>
@@ -177,7 +178,7 @@
       </div>
     </div>
 
-    <h1 class="text-2xl pt-5">Other useful sites</h1>
+    <h2 class="text-2xl pt-5">Other useful sites</h2>
     <hr class="pb-5"/>
 
     <div class="flex flex-wrap">
@@ -249,28 +250,55 @@
       </a>
     </div>
 
-    <h1 class="text-2xl pt-5">Donate</h1>
+    <h2 class="text-2xl pt-5">API endpoints</h2>
+    <hr class="pb-5"/>
+    <div class="flex flex-wrap">
+      <div
+        class="bg-blue-100 dark:bg-blue-900 dark:hover:bg-blue-800 rounded-md shadow p-3 m-3 hover:bg-blue-50 min-w-fit grow"
+        
+      >
+        <h2 class="font-bold">All of the information</h2>
+        <a href="/api/all" class="text-xl break-all">/api/all</a>
+      </div>
+      <div
+        class="bg-yellow-100 dark:bg-sky-900 dark:hover:bg-sky-800  rounded-md shadow p-3 m-3 hover:bg-yellow-50 min-w-fit grow"
+        
+      >
+        <h2 class="font-bold">Only fingerprints</h2>
+        <a href="/api/clean" class="text-xl break-all">/api/clean</a>
+      </div>
+
+      <div
+        class="bg-yellow-100 dark:bg-sky-900 dark:hover:bg-sky-800  rounded-md shadow p-3 m-3 hover:bg-yellow-50 min-w-fit grow"
+        
+      >
+        <h2 class="font-bold">Only TLS data</h2>
+        <a href="/api/tls" class="text-xl break-all">/api/tls</a>
+      </div>
+    </div>
+
+    <h2 class="text-2xl pt-5">Donate</h2>
     <hr class="pb-5"/>
     <p>This API is free for you, but cost's me money and time to operate. If you find it useful, please consider donating via crypto.</p>
     <div class="flex flex-wrap">
       <div
         class="bg-blue-100 dark:bg-blue-900 dark:hover:bg-blue-800 rounded-md shadow p-3 m-3 hover:bg-blue-50 min-w-fit grow"
       >
-        <h1 class="font-bold">Bitcoin (BTC)</h1>
+        <h2 class="font-bold">Bitcoin (BTC)</h2>
         <p class="text-xl break-all" id="btc">bc1qc2av8uc7fdzr9696uqcqtdf2hl25rgmnvm9ys4</p>
       </div>
       <div
         class="bg-red-100 dark:bg-red-900 dark:hover:bg-red-800 rounded-md shadow p-3 m-3 hover:bg-red-50 min-w-fit grow"
         data-clipboard-target="#sol"
       >
-        <h1 class="font-bold">Solana (SOL)</h1>
+        <h2 class="font-bold">Solana (SOL)</h2>
         <p class="text-xl break-all" id="sol">DCCuNLirA9hXPHJGmCVhrkG6Kh4E2w8Bu6HHnXLbm78L</p>
       </div>
       <div
         class="bg-green-100 dark:bg-green-900 dark:hover:bg-green-800 rounded-md shadow p-3 m-3 hover:bg-green-50 min-w-fit grow"
         data-clipboard-target="#eth"
       >
-        <h1 class="font-bold">Ethereum (ETH)</h1>
+        <h2 class="font-bold">Ethereum (ETH)</h2>
         <p class="text-xl break-all" id="eth">0x3dEe894fd880816b1205dE915A00a42c85C44502</p>
       </div>
             
@@ -278,13 +306,13 @@
         class="copy bg-violet-100 dark:bg-violet-900 dark:hover:bg-violet-800 rounded-md shadow p-3 m-3 hover:bg-violet-50 min-w-fit grow"
         data-clipboard-target="#xmr"
         >
-        <h1 class="font-bold">Monero (XMR)</h1>
+        <h2 class="font-bold">Monero (XMR)</h2>
         <p class="text-xl break-all" id="xmr">45jQVd3NnUxPVqDxqdYzA9hbfUDfygLhTiSY1c9mjiYEKL2YcLk4G9E48mRpA2Nd3m4hLxqwy8Y6TBJaAjAiyFazK5SpV1g</p>
       </div>
 
     </div>
 
-    <h1 class="text-2xl pt-5">Contact</h1>
+    <h2 class="text-2xl pt-5">Contact</h2>
     <hr class="pb-5"/>
     <p>Please don't contact me for general programming help.</p>
     <div class="flex flex-wrap">
@@ -292,18 +320,17 @@
         class="bg-blue-100 dark:bg-blue-900 dark:hover:bg-blue-800 rounded-md shadow p-3 m-3 hover:bg-blue-50 min-w-fit grow"
         
       >
-        <h1 class="font-bold">Discord</h1>
+        <h2 class="font-bold">Discord</h2>
         <p class="text-xl break-all">Peet#4245</p>
       </div>
       <div
         class="bg-yellow-100 dark:bg-sky-900 dark:hover:bg-sky-800  rounded-md shadow p-3 m-3 hover:bg-yellow-50 min-w-fit grow"
         
       >
-        <h1 class="font-bold">E-Mail</h1>
+        <h2 class="font-bold">E-Mail</h2>
         <p class="text-xl break-all">tls@peet.ws</p>
       </div>
 
     </div>
-</p>
   </body>
 </html>
