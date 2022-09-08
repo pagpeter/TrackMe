@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"sort"
 	"strings"
 
 	"golang.org/x/net/http2"
@@ -29,7 +30,7 @@ var headersFrameFlags = map[http2.Flags]string{
 }
 
 func GetAllFlags(frame http2.Frame) []string {
-	flagsArray := []string{}
+	var flagsArray []string
 	flags := frame.Header().Flags
 
 	switch frame.(type) {
@@ -38,15 +39,15 @@ func GetAllFlags(frame http2.Frame) []string {
 			flagsArray = append(flagsArray, "Ack (0x1)")
 		}
 	case *http2.HeadersFrame:
-		for key, val := range headersFrameFlags {
+		for _, key := range getKeysInOrder(headersFrameFlags) {
 			if flags.Has(key) {
-				flagsArray = append(flagsArray, val)
+				flagsArray = append(flagsArray, headersFrameFlags[key])
 			}
 		}
 	case *http2.DataFrame:
-		for key, val := range dataFrameFlags {
+		for _, key := range getKeysInOrder(dataFrameFlags) {
 			if flags.Has(key) {
-				flagsArray = append(flagsArray, val)
+				flagsArray = append(flagsArray, dataFrameFlags[key])
 			}
 		}
 	case *http2.PingFrame:
@@ -58,9 +59,9 @@ func GetAllFlags(frame http2.Frame) []string {
 			flagsArray = append(flagsArray, "EndHeaders (0x4)")
 		}
 	case *http2.PushPromiseFrame:
-		for key, val := range pushFrameFlags {
+		for _, key := range getKeysInOrder(pushFrameFlags) {
 			if flags.Has(key) {
-				flagsArray = append(flagsArray, val)
+				flagsArray = append(flagsArray, pushFrameFlags[key])
 			}
 		}
 	}
@@ -129,9 +130,19 @@ func IsIPBlocked(ip string) bool {
 	ips := strings.Split(string(rawIPs), "\n")
 
 	for _, i := range ips {
-		if ip == i { 
+		if ip == i {
 			return true
 		}
 	}
 	return false
+}
+
+func getKeysInOrder(m map[http2.Flags]string) []http2.Flags {
+	keys := make([]http2.Flags, 0)
+	for k, _ := range m {
+		keys = append(keys, k)
+	}
+	sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+
+	return keys
 }
