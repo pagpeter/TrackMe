@@ -75,9 +75,27 @@
         const track = () => {
         fetch('/api/all')
           .then((res) => res.json())
-          .then((data) => insert(data));
-      };
+          .then((res) => {window.data = res})
+	  .then(() => insert(window.data));
+	};
 
+	const togglePadding = () => {
+		const include = "Padding: <u>include</u>"
+		const exclude = "Padding: <u>exclude</u>"
+
+		let elem = document.getElementById("togglePadding");
+		if (elem.innerHTML == include) {
+			elem.innerHTML = exclude
+						
+            		document.getElementById('ja3-hash').innerText = window.data.tls.ja3_hash;
+            		document.getElementById('ja3').innerText = window.data.tls.ja3;
+		} else if (elem.innerHTML == exclude) {
+			elem.innerHTML = include
+
+            		document.getElementById('ja3-hash').innerText = window.data.tls.ja3_hash_padding;
+            		document.getElementById('ja3').innerText = window.data.tls.ja3_padding;
+		}
+	}
     </script>
   </head>
 
@@ -91,7 +109,7 @@
       <div
         class="bg-gray-100 dark:bg-gray-900 rounded-md shadow p-3 m-3 hover:bg-gray-50 dark:hover:bg-black min-w-fit max-w-full grow"
       >
-        <h2 class="font-bold">Ja3 (without padding)</h2>
+      <h2 class="font-bold">Ja3 <button id="togglePadding" onclick="togglePadding()" class="dark:text-gray-400">Padding: <u>exclude</u></button></h2>
         <p class="text-2xl break-all" id="ja3-hash">Loading...</p>
         <p class="text-sm break-all" id="ja3">Loading...</p>
       </div>

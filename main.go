@@ -15,6 +15,7 @@ import (
 )
 
 var Gja3 JA3Calculating
+
 var cert tls.Certificate
 var c *Config = &Config{}
 
@@ -114,11 +115,11 @@ func main() {
 			log.Println("Error accepting connection", err)
 		}
 
-		var ip string 
+		var ip string
 		if addr, ok := conn.RemoteAddr().(*net.TCPAddr); ok {
 			ip = addr.IP.String()
 		}
-		if (IsIPBlocked(ip)) {
+		if IsIPBlocked(ip) {
 			fmt.Println("Request from IP", ip, "blocked")
 			conn.Write([]byte("Don't waste proxies"))
 			conn.Close()

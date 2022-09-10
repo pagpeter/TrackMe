@@ -1,12 +1,13 @@
 package main
 
 import (
-	"crypto/tls"
+	// "crypto/tls"
 	"fmt"
 	"strconv"
 	"strings"
+
 	//tls "github.com/wwhtrbbtt/crypto-tls"
-	// "github.com/honeytrap/honeytrap/services/ja3/crypto/tls"
+	"github.com/honeytrap/honeytrap/services/ja3/crypto/tls"
 )
 
 type JA3Calculating struct {
@@ -29,12 +30,26 @@ type JA3Calculating struct {
 	Version           string   `json:"version"`
 	ReadableProtocols []string `json:"protocols"`
 	ReadableVersions  []string `json:"versions"`
-	JA3               string   `json:"ja3"`
-	JA3Hash           string   `json:"ja3_hash"`
+
+	JA3     string `json:"ja3"`
+	JA3Hash string `json:"ja3_hash"`
+
+	JA3Padding     string `json:"ja3_padding"`
+	JA3HashPadding string `json:"ja3_hash_padding"`
 }
 
-func (j *JA3Calculating) Parse() {
+func (j *JA3Calculating) Parse(includePadding bool) {
 	// Ciphers
+	j.ReadableCiphers = []string{}
+	j.ReadableCurves = []string{}
+	j.ReadableExtensions = []string{}
+	j.ReadablePoints = []string{}
+
+	j.JA3Ciphers = []string{}
+	j.JA3Curves = []string{}
+	j.JA3Extensions = []string{}
+	j.JA3Points = []string{}
+
 	for _, cipher := range j.AllCiphers {
 		name := GetCipherSuiteName(cipher)
 		g := false
@@ -62,7 +77,7 @@ func (j *JA3Calculating) Parse() {
 			g = true
 			name = "TLS_GREASE (" + hex + ")"
 		}
-		if name == "padding (21)" {
+		if name == "padding (21)" && !includePadding {
 			g = true
 		}
 		j.ReadableExtensions = append(j.ReadableExtensions, name)
@@ -98,7 +113,7 @@ func (j *JA3Calculating) Parse() {
 	}
 }
 
-func (j *JA3Calculating) Calculate() {
+func (j *JA3Calculating) Calculate(isWithPadding bool) {
 	// Returns the ja3 and the ja3_hash
 	// TLSVersion,Ciphers,Extensions,EllipticCurves,EllipticCurvePointFormats
 	ja3 := j.Version + ","
@@ -106,8 +121,13 @@ func (j *JA3Calculating) Calculate() {
 	ja3 += strings.Join(j.JA3Extensions, "-") + ","
 	ja3 += strings.Join(j.JA3Curves, "-") + ","
 	ja3 += strings.Join(j.JA3Points, "-")
-	j.JA3 = ja3
-	j.JA3Hash = GetMD5Hash(ja3)
+	if !isWithPadding {
+		j.JA3 = ja3
+		j.JA3Hash = GetMD5Hash(ja3)
+	} else {
+		j.JA3Padding = ja3
+		j.JA3HashPadding = GetMD5Hash(ja3)
+	}
 }
 
 func FingerprintMSG(clientHello *tls.ClientHelloInfo) (*tls.Certificate, error) {
@@ -127,8 +147,12 @@ func FingerprintMSG(clientHello *tls.ClientHelloInfo) (*tls.Certificate, error) 
 			ReadableProtocols: clientHello.SupportedProtos,
 			ReadableVersions:  versions,
 		}
-		j.Parse()
-		j.Calculate()
+		// Get ja3 without padding
+		j.Parse(false)
+		j.Calculate(false)
+		// Get ja3 with padding
+		j.Parse(true)
+		j.Calculate(true)
 		Gja3 = j
 	}()
 
