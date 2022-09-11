@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"net/http"
 
 	// tls "github.com/wwhtrbbtt/crypto-tls"
 
@@ -55,30 +56,20 @@ func init() {
 
 }
 
+func redirect(w http.ResponseWriter, r *http.Request) {
+	http.Redirect(w, r, "http://tls.peet.ws", 301)
+}
+
 func StartRedirectServer(host, port string) {
 	// Starts a HTTP server on port 80 that redirects to the HTTPS server on port 443
 
 	log.Println("Starting Redirect Server")
 	log.Println("Listening on", host+":"+port)
 
-	ln, err := net.Listen("tcp", host+":"+port)
+	http.HandleFunc("/", redirect)
+	err := http.ListenAndServe(host+":"+port, nil)
 	if err != nil {
-		log.Fatal(err)
-	}
-
-	defer ln.Close()
-
-	for {
-		conn, err := ln.Accept()
-		log.Println("Redirect: Accepted connection", conn.RemoteAddr())
-		if err != nil {
-			conn.Close()
-			log.Println("Error accepting connection", err)
-		}
-		go func() {
-			conn.Write([]byte("HTTP/1.1 301 Moved Permanently\r\nLocation: https://tls.peet.ws\r\n\r\n"))
-			conn.Close()
-		}()
+		log.Fatal("ListenAndServe: ", err)
 	}
 }
 
