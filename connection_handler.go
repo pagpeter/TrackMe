@@ -51,10 +51,12 @@ func parseHTTP2(f *http2.Framer, c chan ParsedFrame) {
 	for {
 		frame, err := f.ReadFrame()
 		if err != nil {
-			if strings.HasSuffix(err.Error(), "use of closed network connection") {
-				return
+			r := "ERROR_CLOSE"
+			if strings.HasSuffix(err.Error(), "unknown certificate") {
+				r = "ERROR"
 			}
-			log.Println("Error reading frame", err)
+			log.Println("Error reading frame", err, r)
+			c <- ParsedFrame{Type: r}
 			return
 		}
 
@@ -133,7 +135,12 @@ func HandleTLSConnection(conn net.Conn) {
 	_, err := conn.Read(request)
 	if err != nil {
 		log.Println("Error reading request", err)
-		conn.Close()
+		if !strings.HasSuffix(err.Error(), "unknown certificate") {
+			log.Println("Closing connection")
+			conn.Close()
+		} else {
+			log.Println("Local error")
+		}
 		return
 	}
 
@@ -198,8 +205,15 @@ func handleHTTP2(conn net.Conn) {
 
 	var frame ParsedFrame
 	go parseHTTP2(fr, c)
+
 	for {
 		frame = <-c
+		if frame.Type == "ERROR_CLOSE" {
+			conn.Close()
+			return
+		} else if frame.Type == "ERROR" {
+			return
+		}
 		// log.Println(frame)
 		frames = append(frames, frame)
 		if frame.Type == "HEADERS" {
