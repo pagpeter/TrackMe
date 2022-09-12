@@ -269,6 +269,8 @@ func handleHTTP2(conn net.Conn) {
 		fr.WriteData(frame.Stream, false, c)
 	}
 	fr.WriteData(frame.Stream, true, []byte{})
+	fr.WriteGoAway(frame.Stream, http2.ErrCodeNo, []byte{})
+
 	time.Sleep(time.Millisecond * 500)
 	conn.Close()
 }
