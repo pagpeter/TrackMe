@@ -123,7 +123,7 @@ func parseHTTP2(f *http2.Framer, c chan ParsedFrame) {
 	}
 }
 
-func HandleTLSConnection(conn net.Conn) {
+func HandleTLSConnection(conn net.Conn) bool {
 	// Read the first line of the request
 	// We only read the first line to determine if the connection is HTTP1 or HTTP2
 	// If we know that it isnt HTTP2, we can read the rest of the request and then start processing it
@@ -135,13 +135,11 @@ func HandleTLSConnection(conn net.Conn) {
 	_, err := conn.Read(request)
 	if err != nil {
 		log.Println("Error reading request", err)
-		if !strings.HasSuffix(err.Error(), "unknown certificate") {
-			log.Println("Closing connection")
-			conn.Close()
-		} else {
-			log.Println("Local error")
+		if strings.HasSuffix(err.Error(), "unknown certificate") && local {
+			log.Println("Local error (probably developement) - not closing conn")
+			return true
 		}
-		return
+		return false
 	}
 
 	// Check if the first line is HTTP/2
@@ -153,7 +151,7 @@ func HandleTLSConnection(conn net.Conn) {
 		_, err := conn.Read(r2)
 		if err != nil {
 			log.Println(err)
-			return
+			return true
 		}
 		// Append it to the first line
 		request = append(request, r2...)
@@ -163,6 +161,7 @@ func HandleTLSConnection(conn net.Conn) {
 		details.IP = conn.RemoteAddr().String()
 		respondToHTTP1(conn, details)
 	}
+	return true
 }
 
 func respondToHTTP1(conn net.Conn, resp Response) {

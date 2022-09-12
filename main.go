@@ -6,6 +6,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"time"
 
 	// tls "github.com/wwhtrbbtt/crypto-tls"
 
@@ -23,6 +24,8 @@ var c *Config = &Config{}
 var collection *mongo.Collection
 var ctx = context.TODO()
 var client *mongo.Client
+
+var local = false
 
 func init() {
 	// Loads the config and connects to database (if enabled)
@@ -63,6 +66,8 @@ func redirect(w http.ResponseWriter, r *http.Request) {
 func StartRedirectServer(host, port string) {
 	// Starts a HTTP server on port 80 that redirects to the HTTPS server on port 443
 
+	local = host == "" && port != "443"
+
 	log.Println("Starting Redirect Server")
 	log.Println("Listening on", host+":"+port)
 
@@ -70,6 +75,20 @@ func StartRedirectServer(host, port string) {
 	err := http.ListenAndServe(host+":"+port, nil)
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
+	}
+}
+
+// Timeout function
+func timeoutHandleTLSConnection(conn net.Conn) bool {
+	result := make(chan bool)
+	go func() {
+		result <- HandleTLSConnection(conn)
+	}()
+	select {
+	case <-time.After(15 * time.Second):
+		return false
+	case tmp := <-result:
+		return tmp
 	}
 }
 
@@ -115,7 +134,12 @@ func main() {
 			conn.Write([]byte("Don't waste proxies"))
 			conn.Close()
 		} else {
-			HandleTLSConnection(conn)
+
+			success := timeoutHandleTLSConnection(conn)
+			if !success {
+				log.Println("Request aborted")
+				conn.Close()
+			}
 		}
 
 	}
