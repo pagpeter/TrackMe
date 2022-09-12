@@ -262,6 +262,12 @@ func handleHTTP2(conn net.Conn) {
 		log.Println("could not write headers: ", err)
 		return
 	}
-	fr.WriteData(frame.Stream, true, res)
+
+	chunks := splitBytesIntoChunks(res, 1024)
+	for _, c := range chunks {
+		fr.WriteData(frame.Stream, false, c)
+	}
+	fr.WriteData(frame.Stream, true, []byte{})
+
 	conn.Close()
 }
