@@ -7,6 +7,7 @@ import (
 	"net"
 	"strconv"
 	"strings"
+	"time"
 
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/hpack"
@@ -268,6 +269,6 @@ func handleHTTP2(conn net.Conn) {
 		fr.WriteData(frame.Stream, false, c)
 	}
 	fr.WriteData(frame.Stream, true, []byte{})
-
+	time.Sleep(time.Millisecond * 500)
 	conn.Close()
 }
