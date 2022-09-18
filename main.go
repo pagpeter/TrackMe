@@ -32,6 +32,11 @@ func init() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	
+	if len(c.MongoURL) == 0 { // Don't attempt to setup mongo if its not populated in the config
+		return
+	}
+	
 	clientOptions := options.Client().ApplyURI(c.MongoURL)
 	client, err = mongo.Connect(ctx, clientOptions)
 	if err != nil {
