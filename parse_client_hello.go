@@ -212,6 +212,21 @@ func parseRawExtensions(exts []Extension, chp ClientHello) ([]interface{}, Clien
 				chp.SupportedPoints = []uint8{0x00}
 			}
 			tmp = c
+		case "000d": // signature_algorithms
+			c := struct {
+				Name       string `json:"name"`
+				AlgsLength int      `json:"-"`
+				Algorithms []string `json:"signature_algorithms"`
+			}{
+				Name:      "signature_algorithms (13)",
+				AlgsLength:	hexToInt(d[0:4]) / 2,
+			}
+			tmpC := 4
+			for tmpC <= c.AlgsLength*4{
+				c.Algorithms = append(c.Algorithms, GetSignaturesNameByID(uint16(hexToInt(d[tmpC:tmpC+4]))))
+				tmpC += 4
+			}
+			tmp = c
 		case "0010": // application_layer_protocol_negotiation
 			c := struct {
 				Name                string   `json:"name"`

@@ -532,3 +532,47 @@ func GetCurveNameByID(id uint16) string {
 	}
 	return fmt.Sprintf("Unknown curve %d", id)
 }
+
+var signatures = map[uint16]string{
+	513:  "rsa_pkcs1_sha1",
+	515:  "ecdsa_sha1",
+	1025: "rsa_pkcs1_sha256",
+	1027: "ecdsa_secp256r1_sha256",
+	1056: "rsa_pkcs1_sha256_legacy",
+	1281: "rsa_pkcs1_sha384",
+	1283: "ecdsa_secp384r1_sha384",
+	1312: "rsa_pkcs1_sha384_legacy",
+	1537: "rsa_pkcs1_sha512",
+	1539: "ecdsa_secp521r1_sha512",
+	1568: "rsa_pkcs1_sha512_legacy",
+	1796: "eccsi_sha256",
+	1797: "iso_ibs1",
+	1798: "iso_ibs2",
+	1799: "iso_chinese_ibs",
+	1800: "sm2sig_sm3",
+	1801: "gostr34102012_256a",
+	1802: "gostr34102012_256b",
+	1803: "gostr34102012_256c",
+	1804: "gostr34102012_256d",
+	1805: "gostr34102012_512a",
+	1806: "gostr34102012_512b",
+	1807: "gostr34102012_512c",
+	2052: "rsa_pss_rsae_sha256",
+	2053: "rsa_pss_rsae_sha384",
+	2054: "rsa_pss_rsae_sha512",
+	2055: "ed25519",
+	2056: "ed25519",
+	2057: "rsa_pss_pss_sha256",
+	2058: "rsa_pss_pss_sha384",
+	2059: "rsa_pss_pss_sha512",
+	2074: "ecdsa_brainpoolP256r1tls13_sha256",
+	2075: "ecdsa_brainpoolP384r1tls13_sha384",
+	2076: "ecdsa_brainpoolP512r1tls13_sha512",
+}
+
+func GetSignaturesNameByID(id uint16) string {
+	if name, ok := signatures[id]; ok {
+		return name
+	}
+	return fmt.Sprintf("Unknown Signature %d", id)
+}
