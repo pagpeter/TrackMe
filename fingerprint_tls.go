@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-
-	tls "github.com/wwhtrbbtt/utls"
 	//"github.com/honeytrap/honeytrap/services/ja3/crypto/tls"
 )
 
@@ -17,7 +15,7 @@ type JA3Calculating struct {
 
 	AllCurves      []int    `json:"-"`
 	JA3Curves      []string `json:"-"`
-	ReadableCurves []string `json:"curves"`
+	ReadableCurves []string `json:"-"`
 
 	AllExtensions      []int         `json:"-"`
 	JA3Extensions      []string      `json:"-"`
@@ -25,17 +23,17 @@ type JA3Calculating struct {
 
 	AllPoints      []uint8  `json:"-"`
 	JA3Points      []string `json:"-"`
-	ReadablePoints []string `json:"points"`
+	ReadablePoints []string `json:"-"`
 
 	Version           string   `json:"version"`
-	ReadableProtocols []string `json:"protocols"`
-	ReadableVersions  []string `json:"versions"`
+	ReadableProtocols []string `json:"-"`
+	ReadableVersions  []string `json:"-"`
 
-	JA3     string `json:"ja3"`
-	JA3Hash string `json:"ja3_hash"`
+	JA3     string `json:"ja3_no_padding"`
+	JA3Hash string `json:"ja3_no_padding_hash"`
 
-	JA3Padding     string `json:"ja3_padding"`
-	JA3HashPadding string `json:"ja3_hash_padding"`
+	JA3Padding     string `json:"ja3"`
+	JA3HashPadding string `json:"ja3_hash"`
 
 	ClientRandom string `json:"client_random"`
 	SessionID    string `json:"session_id"`
@@ -81,7 +79,6 @@ func (j *JA3Calculating) Parse(includePadding bool) {
 		if name == "padding (21)" && !includePadding {
 			g = true
 		}
-		//	j.ReadableExtensions = append(j.ReadableExtensions, name)
 		if !g {
 			j.JA3Extensions = append(j.JA3Extensions, fmt.Sprintf("%v", extension))
 		}
@@ -140,43 +137,35 @@ func (j *JA3Calculating) Do() {
 	j.Calculate(true)
 }
 
-func FingerprintMSG(clientHello *tls.ClientHelloInfo) (*tls.Certificate, error) {
-	// We need to start a new goroutine to calculate the ja3, because
-	// we cant block the main thread.
-	go func() {
-		hexClientHello := fmt.Sprintf("%x", clientHello.Raw())
-		parsed := ParseClientHello(hexClientHello)
+func FingerprintClientHello(hs string) JA3Calculating {
+	parsed := ParseClientHello(hs)
 
-		versions := []string{}
-		for _, version := range clientHello.SupportedVersions {
-			hex := strconv.FormatUint(uint64(version), 16)
-			hex = "0x" + strings.ToUpper(hex)
-			if !isGrease(hex) {
-				versions = append(versions, fmt.Sprintf("%v", version))
-			}
+	versions := []string{}
+	for _, version := range parsed.SupportedVersions {
+		hex := strconv.FormatUint(uint64(version), 16)
+		hex = "0x" + strings.ToUpper(hex)
+		if !isGrease(hex) {
+			versions = append(versions, fmt.Sprintf("%v", version))
 		}
+	}
 
-		curves := []int{}
-		for _, curve := range clientHello.SupportedCurves {
-			curves = append(curves, int(curve))
-		}
+	curves := []int{}
+	for _, curve := range parsed.SupportedCurves {
+		curves = append(curves, int(curve))
+	}
 
-		j := JA3Calculating{
-			AllCiphers:         clientHello.CipherSuites,
-			AllCurves:          curves,
-			AllPoints:          clientHello.SupportedPoints,
-			AllExtensions:      parsed.AllExtensions,
-			ReadableExtensions: parsed.Extensions,
-			Version:            fmt.Sprint(parsed.Version),
-			ReadableProtocols:  clientHello.SupportedProtos,
-			ReadableVersions:   versions,
-			SessionID:          parsed.SessionID,
-			ClientRandom:       parsed.ClientRandom,
-		}
-		j.Do()
-		Gja3 = j
-
-	}()
-
-	return &cert, nil
+	j := JA3Calculating{
+		AllCiphers:         parsed.CipherSuites,
+		AllCurves:          curves,
+		AllPoints:          parsed.SupportedPoints,
+		AllExtensions:      parsed.AllExtensions,
+		ReadableExtensions: parsed.Extensions,
+		Version:            fmt.Sprint(parsed.Version),
+		ReadableProtocols:  parsed.SupportedProtos,
+		ReadableVersions:   versions,
+		SessionID:          parsed.SessionID,
+		ClientRandom:       parsed.ClientRandom,
+	}
+	j.Do()
+	return j
 }

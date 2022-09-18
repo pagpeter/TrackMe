@@ -16,8 +16,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-var Gja3 JA3Calculating
-
 var cert tls.Certificate
 var c *Config = &Config{}
 
@@ -108,7 +106,7 @@ func main() {
 		NextProtos: []string{
 			"h2",
 		},
-		GetCertificate: FingerprintMSG,
+		Certificates: []tls.Certificate{cert},
 	}
 
 	listener, err := tls.Listen("tcp", c.Host+":"+c.TLSPort, &config)
@@ -121,6 +119,7 @@ func main() {
 
 	for {
 		conn, err := listener.Accept()
+		//fmt.Println(reflect.TypeOf(conn))
 		if err != nil {
 			log.Println("Error accepting connection", err)
 		}
@@ -133,11 +132,13 @@ func main() {
 			conn.Write([]byte("Don't waste proxies"))
 			conn.Close()
 		} else {
-			success := timeoutHandleTLSConnection(conn)
-			if !success {
-				log.Println("Request aborted")
-				conn.Close()
-			}
+			go func() {
+				success := timeoutHandleTLSConnection(conn)
+				if !success {
+					log.Println("Request aborted")
+					conn.Close()
+				}
+			}()
 		}
 
 	}

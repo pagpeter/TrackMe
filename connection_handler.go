@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	tls "github.com/wwhtrbbtt/utls"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/hpack"
 )
@@ -44,7 +45,6 @@ func parseHTTP1(request []byte) Response {
 		Http1: &Http1Details{
 			Headers: headers,
 		},
-		TLS: Gja3,
 	}
 }
 
@@ -143,9 +143,12 @@ func HandleTLSConnection(conn net.Conn) bool {
 		return false
 	}
 
+	hs := conn.(*tls.Conn).ClientHello
+	tls_fingerprint := FingerprintClientHello(hs)
+
 	// Check if the first line is HTTP/2
 	if string(request) == HTTP2_PREAMBLE {
-		handleHTTP2(conn)
+		handleHTTP2(conn, tls_fingerprint)
 	} else {
 		// Read the rest of the request
 		r2 := make([]byte, 1024-l)
@@ -160,6 +163,7 @@ func HandleTLSConnection(conn net.Conn) bool {
 		// Parse and handle the request
 		details := parseHTTP1(request)
 		details.IP = conn.RemoteAddr().String()
+		details.TLS = tls_fingerprint
 		respondToHTTP1(conn, details)
 	}
 	return true
@@ -184,7 +188,7 @@ func respondToHTTP1(conn net.Conn, resp Response) {
 }
 
 // https://stackoverflow.com/questions/52002623/golang-tcp-server-how-to-write-http2-data
-func handleHTTP2(conn net.Conn) {
+func handleHTTP2(conn net.Conn, tls_fingerprint JA3Calculating) {
 	// make a new framer to encode/decode frames
 	fr := http2.NewFramer(conn, conn)
 	c := make(chan ParsedFrame)
@@ -244,7 +248,7 @@ func handleHTTP2(conn net.Conn) {
 			AkamaiFingerprint:     GetAkamaiFingerprint(frames),
 			AkamaiFingerprintHash: GetMD5Hash(GetAkamaiFingerprint(frames)),
 		},
-		TLS: Gja3,
+		TLS: tls_fingerprint,
 	}
 
 	res, ctype := Router(path, resp)

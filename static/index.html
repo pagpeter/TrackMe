@@ -87,13 +87,13 @@
 		if (elem.innerHTML == include) {
 			elem.innerHTML = exclude
 						
-            		document.getElementById('ja3-hash').innerText = window.data.tls.ja3_hash;
-            		document.getElementById('ja3').innerText = window.data.tls.ja3;
+			document.getElementById('ja3-hash').innerText = window.data.tls.ja3_no_padding_hash;
+            		document.getElementById('ja3').innerText = window.data.tls.ja3_padding;
 		} else if (elem.innerHTML == exclude) {
 			elem.innerHTML = include
 
-            		document.getElementById('ja3-hash').innerText = window.data.tls.ja3_hash_padding;
-            		document.getElementById('ja3').innerText = window.data.tls.ja3_padding;
+            		document.getElementById('ja3-hash').innerText = window.data.tls.ja3_hash;
+            		document.getElementById('ja3').innerText = window.data.tls.ja3;
 		}
 	}
     </script>

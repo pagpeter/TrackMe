@@ -27,8 +27,8 @@ func Router(path string, res Response) ([]byte, string) {
 			hash = GetMD5Hash(res.Http2.AkamaiFingerprint)
 		}
 		return []byte(SmallResponse{
-			JA3:        res.TLS.JA3,
-			JA3Hash:    res.TLS.JA3Hash,
+			JA3:        res.TLS.JA3Padding,
+			JA3Hash:    res.TLS.JA3HashPadding,
 			Akamai:     akamai,
 			AkamaiHash: hash,
 		}.ToJson()), "application/json"

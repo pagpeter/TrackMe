@@ -8,8 +8,6 @@ import (
 	"strings"
 )
 
-var debug = true
-
 type Extension struct {
 	Type   string
 	Length int
@@ -25,6 +23,11 @@ type ClientHello struct {
 	CompressionMethods string
 	AllExtensions      []int
 	Extensions         []interface{}
+
+	SupportedProtos   []string
+	SupportedPoints   []uint8
+	SupportedVersions []uint8
+	SupportedCurves   []uint8
 }
 
 func hexToInt(hex string) int {
@@ -76,15 +79,11 @@ func parseCipherSuites(ch string, c int) ([]uint16, int) {
 	c += 4
 	length := hexToInt(length_raw) * 2
 	rawSuites := ch[c : c+length]
-
 	suites := []uint16{}
 	tmpC := 0
-	for {
-		suites = append(suites, uint16(hexToInt(ch[tmpC:tmpC+4])))
+	for tmpC < len(rawSuites) {
+		suites = append(suites, uint16(hexToInt(rawSuites[tmpC:tmpC+4])))
 		tmpC += 4
-		if tmpC >= len(rawSuites) {
-			break
-		}
 	}
 
 	return suites, c + length
@@ -115,7 +114,6 @@ func parseExtensions(ch string, c int) ([]Extension, int) {
 		ext.Data = rawExtensions[tmpC : tmpC+ext.Length]
 		tmpC += ext.Length
 		extensions = append(extensions, ext)
-
 		if tmpC >= len(rawExtensions) {
 			break
 		}
@@ -149,7 +147,7 @@ func getOrReturnOG(in string, arr map[string]string) string {
 	}
 }
 
-func parseRawExtensions(exts []Extension) []interface{} {
+func parseRawExtensions(exts []Extension, chp ClientHello) ([]interface{}, ClientHello) {
 	var parsed []interface{}
 	for _, ext := range exts {
 		t := ext.Type
@@ -177,6 +175,43 @@ func parseRawExtensions(exts []Extension) []interface{} {
 			c.ServerName = hexToString(d[10:])
 
 			tmp = c
+		case "000a": // supported_groups
+			c := struct {
+				Name            string   `json:"name"`
+				SupportedGroups []string `json:"supported_groups"`
+			}{}
+			c.Name = "supported_groups (10)"
+			length := hexToInt(d[0:4])
+			tmpC := 4
+			for tmpC <= length*2 {
+				val := d[tmpC : tmpC+4]
+				if isGrease("0x" + strings.ToUpper(val)) {
+					c.SupportedGroups = append(c.SupportedGroups, "TLS_GREASE (0x"+val+")")
+				} else {
+					c.SupportedGroups = append(c.SupportedGroups, "0x"+val)
+					chp.SupportedCurves = append(chp.SupportedCurves, uint8(hexToInt(val)))
+				}
+				tmpC += 4
+			}
+			tmp = c
+		case "000b": // ec_point_formats
+			c := struct {
+				Name         string   `json:"name"`
+				PointFormats []string `json:"elliptic_curves_point_formats"`
+			}{}
+			c.Name = "ec_point_formats (11)"
+			length := hexToInt(d[0:1])
+			tmpC := 1
+			for tmpC <= length*2 {
+				val := d[tmpC : tmpC+1]
+				c.PointFormats = append(c.PointFormats, "0x"+val)
+				chp.SupportedPoints = append(chp.SupportedPoints, uint8(hexToInt(val)))
+				tmpC++
+			}
+			if len(chp.SupportedPoints) == 0 {
+				chp.SupportedPoints = []uint8{0x00}
+			}
+			tmp = c
 		case "0010": // application_layer_protocol_negotiation
 			c := struct {
 				Name                string   `json:"name"`
@@ -196,7 +231,7 @@ func parseRawExtensions(exts []Extension) []interface{} {
 			}
 
 			tmp = c
-		case "0015":
+		case "0015": // padding
 			tmp = struct {
 				Name        string `json:"name"`
 				PaddingData string `json:"data"`
@@ -204,7 +239,7 @@ func parseRawExtensions(exts []Extension) []interface{} {
 				Name:        "padding (21)",
 				PaddingData: d,
 			}
-		case "0017":
+		case "0017": // extended_master_secret
 			c := struct {
 				Name                     string `json:"name"`
 				MasterSecretData         string `json:"master_secret_data"`
@@ -224,7 +259,7 @@ func parseRawExtensions(exts []Extension) []interface{} {
 				c.Length = hexToInt(length)
 			}
 			tmp = c
-		case "001b":
+		case "001b": // compress_certificate
 			c := struct {
 				Name       string   `json:"name"`
 				AlgsLength int      `json:"-"`
@@ -239,7 +274,7 @@ func parseRawExtensions(exts []Extension) []interface{} {
 				count += 4
 			}
 			tmp = c
-		case "002b":
+		case "002b": // supported_versions
 			c := struct {
 				Name           string   `json:"name"`
 				VersionsLength int      `json:"-"`
@@ -263,7 +298,7 @@ func parseRawExtensions(exts []Extension) []interface{} {
 				count += 4
 			}
 			tmp = c
-		case "4469":
+		case "4469": // application_settings
 			c := struct {
 				Name       string   `json:"name"`
 				ALPSLength int      `json:"-"`
@@ -299,7 +334,7 @@ func parseRawExtensions(exts []Extension) []interface{} {
 		}
 		parsed = append(parsed, tmp)
 	}
-	return parsed
+	return parsed, chp
 }
 
 // Gets the ClientHello as hex bytes
@@ -326,6 +361,7 @@ func ParseClientHello(ch string) ClientHello {
 	for _, ext := range exts {
 		chp.AllExtensions = append(chp.AllExtensions, hexToInt(ext.Type))
 	}
-	chp.Extensions = parseRawExtensions(exts)
+	parsed, chp := parseRawExtensions(exts, chp)
+	chp.Extensions = parsed
 	return chp
 }
