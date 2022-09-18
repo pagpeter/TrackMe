@@ -233,7 +233,7 @@ func parseRawExtensions(exts []Extension, chp ClientHello) ([]interface{}, Clien
 				ALPNExtensionLength int      `json:"-"`
 				Protocols           []string `json:"protocols"`
 			}{
-				Name:                "application_layer_protocol_negotiation",
+				Name:                "application_layer_protocol_negotiation (16)",
 				ALPNExtensionLength: hexToInt(d[0:4]),
 			}
 			tmpC := 4
