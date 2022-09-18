@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/honeytrap/honeytrap v0.0.0-20211220121207-05965fc67dea
-	github.com/wwhtrbbtt/utls v0.0.0-20220917120157-3a12d30069eb
+	github.com/wwhtrbbtt/utls v0.0.0-20220917123339-f7f1c1dc2274
 	go.mongodb.org/mongo-driver v1.9.0
 	golang.org/x/net v0.0.0-20220708220712-1185a9018129
 )

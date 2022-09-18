@@ -80,6 +80,8 @@ github.com/stretchr/testify v1.6.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/
 github.com/tidwall/pretty v1.0.0/go.mod h1:XNkn88O1ChpSDQmQeStsy+sBenx6DDtFZJxhVysOjyk=
 github.com/wwhtrbbtt/utls v0.0.0-20220917120157-3a12d30069eb h1:k/GPx/4oCEW2/k7hxWglsPRz2shUHYgALeXWE6ECI1U=
 github.com/wwhtrbbtt/utls v0.0.0-20220917120157-3a12d30069eb/go.mod h1:cE/NJeUKssh/0XGO4KVBXZH0u7/BqRDqGs1Ij8hgy0w=
+github.com/wwhtrbbtt/utls v0.0.0-20220917123339-f7f1c1dc2274 h1:UtJprnST73eiVdz0mb2jvYslGWkJ/dtvO+wDMEEDi3E=
+github.com/wwhtrbbtt/utls v0.0.0-20220917123339-f7f1c1dc2274/go.mod h1:cE/NJeUKssh/0XGO4KVBXZH0u7/BqRDqGs1Ij8hgy0w=
 github.com/xdg-go/pbkdf2 v1.0.0 h1:Su7DPu48wXMwC3bs7MCNG+z4FhcyEuz5dlvchbq0B0c=
 github.com/xdg-go/pbkdf2 v1.0.0/go.mod h1:jrpuAogTd400dnrH08LKmI/xc1MbPOebTwRqcT5RDeI=
 github.com/xdg-go/scram v1.0.2 h1:akYIkZ28e6A96dkWNJQu3nmCzH3YfwMPQExUYDaRv7w=
