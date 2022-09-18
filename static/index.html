@@ -51,7 +51,7 @@
             // tls extensions
             extTable = d.getElementById("tls-extensions");
             data.tls.extensions.forEach((ext, i) => {
-                extTable.insertRow(i+1).innerHTML = `<td>${ext}</td>`;
+                extTable.insertRow(i+1).innerHTML = `<td>${ext.name || "0x"+ext.Type}</td>`;
             });
 
             // tls curves

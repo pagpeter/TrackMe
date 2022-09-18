@@ -8,9 +8,9 @@ import (
 	"net/http"
 	"time"
 
-	// tls "github.com/wwhtrbbtt/crypto-tls"
+	tls "github.com/wwhtrbbtt/utls"
 
-	"github.com/honeytrap/honeytrap/services/ja3/crypto/tls"
+	// 	"github.com/honeytrap/honeytrap/services/ja3/crypto/tls"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -124,7 +124,6 @@ func main() {
 		if err != nil {
 			log.Println("Error accepting connection", err)
 		}
-
 		var ip string
 		if addr, ok := conn.RemoteAddr().(*net.TCPAddr); ok {
 			ip = addr.IP.String()
@@ -134,7 +133,6 @@ func main() {
 			conn.Write([]byte("Don't waste proxies"))
 			conn.Close()
 		} else {
-
 			success := timeoutHandleTLSConnection(conn)
 			if !success {
 				log.Println("Request aborted")
