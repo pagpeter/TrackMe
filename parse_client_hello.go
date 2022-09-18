@@ -188,7 +188,7 @@ func parseRawExtensions(exts []Extension, chp ClientHello) ([]interface{}, Clien
 				if isGrease("0x" + strings.ToUpper(val)) {
 					c.SupportedGroups = append(c.SupportedGroups, "TLS_GREASE (0x"+val+")")
 				} else {
-					c.SupportedGroups = append(c.SupportedGroups, "0x"+val)
+					c.SupportedGroups = append(c.SupportedGroups, GetCurveNameByID(uint16(hexToInt(val))))
 					chp.SupportedCurves = append(chp.SupportedCurves, uint8(hexToInt(val)))
 				}
 				tmpC += 4
