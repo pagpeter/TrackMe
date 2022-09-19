@@ -175,6 +175,17 @@ func parseRawExtensions(exts []Extension, chp ClientHello) ([]interface{}, Clien
 			c.ServerName = hexToString(d[10:])
 
 			tmp = c
+		case "0005":
+			c := struct {
+				Name            string        `json:"name"`
+				StatusRequest   StatusRequest `json:"status_request"`
+			}{
+				Name: "status_request",
+			}
+			c.StatusRequest.CertificateStatusType = fmt.Sprintf("OSCP (%d)", hexToInt(d[0:2]))
+			c.StatusRequest.ResponderIDListLength = hexToInt(d[2:4])
+			c.StatusRequest.RequestExtensionsLength = hexToInt(d[4:6])
+			tmp = c
 		case "000a": // supported_groups
 			c := struct {
 				Name            string   `json:"name"`
