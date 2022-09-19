@@ -175,6 +175,23 @@ func parseRawExtensions(exts []Extension, chp ClientHello) ([]interface{}, Clien
 			c.ServerName = hexToString(d[10:])
 
 			tmp = c
+		case "0005": // status_request
+			type StatusRequest struct {
+				CertificateStatusType	string        `json:"certificate_status_type"`
+				ResponderIDListLength	int           `json:"responder_id_list_length"`
+				RequestExtensionsLength int    		  `json:"request_extensions_length"`
+			}
+			tmp = struct {
+				Name            		string        `json:"name"`
+				StatusRequest   		StatusRequest `json:"status_request"`
+			}{
+				Name: "status_request",
+				StatusRequest: StatusRequest{
+					CertificateStatusType: fmt.Sprintf("OSCP (%d)", hexToInt(d[0:2])),
+					ResponderIDListLength:hexToInt(d[2:4]),
+					RequestExtensionsLength: hexToInt(d[4:6]),
+				},
+			}
 		case "000a": // supported_groups
 			c := struct {
 				Name            string   `json:"name"`
@@ -188,7 +205,7 @@ func parseRawExtensions(exts []Extension, chp ClientHello) ([]interface{}, Clien
 				if isGrease("0x" + strings.ToUpper(val)) {
 					c.SupportedGroups = append(c.SupportedGroups, "TLS_GREASE (0x"+val+")")
 				} else {
-					c.SupportedGroups = append(c.SupportedGroups, "0x"+val)
+					c.SupportedGroups = append(c.SupportedGroups, GetCurveNameByID(uint16(hexToInt(val))))
 					chp.SupportedCurves = append(chp.SupportedCurves, uint8(hexToInt(val)))
 				}
 				tmpC += 4
@@ -212,13 +229,28 @@ func parseRawExtensions(exts []Extension, chp ClientHello) ([]interface{}, Clien
 				chp.SupportedPoints = []uint8{0x00}
 			}
 			tmp = c
+		case "000d": // signature_algorithms
+			c := struct {
+				Name       string `json:"name"`
+				AlgsLength int      `json:"-"`
+				Algorithms []string `json:"signature_algorithms"`
+			}{
+				Name:      "signature_algorithms (13)",
+				AlgsLength:	hexToInt(d[0:4]) / 2,
+			}
+			tmpC := 4
+			for tmpC <= (c.AlgsLength * 4){
+				c.Algorithms = append(c.Algorithms, GetSignatureNameByID(uint16(hexToInt(d[tmpC:tmpC+4]))))
+				tmpC += 4
+			}
+			tmp = c
 		case "0010": // application_layer_protocol_negotiation
 			c := struct {
 				Name                string   `json:"name"`
 				ALPNExtensionLength int      `json:"-"`
 				Protocols           []string `json:"protocols"`
 			}{
-				Name:                "application_layer_protocol_negotiation",
+				Name:                "application_layer_protocol_negotiation (16)",
 				ALPNExtensionLength: hexToInt(d[0:4]),
 			}
 			tmpC := 4
@@ -231,6 +263,12 @@ func parseRawExtensions(exts []Extension, chp ClientHello) ([]interface{}, Clien
 			}
 
 			tmp = c
+		case "0012": // signed_certificate_timestamp
+			tmp = struct {
+				Name        string `json:"name"`
+			} {
+				Name:		"signed_certificate_timestamp (18)",
+			}
 		case "0015": // padding
 			tmp = struct {
 				Name        string `json:"name"`
@@ -268,7 +306,10 @@ func parseRawExtensions(exts []Extension, chp ClientHello) ([]interface{}, Clien
 			c.Name = "compress_certificate (27)"
 			c.AlgsLength = hexToInt(d[:2])
 			count := 2
-			mapping := map[string]string{"0002": "brotli (2)"}
+			mapping := map[string]string{
+				"0001": "zlib (1)",
+				"0002": "brotli (2)",
+			}
 			for len(c.Algorithms)*2 < c.AlgsLength {
 				c.Algorithms = append(c.Algorithms, getOrReturnOG(d[count:count+4], mapping))
 				count += 4
@@ -298,6 +339,22 @@ func parseRawExtensions(exts []Extension, chp ClientHello) ([]interface{}, Clien
 				count += 4
 			}
 			tmp = c
+		case "002d": // psk_key_exchange_modes
+			// https://www.rfc-editor.org/rfc/rfc8446#section-4.2.9
+			mapping := map[int]string{
+				0: "PSK-only key establishment (psk) (0)",
+				1: "PSK with (EC)DHE key establishment (psk_dhe_ke) (1)",
+			}
+			tmp = struct {
+				Name                      string `json:"name"`
+				PSKKeyExchangeModesLength int `json:"PSK_Key_Exchange_Modes_Length"`
+				PSKKeyExchangeMode        string `json:"PSK_Key_Exchange_Mode"`
+
+			}{
+				Name: "psk_key_exchange_modes (45)",
+				PSKKeyExchangeModesLength: hexToInt(d[0:2]),
+				PSKKeyExchangeMode: mapping[hexToInt(d[2:4])],
+			}
 		case "4469": // application_settings
 			c := struct {
 				Name       string   `json:"name"`
