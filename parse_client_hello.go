@@ -177,18 +177,18 @@ func parseRawExtensions(exts []Extension, chp ClientHello) ([]interface{}, Clien
 			tmp = c
 		case "0005": // status_request
 			type StatusRequest struct {
-				CertificateStatusType	string        `json:"certificate_status_type"`
-				ResponderIDListLength	int           `json:"responder_id_list_length"`
-				RequestExtensionsLength int    		  `json:"request_extensions_length"`
+				CertificateStatusType   string `json:"certificate_status_type"`
+				ResponderIDListLength   int    `json:"responder_id_list_length"`
+				RequestExtensionsLength int    `json:"request_extensions_length"`
 			}
 			tmp = struct {
-				Name            		string        `json:"name"`
-				StatusRequest   		StatusRequest `json:"status_request"`
+				Name          string        `json:"name"`
+				StatusRequest StatusRequest `json:"status_request"`
 			}{
 				Name: "status_request",
 				StatusRequest: StatusRequest{
-					CertificateStatusType: fmt.Sprintf("OSCP (%d)", hexToInt(d[0:2])),
-					ResponderIDListLength:hexToInt(d[2:4]),
+					CertificateStatusType:   fmt.Sprintf("OSCP (%d)", hexToInt(d[0:2])),
+					ResponderIDListLength:   hexToInt(d[2:4]),
 					RequestExtensionsLength: hexToInt(d[4:6]),
 				},
 			}
@@ -231,15 +231,15 @@ func parseRawExtensions(exts []Extension, chp ClientHello) ([]interface{}, Clien
 			tmp = c
 		case "000d": // signature_algorithms
 			c := struct {
-				Name       string `json:"name"`
+				Name       string   `json:"name"`
 				AlgsLength int      `json:"-"`
 				Algorithms []string `json:"signature_algorithms"`
 			}{
-				Name:      "signature_algorithms (13)",
-				AlgsLength:	hexToInt(d[0:4]) / 2,
+				Name:       "signature_algorithms (13)",
+				AlgsLength: hexToInt(d[0:4]) / 2,
 			}
 			tmpC := 4
-			for tmpC <= (c.AlgsLength * 4){
+			for tmpC <= (c.AlgsLength * 4) {
 				c.Algorithms = append(c.Algorithms, GetSignatureNameByID(uint16(hexToInt(d[tmpC:tmpC+4]))))
 				tmpC += 4
 			}
@@ -265,9 +265,9 @@ func parseRawExtensions(exts []Extension, chp ClientHello) ([]interface{}, Clien
 			tmp = c
 		case "0012": // signed_certificate_timestamp
 			tmp = struct {
-				Name        string `json:"name"`
-			} {
-				Name:		"signed_certificate_timestamp (18)",
+				Name string `json:"name"`
+			}{
+				Name: "signed_certificate_timestamp (18)",
 			}
 		case "0015": // padding
 			tmp = struct {
@@ -347,14 +347,43 @@ func parseRawExtensions(exts []Extension, chp ClientHello) ([]interface{}, Clien
 			}
 			tmp = struct {
 				Name                      string `json:"name"`
-				PSKKeyExchangeModesLength int `json:"PSK_Key_Exchange_Modes_Length"`
+				PSKKeyExchangeModesLength int    `json:"-"`
 				PSKKeyExchangeMode        string `json:"PSK_Key_Exchange_Mode"`
-
 			}{
-				Name: "psk_key_exchange_modes (45)",
+				Name:                      "psk_key_exchange_modes (45)",
 				PSKKeyExchangeModesLength: hexToInt(d[0:2]),
-				PSKKeyExchangeMode: mapping[hexToInt(d[2:4])],
+				PSKKeyExchangeMode:        mapping[hexToInt(d[2:4])],
 			}
+		case "0033": // key_share
+			mapping := map[string]string{
+				"001d": "x25519 (29)",
+			}
+			type keyStruct struct {
+				Name  string `json:"name"`
+				Value string `json:"value"`
+			}
+			c := struct {
+				Name       string      `json:"name"`
+				SharedKeys []keyStruct `json:"shared_keys"`
+			}{}
+			c.Name = "key_share (51)"
+			length := hexToInt(d[0:4]) * 2
+			tmpC := 4
+			for tmpC < length {
+				name := d[tmpC : tmpC+4]
+				tmpC += 4
+				keyLength := hexToInt(d[tmpC:tmpC+4]) * 2
+				tmpC += 4
+				data := d[tmpC : tmpC+keyLength]
+				tmpC += keyLength
+
+				name = getOrReturnOG(name, mapping)
+				if isGrease("0x" + strings.ToUpper(name)) {
+					name = "TLS_GREASE (0x" + name + ")"
+				}
+				c.SharedKeys = append(c.SharedKeys, keyStruct{Name: name, Value: data})
+			}
+			tmp = c
 		case "4469": // application_settings
 			c := struct {
 				Name       string   `json:"name"`
