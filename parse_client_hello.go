@@ -315,6 +315,21 @@ func parseRawExtensions(exts []Extension, chp ClientHello) ([]interface{}, Clien
 				count += 4
 			}
 			tmp = c
+		case "0022": // delegated_credentials
+			c := struct {
+				Name                    string   `json:"name"`
+				SignatureHashAlgorithms []string `json:"signature_hash_algorithms"`
+			}{}
+			c.Name = "delegated_credentials (34)"
+			length := hexToInt(d[0:4]) * 2
+			tmpC := 4
+			for len(c.SignatureHashAlgorithms)*4 < length {
+				name := uint16(hexToInt(d[tmpC : tmpC+4]))
+				tmpC += 4
+				c.SignatureHashAlgorithms = append(c.SignatureHashAlgorithms, GetSignatureNameByID(name))
+			}
+			tmp = c
+
 		case "002b": // supported_versions
 			c := struct {
 				Name           string   `json:"name"`
