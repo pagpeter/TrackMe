@@ -122,9 +122,3 @@ func (c *Config) MakeDefault() {
 	c.KeyFile = "certs/key.pem"
 	c.MongoURL = ""
 }
-
-type StatusRequest struct {
-	CertificateStatusType	string `json:"certificate_status_type"`
-	ResponderIDListLength	int    `json:"responder_id_list_length"`
-	RequestExtensionsLength int    `json:"request_extensions_length"`
-}
