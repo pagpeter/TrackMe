@@ -324,6 +324,24 @@ func parseRawExtensions(exts []Extension, chp ClientHello) ([]interface{}, Clien
 				count += 4
 			}
 			tmp = c
+		case "002d": // psk_key_exchange_modes
+			// https://www.rfc-editor.org/rfc/rfc8446#section-4.2.9
+			mapping := map[int]string{
+				0: "PSK-only key establishment (psk) (0)",
+				1: "PSK with (EC)DHE key establishment (psk_dhe_ke) (1)",
+			}
+			
+			c := struct {
+				Name                      string `json:"name"`
+				PSKKeyExchangeModesLength int `json:"PSK_Key_Exchange_Modes_Length"`
+				PSKKeyExchangeMode        string `json:"PSK_Key_Exchange_Mode"`
+				
+			}{
+				Name: "psk_key_exchange_modes ",
+				PSKKeyExchangeModesLength: hexToInt(d[0:2]),
+				PSKKeyExchangeMode: mapping[hexToInt(d[2:4])],
+			}
+			tmp = c
 		case "4469": // application_settings
 			c := struct {
 				Name       string   `json:"name"`
