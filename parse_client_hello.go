@@ -370,13 +370,9 @@ func parseRawExtensions(exts []Extension, chp ClientHello) ([]interface{}, Clien
 				PSKKeyExchangeMode:        mapping[hexToInt(d[2:4])],
 			}
 		case "0033": // key_share
-			type keyStruct struct {
-				Name  string `json:"name"`
-				Value string `json:"value"`
-			}
 			c := struct {
-				Name       string      `json:"name"`
-				SharedKeys []keyStruct `json:"shared_keys"`
+				Name       string              `json:"name"`
+				SharedKeys []map[string]string `json:"shared_keys"`
 			}{}
 			c.Name = "key_share (51)"
 			length := hexToInt(d[0:4]) * 2
@@ -389,11 +385,12 @@ func parseRawExtensions(exts []Extension, chp ClientHello) ([]interface{}, Clien
 				data := d[tmpC : tmpC+keyLength]
 				tmpC += keyLength
 
-				name = GetCurveNameByID(uint16(hexToInt(name)))
 				if isGrease("0x" + strings.ToUpper(name)) {
 					name = "TLS_GREASE (0x" + name + ")"
+				} else {
+					name = GetCurveNameByID(uint16(hexToInt(name)))
 				}
-				c.SharedKeys = append(c.SharedKeys, keyStruct{Name: name, Value: data})
+				c.SharedKeys = append(c.SharedKeys, map[string]string{name: data})
 			}
 			tmp = c
 		case "4469": // application_settings
