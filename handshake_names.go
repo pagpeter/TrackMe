@@ -570,9 +570,9 @@ var signatures = map[uint16]string{
 	2076: "ecdsa_brainpoolP512r1tls13_sha512",
 }
 
-func GetSignaturesNameByID(id uint16) string {
+func GetSignatureNameByID(id uint16) string {
 	if name, ok := signatures[id]; ok {
 		return name
 	}
-	return fmt.Sprintf("Unknown Signature %d", id)
+	return fmt.Sprintf("0x%x", id)
 }
