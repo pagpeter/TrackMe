@@ -355,9 +355,6 @@ func parseRawExtensions(exts []Extension, chp ClientHello) ([]interface{}, Clien
 				PSKKeyExchangeMode:        mapping[hexToInt(d[2:4])],
 			}
 		case "0033": // key_share
-			mapping := map[string]string{
-				"001d": "x25519 (29)",
-			}
 			type keyStruct struct {
 				Name  string `json:"name"`
 				Value string `json:"value"`
@@ -377,7 +374,7 @@ func parseRawExtensions(exts []Extension, chp ClientHello) ([]interface{}, Clien
 				data := d[tmpC : tmpC+keyLength]
 				tmpC += keyLength
 
-				name = getOrReturnOG(name, mapping)
+				name = GetCurveNameByID(uint16(hexToInt(name)))
 				if isGrease("0x" + strings.ToUpper(name)) {
 					name = "TLS_GREASE (0x" + name + ")"
 				}
