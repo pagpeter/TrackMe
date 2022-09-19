@@ -26,6 +26,21 @@
 
             d = document
 
+	    let groups = []
+	    let protos = []
+	    let versions = []
+	    data.tls.extensions.forEach(ext => {
+		if (ext.name == "supported_groups (10)") {
+			groups = ext.supported_groups
+		} else if (ext.name == "application_layer_protocol_negotiation (16)") {
+			protos = ext.protocols
+		} else if (ext.name == "supported_versions (43)") {	
+			ext.versions.forEach(elem => {
+				if (!elem.startsWith("TLS_GREASE")) versions.push(elem)
+			})		
+		}
+	     })
+
             d.getElementById('ja3-hash').innerText = data.tls.ja3_hash;
             d.getElementById('ja3').innerText = data.tls.ja3;
 
@@ -34,8 +49,8 @@
 
             d.getElementById("tls-version").innerText = data.tls.version;
             d.getElementById("http-version").innerText = (data.http_version == "h2" ? "HTTP/2" : "HTTP/1.1");
-            d.getElementById("tls-versions").innerText = data.tls.versions.join(", ");
-            d.getElementById("http-versions").innerText = data.tls.protocols.join(", ");
+            d.getElementById("tls-versions").innerText = versions.join(", ");
+            d.getElementById("http-versions").innerText = protos.join(", ");
             if (data.http_version == "h2") {
                 d.getElementById("h2-frames").innerText = data.http2.sent_frames.length;
             } else {
@@ -53,10 +68,11 @@
             data.tls.extensions.forEach((ext, i) => {
                 extTable.insertRow(i+1).innerHTML = `<td>${ext.name || "0x"+ext.Type}</td>`;
             });
+		
 
             // tls curves
             curveTable = d.getElementById("tls-curves");
-            data.tls.curves.forEach((curve, i) => {
+            groups.forEach((curve, i) => {
                 curveTable.insertRow(i+1).innerHTML = `<td>${curve}</td>`;
             });
 
@@ -88,7 +104,7 @@
 			elem.innerHTML = exclude
 						
 			document.getElementById('ja3-hash').innerText = window.data.tls.ja3_no_padding_hash;
-            		document.getElementById('ja3').innerText = window.data.tls.ja3_padding;
+            		document.getElementById('ja3').innerText = window.data.tls.ja3_no_padding;
 		} else if (elem.innerHTML == exclude) {
 			elem.innerHTML = include
 
@@ -109,7 +125,7 @@
       <div
         class="bg-gray-100 dark:bg-gray-900 rounded-md shadow p-3 m-3 hover:bg-gray-50 dark:hover:bg-black min-w-fit max-w-full grow"
       >
-      <h2 class="font-bold">Ja3 <button id="togglePadding" onclick="togglePadding()" class="dark:text-gray-400">Padding: <u>exclude</u></button></h2>
+      <h2 class="font-bold">Ja3 <button id="togglePadding" onclick="togglePadding()" class="dark:text-gray-400">Padding: <u>include</u></button></h2>
         <p class="text-2xl break-all" id="ja3-hash">Loading...</p>
         <p class="text-sm break-all" id="ja3">Loading...</p>
       </div>
