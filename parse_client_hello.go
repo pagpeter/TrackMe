@@ -262,6 +262,12 @@ func parseRawExtensions(exts []Extension, chp ClientHello) ([]interface{}, Clien
 			}
 
 			tmp = c
+		case "0012":
+			tmp = struct {
+				Name        string `json:"name"`
+			} {
+				Name:		"signed_certificate_timestamp (18)",
+			}
 		case "0015": // padding
 			tmp = struct {
 				Name        string `json:"name"`
