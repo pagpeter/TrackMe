@@ -37,6 +37,8 @@ type JA3Calculating struct {
 
 	ClientRandom string `json:"client_random"`
 	SessionID    string `json:"session_id"`
+
+	UsedVersion string `json:"used_tls_version"`
 }
 
 func (j *JA3Calculating) Parse(includePadding bool) {

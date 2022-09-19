@@ -145,6 +145,7 @@ func HandleTLSConnection(conn net.Conn) bool {
 
 	hs := conn.(*tls.Conn).ClientHello
 	tls_fingerprint := FingerprintClientHello(hs)
+	tls_fingerprint.UsedVersion = fmt.Sprintf("%v", conn.(*tls.Conn).ConnectionState().Version)
 
 	// Check if the first line is HTTP/2
 	if string(request) == HTTP2_PREAMBLE {

@@ -16,7 +16,7 @@ type Extension struct {
 
 type ClientHello struct {
 	Length             int
-	Version            int // TLS verion
+	Version            int // TLS version, always 1.2 because of middleboxes
 	ClientRandom       string
 	SessionID          string
 	CipherSuites       []uint16
