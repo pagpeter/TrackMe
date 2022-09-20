@@ -47,7 +47,7 @@
             d.getElementById('akamai-hash').innerText = data.http2.akamai_fingerprint_hash;
             d.getElementById('akamai').innerText = data.http2.akamai_fingerprint;
 
-            d.getElementById("tls-version").innerText = data.tls.used_tls_version;
+            d.getElementById("tls-version").innerText = data.tls.tls_version_negotiated;
             d.getElementById("http-version").innerText = (data.http_version == "h2" ? "HTTP/2" : "HTTP/1.1");
             d.getElementById("tls-versions").innerText = versions.join(", ");
             d.getElementById("http-versions").innerText = protos.join(", ");
@@ -95,23 +95,6 @@
 	  .then(() => insert(window.data));
 	};
 
-	const togglePadding = () => {
-		const include = "Padding: <u>include</u>"
-		const exclude = "Padding: <u>exclude</u>"
-
-		let elem = document.getElementById("togglePadding");
-		if (elem.innerHTML == include) {
-			elem.innerHTML = exclude
-						
-			document.getElementById('ja3-hash').innerText = window.data.tls.ja3_no_padding_hash;
-            		document.getElementById('ja3').innerText = window.data.tls.ja3_no_padding;
-		} else if (elem.innerHTML == exclude) {
-			elem.innerHTML = include
-
-            		document.getElementById('ja3-hash').innerText = window.data.tls.ja3_hash;
-            		document.getElementById('ja3').innerText = window.data.tls.ja3;
-		}
-	}
     </script>
   </head>
 
@@ -125,7 +108,7 @@
       <div
         class="bg-gray-100 dark:bg-gray-900 rounded-md shadow p-3 m-3 hover:bg-gray-50 dark:hover:bg-black min-w-fit max-w-full grow"
       >
-      <h2 class="font-bold">Ja3 <button id="togglePadding" onclick="togglePadding()" class="dark:text-gray-400">Padding: <u>include</u></button></h2>
+      <h2 class="font-bold">JA3</h2>
         <p class="text-2xl break-all" id="ja3-hash">Loading...</p>
         <p class="text-sm break-all" id="ja3">Loading...</p>
       </div>
@@ -133,7 +116,7 @@
         class="bg-gray-100 dark:bg-gray-900 rounded-md shadow p-3 m-3 hover:bg-gray-50 dark:hover:bg-black min-w-fit max-w-full grow"
         
       >
-        <h2 class="font-bold">Akamai http/2 fingerprint</h2>
+        <h2 class="font-bold">Akamai HTTP/2 fingerprint</h2>
         <p class="text-2xl break-all" id="akamai-hash">Loading...</p>
         <p class="text-sm break-all" id="akamai">Loading...</p>
       </div>

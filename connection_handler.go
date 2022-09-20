@@ -35,12 +35,12 @@ func parseHTTP1(request []byte) Response {
 		return Response{
 			HTTPVersion: "--",
 			Method:      "--",
-			Path:        "--",
+			path:        "--",
 		}
 	}
 	return Response{
 		HTTPVersion: firstLine[2],
-		Path:        firstLine[1],
+		path:        firstLine[1],
 		Method:      firstLine[0],
 		Http1: &Http1Details{
 			Headers: headers,
@@ -144,12 +144,24 @@ func HandleTLSConnection(conn net.Conn) bool {
 	}
 
 	hs := conn.(*tls.Conn).ClientHello
-	tls_fingerprint := FingerprintClientHello(hs)
-	tls_fingerprint.UsedVersion = fmt.Sprintf("%v", conn.(*tls.Conn).ConnectionState().Version)
+
+	parsedClientHello := ParseClientHello(hs)
+	JA3Data := CalculateJA3(parsedClientHello)
+
+	tlsDetails := TLSDetails{
+		Ciphers:          JA3Data.ReadableCiphers,
+		Extensions:       parsedClientHello.Extensions,
+		RecordVersion:    JA3Data.Version,
+		NegotiatedVesion: fmt.Sprintf("%v", conn.(*tls.Conn).ConnectionState().Version),
+		JA3:              JA3Data.JA3,
+		JA3Hash:          JA3Data.JA3Hash,
+		SessionID:        parsedClientHello.SessionID,
+		ClientRandom:     parsedClientHello.ClientRandom,
+	}
 
 	// Check if the first line is HTTP/2
 	if string(request) == HTTP2_PREAMBLE {
-		handleHTTP2(conn, tls_fingerprint)
+		handleHTTP2(conn, tlsDetails)
 	} else {
 		// Read the rest of the request
 		r2 := make([]byte, 1024-l)
@@ -164,7 +176,7 @@ func HandleTLSConnection(conn net.Conn) bool {
 		// Parse and handle the request
 		details := parseHTTP1(request)
 		details.IP = conn.RemoteAddr().String()
-		details.TLS = tls_fingerprint
+		details.TLS = tlsDetails
 		respondToHTTP1(conn, details)
 	}
 	return true
@@ -174,7 +186,7 @@ func respondToHTTP1(conn net.Conn, resp Response) {
 	// log.Println("Request:", resp.ToJson())
 	// log.Println(len(resp.ToJson()))
 
-	res1, ctype := Router(resp.Path, resp)
+	res1, ctype := Router(resp.path, resp)
 
 	res := "HTTP/1.1 200 OK\r\n"
 	res += "Content-Length: " + fmt.Sprintf("%v\r\n", len(res1))
@@ -189,7 +201,7 @@ func respondToHTTP1(conn net.Conn, resp Response) {
 }
 
 // https://stackoverflow.com/questions/52002623/golang-tcp-server-how-to-write-http2-data
-func handleHTTP2(conn net.Conn, tls_fingerprint JA3Calculating) {
+func handleHTTP2(conn net.Conn, tls_fingerprint TLSDetails) {
 	// make a new framer to encode/decode frames
 	fr := http2.NewFramer(conn, conn)
 	c := make(chan ParsedFrame)
@@ -242,7 +254,7 @@ func handleHTTP2(conn net.Conn, tls_fingerprint JA3Calculating) {
 	resp := Response{
 		IP:          conn.RemoteAddr().String(),
 		HTTPVersion: "h2",
-		Path:        path,
+		path:        path,
 		Method:      method,
 		Http2: &Http2Details{
 			SendFrames:            frames,

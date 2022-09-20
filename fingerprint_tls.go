@@ -13,39 +13,26 @@ type JA3Calculating struct {
 	JA3Ciphers      []string `json:"-"`
 	ReadableCiphers []string `json:"ciphers"`
 
-	AllCurves      []int    `json:"-"`
-	JA3Curves      []string `json:"-"`
-	ReadableCurves []string `json:"-"`
+	AllCurves []uint8  `json:"-"`
+	JA3Curves []string `json:"-"`
 
-	AllExtensions      []int         `json:"-"`
-	JA3Extensions      []string      `json:"-"`
-	ReadableExtensions []interface{} `json:"extensions"`
+	AllExtensions []int    `json:"-"`
+	JA3Extensions []string `json:"-"`
 
-	AllPoints      []uint8  `json:"-"`
-	JA3Points      []string `json:"-"`
-	ReadablePoints []string `json:"-"`
+	AllPoints []uint8  `json:"-"`
+	JA3Points []string `json:"-"`
 
-	Version           string   `json:"version"`
-	ReadableProtocols []string `json:"-"`
-	ReadableVersions  []string `json:"-"`
+	Version           string
+	ReadableProtocols []string
+	ReadableVersions  []string
 
-	JA3     string `json:"ja3_no_padding"`
-	JA3Hash string `json:"ja3_no_padding_hash"`
-
-	JA3Padding     string `json:"ja3"`
-	JA3HashPadding string `json:"ja3_hash"`
-
-	ClientRandom string `json:"client_random"`
-	SessionID    string `json:"session_id"`
-
-	UsedVersion string `json:"used_tls_version"`
+	JA3     string
+	JA3Hash string
 }
 
-func (j *JA3Calculating) Parse(includePadding bool) {
+func (j *JA3Calculating) Parse() {
 	// Ciphers
 	j.ReadableCiphers = []string{}
-	j.ReadableCurves = []string{}
-	j.ReadablePoints = []string{}
 
 	j.JA3Ciphers = []string{}
 	j.JA3Curves = []string{}
@@ -54,53 +41,27 @@ func (j *JA3Calculating) Parse(includePadding bool) {
 
 	for _, cipher := range j.AllCiphers {
 		name := GetCipherSuiteName(cipher)
-		g := false
-		// if the cipher isnt in the cipher list, its probably a GREASE cipher
-		if len(name) == 6 {
-			if isGrease(name) {
-				name = "TLS_GREASE (" + name + ")"
-				g = true
-			}
-		}
-		j.ReadableCiphers = append(j.ReadableCiphers, name)
-		// only add the cipher to the ja3 list if it isnt GREASE
-		if !g {
+		if isGrease(name) {
+			name = "TLS_GREASE (" + name + ")"
+		} else {
 			j.JA3Ciphers = append(j.JA3Ciphers, fmt.Sprintf("%v", cipher))
 		}
+		j.ReadableCiphers = append(j.ReadableCiphers, name)
 	}
 	// Extensions
 	for _, extension := range j.AllExtensions {
-		g := false
 		hex := strconv.FormatUint(uint64(extension), 16)
 		hex = "0x" + strings.ToUpper(hex)
-		name := GetExtensionNameByID(uint16(extension))
-		if isGrease(hex) {
-			g = true
-			name = "TLS_GREASE (" + hex + ")"
-		}
-		if name == "padding (21)" && !includePadding {
-			g = true
-		}
-		if !g {
+		if !isGrease(hex) {
 			j.JA3Extensions = append(j.JA3Extensions, fmt.Sprintf("%v", extension))
 		}
 	}
 
 	// Curves
 	for _, curve := range j.AllCurves {
-		g := false
-		// We get the curve name from the curve list
-		name := GetCurveNameByID(uint16(curve))
 		hex := strconv.FormatUint(uint64(curve), 16)
 		hex = "0x" + strings.ToUpper(hex)
-		// if the curve isnt in the curve list, its probably a GREASE curve
-		if isGrease(hex) {
-			g = true
-			name = "TLS_GREASE (" + hex + ")"
-		}
-		j.ReadableCurves = append(j.ReadableCurves, name)
-		// only add the curve to the ja3 list if it isnt GREASE
-		if !g {
+		if !isGrease(hex) {
 			j.JA3Curves = append(j.JA3Curves, fmt.Sprintf("%v", curve))
 		}
 	}
@@ -108,12 +69,11 @@ func (j *JA3Calculating) Parse(includePadding bool) {
 	// Points
 	for _, point := range j.AllPoints {
 		name := fmt.Sprintf("%v", point)
-		j.ReadablePoints = append(j.ReadablePoints, name)
 		j.JA3Points = append(j.JA3Points, name)
 	}
 }
 
-func (j *JA3Calculating) Calculate(isWithPadding bool) {
+func (j *JA3Calculating) Calculate() {
 	// Returns the ja3 and the ja3_hash
 	// TLSVersion,Ciphers,Extensions,EllipticCurves,EllipticCurvePointFormats
 	ja3 := j.Version + ","
@@ -121,27 +81,11 @@ func (j *JA3Calculating) Calculate(isWithPadding bool) {
 	ja3 += strings.Join(j.JA3Extensions, "-") + ","
 	ja3 += strings.Join(j.JA3Curves, "-") + ","
 	ja3 += strings.Join(j.JA3Points, "-")
-	if !isWithPadding {
-		j.JA3 = ja3
-		j.JA3Hash = GetMD5Hash(ja3)
-	} else {
-		j.JA3Padding = ja3
-		j.JA3HashPadding = GetMD5Hash(ja3)
-	}
+	j.JA3 = ja3
+	j.JA3Hash = GetMD5Hash(ja3)
 }
 
-func (j *JA3Calculating) Do() {
-	// Get ja3 without padding
-	j.Parse(false)
-	j.Calculate(false)
-	// Get ja3 with padding
-	j.Parse(true)
-	j.Calculate(true)
-}
-
-func FingerprintClientHello(hs string) JA3Calculating {
-	parsed := ParseClientHello(hs)
-
+func CalculateJA3(parsed ClientHello) JA3Calculating {
 	versions := []string{}
 	for _, version := range parsed.SupportedVersions {
 		hex := strconv.FormatUint(uint64(version), 16)
@@ -151,23 +95,16 @@ func FingerprintClientHello(hs string) JA3Calculating {
 		}
 	}
 
-	curves := []int{}
-	for _, curve := range parsed.SupportedCurves {
-		curves = append(curves, int(curve))
-	}
-
 	j := JA3Calculating{
-		AllCiphers:         parsed.CipherSuites,
-		AllCurves:          curves,
-		AllPoints:          parsed.SupportedPoints,
-		AllExtensions:      parsed.AllExtensions,
-		ReadableExtensions: parsed.Extensions,
-		Version:            fmt.Sprint(parsed.Version),
-		ReadableProtocols:  parsed.SupportedProtos,
-		ReadableVersions:   versions,
-		SessionID:          parsed.SessionID,
-		ClientRandom:       parsed.ClientRandom,
+		AllCiphers:        parsed.CipherSuites,
+		AllCurves:         parsed.SupportedCurves,
+		AllPoints:         parsed.SupportedPoints,
+		AllExtensions:     parsed.AllExtensions,
+		Version:           fmt.Sprint(parsed.Version),
+		ReadableProtocols: parsed.SupportedProtos,
+		ReadableVersions:  versions,
 	}
-	j.Do()
+	j.Parse()
+	j.Calculate()
 	return j
 }

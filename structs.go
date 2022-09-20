@@ -6,6 +6,19 @@ import (
 	"log"
 )
 
+type TLSDetails struct {
+	Ciphers          []string      `json:"ciphers"`
+	Extensions       []interface{} `json:"extensions"`
+	RecordVersion    string        `json:"tls_version_record"`
+	NegotiatedVesion string        `json:"tls_version_negotiated"`
+
+	JA3     string `json:"ja3"`
+	JA3Hash string `json:"ja3_hash"`
+
+	ClientRandom string `json:"client_random"`
+	SessionID    string `json:"session_id"`
+}
+
 type Http1Details struct {
 	Headers []string `json:"headers"`
 }
@@ -17,14 +30,14 @@ type Http2Details struct {
 }
 
 type Response struct {
-	Donate      string         `json:"donate"`
-	IP          string         `json:"ip"`
-	HTTPVersion string         `json:"http_version"`
-	Path        string         `json:"path"`
-	Method      string         `json:"method"`
-	TLS         JA3Calculating `json:"tls"`
-	Http1       *Http1Details  `json:"http1,omitempty"`
-	Http2       *Http2Details  `json:"http2,omitempty"`
+	// Donate      string        `json:"donate"`
+	IP          string        `json:"ip"`
+	HTTPVersion string        `json:"http_version"`
+	path        string        `json:"-"`
+	Method      string        `json:"method"`
+	TLS         TLSDetails    `json:"tls"`
+	Http1       *Http1Details `json:"http1,omitempty"`
+	Http2       *Http2Details `json:"http2,omitempty"`
 }
 
 func (res Response) ToJson() string {

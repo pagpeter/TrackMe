@@ -271,11 +271,13 @@ func parseRawExtensions(exts []Extension, chp ClientHello) ([]interface{}, Clien
 			}
 		case "0015": // padding
 			tmp = struct {
-				Name        string `json:"name"`
-				PaddingData string `json:"data"`
+				Name              string `json:"name"`
+				PaddingData       string `json:"-"`
+				PaddingDataLength int    `json:"padding_data_length"`
 			}{
-				Name:        "padding (21)",
-				PaddingData: d,
+				Name:              "padding (21)",
+				PaddingData:       d,
+				PaddingDataLength: len(d),
 			}
 		case "0017": // extended_master_secret
 			c := struct {

@@ -25,6 +25,40 @@ You can build a binary by running `go build -o TrackMe *.go`
 
 After that, just run the binary (`sudo ./TrackMe`)
 
+## Custom Fingerpints
+
+I wanted to extend JA3, so I created my own TLS fingerprint algorithm. It's better suited for fingerprinting TLS1.3 connections, because [JA3 does not really do that](https://github.com/salesforce/ja3/issues/78), and has more datapoints. The designed is inspired by the http/2 fingerprint proposed by akamai.
+
+It looks like this:
+
+```
+supported-tls-versions|supported-protocols|supported-groups|supported-signature-algorithms|psk-key-exchange-mode|certificate-compression-algorithms|cipher-suites|extensions
+```
+
+**supported-tls-versions**: Comma seperated list of supported TLS versions as sent in the `supported_versions` extension.
+
+**supported-protocols**: Comma seperated list of supported HTTP versions as sent in the `application_layer_protocol_negotiation` extension. http/1.0 => 1.0, http/1.1 => 1.1, http/2 => 2
+
+**supported-groups**: Comma seperated list of supported elliptic curve groups as sent in the `supported_groups` extension.
+
+**supported-signature-algorithms**: Comma seperated list of supported signatue algorithms as sent in the `signature_algorithms` extension.
+
+**psk-key-exchange-mode** The PSK key exchange mode as specified in the `psk_key_exchange_modes` extension. Usually 0 or 1.
+
+**certificate-compression-algorithms** Comma seperated list of the certificate compression algorithms as sent in the `compress_certificate` extension.
+
+**cipher-suites**: Comma seperated list of the supported cipher suites.
+
+**extensions**: Comma seperated list of the supported extensions.
+
+All TLS GREASE values must be omitted everywhere.
+
+That means, a fingerprint could look something like this:
+
+```
+771,772|1.1,2|29,23,24|1027,2057,1025,1283,2053,1281,2054,1537|1|2|4865-4866-4867-49195-49199-49196-49200-52393-52392-49171-49172-156-157-47-53|0-23-65281-10-11-35-16-5-13-18-51-45-43-27-17513-41
+```
+
 ## TLS & HTTP2 fingerprinting resources
 
 - [TLS 1.3, every byte explained](https://tls13.xargs.org/)
