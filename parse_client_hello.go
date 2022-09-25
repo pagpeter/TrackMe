@@ -185,7 +185,7 @@ func parseRawExtensions(exts []Extension, chp ClientHello) ([]interface{}, Clien
 				Name          string        `json:"name"`
 				StatusRequest StatusRequest `json:"status_request"`
 			}{
-				Name: "status_request",
+				Name: "status_request (5)",
 				StatusRequest: StatusRequest{
 					CertificateStatusType:   fmt.Sprintf("OSCP (%d)", hexToInt(d[0:2])),
 					ResponderIDListLength:   hexToInt(d[2:4]),
@@ -289,7 +289,7 @@ func parseRawExtensions(exts []Extension, chp ClientHello) ([]interface{}, Clien
 			c.Name = "extended_master_secret (23)"
 			if l < 4 {
 				tmp = c
-				continue
+				break
 			}
 			length := d[0:4]
 			c.MasterSecretData = d[4:]
@@ -362,22 +362,36 @@ func parseRawExtensions(exts []Extension, chp ClientHello) ([]interface{}, Clien
 				0: "PSK-only key establishment (psk) (0)",
 				1: "PSK with (EC)DHE key establishment (psk_dhe_ke) (1)",
 			}
-			tmp = struct {
+
+			c := struct {
 				Name                      string `json:"name"`
 				PSKKeyExchangeModesLength int    `json:"-"`
 				PSKKeyExchangeMode        string `json:"PSK_Key_Exchange_Mode"`
-			}{
-				Name:                      "psk_key_exchange_modes (45)",
-				PSKKeyExchangeModesLength: hexToInt(d[0:2]),
-				PSKKeyExchangeMode:        mapping[hexToInt(d[2:4])],
+			}{}
+			c.Name = "psk_key_exchange_modes (45)"
+			if len(d) < 4 {
+				tmp = c
+				break
 			}
+
+			c.PSKKeyExchangeModesLength = hexToInt(d[0:2])
+			c.PSKKeyExchangeMode = mapping[hexToInt(d[2:4])]
+			tmp = c
 		case "0033": // key_share
 			c := struct {
 				Name       string              `json:"name"`
 				SharedKeys []map[string]string `json:"shared_keys"`
 			}{}
 			c.Name = "key_share (51)"
+			tmp = c
+			if len(d) <= 4 {
+				break
+			}
 			length := hexToInt(d[0:4]) * 2
+			if len(d) < length+2 {
+				break
+			}
+
 			tmpC := 4
 			for tmpC < length {
 				name := d[tmpC : tmpC+4]
@@ -402,16 +416,16 @@ func parseRawExtensions(exts []Extension, chp ClientHello) ([]interface{}, Clien
 				Protocols  []string `json:"protocols"`
 			}{}
 			c.Name = "application_settings (17513)"
+			tmp = c
 			if len(d) <= 4 {
-				tmp = c
 				break
 			}
 			c.ALPSLength = hexToInt(d[0:4])
+			if len(d) < c.ALPSLength*2+4 {
+				break
+			}
 			tmpC := 4
 			for tmpC < c.ALPSLength*2 {
-				if len(d) <= tmpC+2 {
-					break
-				}
 				length := hexToInt(d[tmpC:tmpC+2]) * 2
 				tmpC += 2
 				c.Protocols = append(c.Protocols, hexToString(d[tmpC:tmpC+length]))
