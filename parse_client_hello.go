@@ -402,6 +402,10 @@ func parseRawExtensions(exts []Extension, chp ClientHello) ([]interface{}, Clien
 				Protocols  []string `json:"protocols"`
 			}{}
 			c.Name = "application_settings (17513)"
+			if len(d) <= 4 {
+				tmp = c
+				break
+			}
 			c.ALPSLength = hexToInt(d[0:4])
 			tmpC := 4
 			for tmpC < c.ALPSLength*2 {
