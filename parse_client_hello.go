@@ -289,7 +289,7 @@ func parseRawExtensions(exts []Extension, chp ClientHello) ([]interface{}, Clien
 			c.Name = "extended_master_secret (23)"
 			if l < 4 {
 				tmp = c
-				continue
+				
 			}
 			length := d[0:4]
 			c.MasterSecretData = d[4:]
