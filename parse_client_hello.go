@@ -405,6 +405,9 @@ func parseRawExtensions(exts []Extension, chp ClientHello) ([]interface{}, Clien
 			c.ALPSLength = hexToInt(d[0:4])
 			tmpC := 4
 			for tmpC < c.ALPSLength*2 {
+				if len(d) <= tmpC+2 {
+					break
+				}
 				length := hexToInt(d[tmpC:tmpC+2]) * 2
 				tmpC += 2
 				c.Protocols = append(c.Protocols, hexToString(d[tmpC:tmpC+length]))
