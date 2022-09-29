@@ -56,7 +56,7 @@ func parseHTTP2(f *http2.Framer, c chan ParsedFrame) {
 			if strings.HasSuffix(err.Error(), "unknown certificate") {
 				r = "ERROR"
 			}
-			log.Println("Error reading frame", err, r)
+			// log.Println("Error reading frame", err, r)
 			c <- ParsedFrame{Type: r}
 			return
 		}
@@ -84,7 +84,7 @@ func parseHTTP2(f *http2.Framer, c chan ParsedFrame) {
 			d.SetEmitEnabled(true)
 			h2Headers, err := d.DecodeFull(frame.HeaderBlockFragment())
 			if err != nil {
-				log.Println("Error decoding headers", err)
+				//log.Println("Error decoding headers", err)
 				return
 			}
 
@@ -135,7 +135,7 @@ func HandleTLSConnection(conn net.Conn) bool {
 
 	_, err := conn.Read(request)
 	if err != nil {
-		log.Println("Error reading request", err)
+		//log.Println("Error reading request", err)
 		if strings.HasSuffix(err.Error(), "unknown certificate") && local {
 			log.Println("Local error (probably developement) - not closing conn")
 			return true

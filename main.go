@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net"
 	"net/http"
@@ -32,11 +31,11 @@ func init() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	
+
 	if len(c.MongoURL) == 0 { // Don't attempt to setup mongo if its not populated in the config
 		return
 	}
-	
+
 	clientOptions := options.Client().ApplyURI(c.MongoURL)
 	client, err = mongo.Connect(ctx, clientOptions)
 	if err != nil {
@@ -133,14 +132,14 @@ func main() {
 			ip = addr.IP.String()
 		}
 		if IsIPBlocked(ip) {
-			fmt.Println("Request from IP", ip, "blocked")
+			Log("Request from IP " + ip + " blocked")
 			conn.Write([]byte("Don't waste proxies"))
 			conn.Close()
 		} else {
 			go func() {
 				success := timeoutHandleTLSConnection(conn)
 				if !success {
-					log.Println("Request aborted")
+					Log("Request aborted - " + ip)
 					conn.Close()
 				}
 			}()

@@ -1,11 +1,21 @@
 package main
 
-import "log"
+import (
+	"fmt"
+	"time"
+)
+
+func Log(msg string) {
+	t := time.Now()
+	formatted := t.Format("2006-02-01 15:04:05")
+	fmt.Printf("[%v] %v\n", formatted, msg)
+}
 
 // returns bytes and content type that should be sent to the client
 func Router(path string, res Response) ([]byte, string) {
 	// res.Donate = "Please consider donating to keep this API running."
-	log.Println(res.IP, res.HTTPVersion, res.Method, res.path, res.TLS.JA3)
+	Log(fmt.Sprintf("%v %v %v %v %v", res.IP, res.Method, res.HTTPVersion, res.path, res.TLS.JA3Hash))
+
 	if GetUserAgent(res) == "" {
 		return []byte("no useragent"), "text/html"
 	}

@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"time"
 
@@ -42,7 +41,7 @@ func SaveRequest(req Response) {
 	}
 
 	if result.Hash != "" {
-		fmt.Println("updating...")
+		//		fmt.Println("updating...")
 		_, err := collection.UpdateOne(context.TODO(), filter, bson.D{{"$inc", bson.D{{"timesseen", 1}}}})
 		if err != nil {
 			log.Println(err)
@@ -52,11 +51,11 @@ func SaveRequest(req Response) {
 		reqLog.Lastseen = time.Now().Unix()
 		reqLog.Timesseen = 1
 
-		id, err := collection.InsertOne(ctx, reqLog)
+		_, err := collection.InsertOne(ctx, reqLog)
 		if err != nil {
 			log.Println(err)
 
 		}
-		log.Println("Logged req", id)
+		//		log.Println("Logged req", id)
 	}
 }
