@@ -108,3 +108,48 @@ func CalculateJA3(parsed ClientHello) JA3Calculating {
 	j.Calculate()
 	return j
 }
+
+func joinInts(ints []int, seperator string) string {
+	tmp := []string{}
+	for _, v := range ints {
+		tmp = append(tmp, fmt.Sprintf("%v", v))
+	}
+	return strings.Join(tmp, seperator)
+}
+
+func CalculatePeetPrint(parsed ClientHello, j JA3Calculating) (string, string) {
+	tmp := []string{}
+	for _, v := range parsed.SupportedProtocols {
+		if strings.ToLower(v) == "h2" {
+			tmp = append(tmp, "2")
+		} else if strings.ToLower(v) == "http/1.1" {
+			tmp = append(tmp, "1.1")
+		} else if strings.ToLower(v) == "http/1.0" {
+			tmp = append(tmp, "1.0")
+		}
+	}
+
+	tls_versions := joinInts(parsed.SupportedTLSVersions, "-")   // Comma seperated list of supported TLS versions as sent in the `supported_versions` extension.
+	protos := strings.Join(tmp, "-")                             // Comma seperated list of supported HTTP versions as sent in the `application_layer_protocol_negotiation` extension. http/1.0 => 1.0, http/1.1 => 1.1, http/2 => 2
+	sig_als := joinInts(parsed.SignatureAlgorithms, "-")         // Comma seperated list of supported signatue algorithms as sent in the `signature_algorithms` extension.
+	key_mode := fmt.Sprintf("%v", parsed.PSKKeyExchangeMode)     // The PSK key exchange mode as specified in the`psk_key_exchange_modes` extension. Usually 0 or 1.
+	comp_algs := joinInts(parsed.CertCompressionAlgorithms, "-") // Comma seperated list of the certificate compression algorithms as sent in the `compress_certificate` extension
+	groups := strings.Join(j.JA3Curves, "-")                     // Comma seperated list of supported elliptic curve groups as sent in the `supported_groups` extension.
+	suites := strings.Join(j.JA3Ciphers, "-")                    // Cipher suites
+	extensions := strings.Join(j.JA3Extensions, "-")             // Extensions
+
+	debug := false
+	if debug {
+		fmt.Println("tls_versions:", tls_versions)
+		fmt.Println("protos:", protos)
+		fmt.Println("signature algs:", sig_als)
+		fmt.Println("key_mode:", key_mode)
+		fmt.Println("comp_algs:", comp_algs)
+		fmt.Println("groups:", groups)
+		fmt.Println("cipher suites:", suites)
+		fmt.Println("extensions:", extensions)
+	}
+
+	fp := fmt.Sprintf("%v|%v|%v|%v|%v|%v|%v|%v", tls_versions, protos, groups, sig_als, key_mode, comp_algs, suites, extensions)
+	return fp, GetMD5Hash(fp)
+}

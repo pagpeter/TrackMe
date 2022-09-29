@@ -28,6 +28,13 @@ type ClientHello struct {
 	SupportedPoints   []uint8
 	SupportedVersions []uint8
 	SupportedCurves   []uint8
+
+	// For the PeetPrint
+	SupportedTLSVersions      []int
+	SupportedProtocols        []string
+	SignatureAlgorithms       []int
+	PSKKeyExchangeMode        int
+	CertCompressionAlgorithms []int
 }
 
 func hexToInt(hex string) int {
@@ -240,7 +247,9 @@ func parseRawExtensions(exts []Extension, chp ClientHello) ([]interface{}, Clien
 			}
 			tmpC := 4
 			for tmpC <= (c.AlgsLength * 4) {
-				c.Algorithms = append(c.Algorithms, GetSignatureNameByID(uint16(hexToInt(d[tmpC:tmpC+4]))))
+				asInt := uint16(hexToInt(d[tmpC : tmpC+4]))
+				chp.SignatureAlgorithms = append(chp.SignatureAlgorithms, int(asInt))
+				c.Algorithms = append(c.Algorithms, GetSignatureNameByID(asInt))
 				tmpC += 4
 			}
 			tmp = c
@@ -260,6 +269,7 @@ func parseRawExtensions(exts []Extension, chp ClientHello) ([]interface{}, Clien
 				proto := d[tmpC : tmpC+length]
 				tmpC += length
 				c.Protocols = append(c.Protocols, hexToString(proto))
+				chp.SupportedProtocols = append(chp.SupportedProtocols, hexToString(proto))
 			}
 
 			tmp = c
@@ -313,6 +323,7 @@ func parseRawExtensions(exts []Extension, chp ClientHello) ([]interface{}, Clien
 				"0002": "brotli (2)",
 			}
 			for len(c.Algorithms)*2 < c.AlgsLength {
+				chp.CertCompressionAlgorithms = append(chp.CertCompressionAlgorithms, hexToInt(d[count:count+4]))
 				c.Algorithms = append(c.Algorithms, getOrReturnOG(d[count:count+4], mapping))
 				count += 4
 			}
@@ -351,6 +362,8 @@ func parseRawExtensions(exts []Extension, chp ClientHello) ([]interface{}, Clien
 				val := getOrReturnOG(d[count:count+4], mapping)
 				if isGrease("0x" + strings.ToUpper(val)) {
 					val = "TLS_GREASE (0x" + val + ")"
+				} else {
+					chp.SupportedTLSVersions = append(chp.SupportedTLSVersions, hexToInt(d[count:count+4]))
 				}
 				c.Versions = append(c.Versions, val)
 				count += 4
@@ -376,6 +389,7 @@ func parseRawExtensions(exts []Extension, chp ClientHello) ([]interface{}, Clien
 
 			c.PSKKeyExchangeModesLength = hexToInt(d[0:2])
 			c.PSKKeyExchangeMode = mapping[hexToInt(d[2:4])]
+			chp.PSKKeyExchangeMode = hexToInt(d[2:4])
 			tmp = c
 		case "0033": // key_share
 			c := struct {

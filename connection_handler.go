@@ -147,7 +147,7 @@ func HandleTLSConnection(conn net.Conn) bool {
 
 	parsedClientHello := ParseClientHello(hs)
 	JA3Data := CalculateJA3(parsedClientHello)
-
+	peetfp, peetfp_hash := CalculatePeetPrint(parsedClientHello, JA3Data)
 	tlsDetails := TLSDetails{
 		Ciphers:          JA3Data.ReadableCiphers,
 		Extensions:       parsedClientHello.Extensions,
@@ -155,6 +155,8 @@ func HandleTLSConnection(conn net.Conn) bool {
 		NegotiatedVesion: fmt.Sprintf("%v", conn.(*tls.Conn).ConnectionState().Version),
 		JA3:              JA3Data.JA3,
 		JA3Hash:          JA3Data.JA3Hash,
+		PeetPrint:        peetfp,
+		PeetPrintHash:    peetfp_hash,
 		SessionID:        parsedClientHello.SessionID,
 		ClientRandom:     parsedClientHello.ClientRandom,
 	}
