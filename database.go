@@ -99,6 +99,8 @@ func queryDB(query, val string) []RequestLog {
 	return dbRes
 }
 
+const COUNT = 10
+
 func GetByJa3(val string) ByJA3 {
 	res := ByJA3{
 		JA3:        val,
@@ -128,6 +130,10 @@ func GetByJa3(val string) ByJA3 {
 			res.UserAgents[r.UserAgent] = 1
 		}
 	}
+
+	res.PeetPrint = sortByVal(res.PeetPrint, COUNT)
+	res.H2 = sortByVal(res.H2, COUNT)
+	res.UserAgents = sortByVal(res.UserAgents, COUNT)
 
 	return res
 }
@@ -162,6 +168,9 @@ func GetByH2(val string) ByH2 {
 		}
 	}
 
+	res.PeetPrint = sortByVal(res.PeetPrint, COUNT)
+	res.JA3 = sortByVal(res.JA3, COUNT)
+	res.UserAgents = sortByVal(res.UserAgents, COUNT)
 	return res
 }
 
@@ -194,6 +203,9 @@ func GetByPeetPrint(val string) ByPeetPrint {
 			res.UserAgents[r.UserAgent] = 1
 		}
 	}
+	res.JA3 = sortByVal(res.JA3, COUNT)
+	res.H2 = sortByVal(res.H2, COUNT)
+	res.UserAgents = sortByVal(res.UserAgents, COUNT)
 
 	return res
 }

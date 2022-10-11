@@ -159,3 +159,28 @@ func splitBytesIntoChunks(buf []byte, lim int) [][]byte {
 	}
 	return chunks
 }
+
+type kv struct {
+	Key   string
+	Value int
+}
+
+func sortByVal(m map[string]int, x int) map[string]int {
+	// Turning the map into this structure
+
+	var ss []kv
+	for k, v := range m {
+		ss = append(ss, kv{k, v})
+	}
+
+	// Then sorting the slice by value, higher first.
+	sort.Slice(ss, func(i, j int) bool {
+		return ss[i].Value > ss[j].Value
+	})
+
+	res := map[string]int{}
+	for _, obj := range ss[:x] {
+		res[obj.Key] = obj.Value
+	}
+	return res
+}
