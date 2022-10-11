@@ -223,18 +223,21 @@ func parseRawExtensions(exts []Extension, chp ClientHello) ([]interface{}, Clien
 				Name         string   `json:"name"`
 				PointFormats []string `json:"elliptic_curves_point_formats"`
 			}{}
+			fmt.Println(d, l)
 			c.Name = "ec_point_formats (11)"
-			length := hexToInt(d[0:1])
-			tmpC := 1
-			for tmpC <= length*2 {
-				val := d[tmpC : tmpC+1]
-				c.PointFormats = append(c.PointFormats, "0x"+val)
-				chp.SupportedPoints = append(chp.SupportedPoints, uint8(hexToInt(val)))
-				tmpC++
+			// length := hexToInt(d[0:1])
+			i := 2
+			for {
+				if len(d) >= i+2 {
+					val := d[i : i+2]
+					i += 2
+					c.PointFormats = append(c.PointFormats, "0x"+val)
+					chp.SupportedPoints = append(chp.SupportedPoints, uint8(hexToInt(val)))
+				} else {
+					break
+				}
 			}
-			if len(chp.SupportedPoints) == 0 {
-				chp.SupportedPoints = []uint8{0x00}
-			}
+
 			tmp = c
 		case "000d": // signature_algorithms
 			c := struct {
