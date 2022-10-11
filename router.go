@@ -72,7 +72,7 @@ func Router(path string, res Response) ([]byte, string) {
 			return []byte("{\"error\": \"No 'by' param present\"}"), "application/json"
 		}
 		res := GetByJa3(byParam)
-		j, _ := json.MarshalIndent(res, "    ", "")
+		j, _ := json.MarshalIndent(res, "", "\t")
 		return []byte(j), "application/json"
 	case "/api/search-h2":
 		if !connectedToDB {
@@ -82,7 +82,7 @@ func Router(path string, res Response) ([]byte, string) {
 			return []byte("{\"error\": \"No 'by' param present\"}"), "application/json"
 		}
 		res := GetByH2(byParam)
-		j, _ := json.MarshalIndent(res, "    ", "")
+		j, _ := json.MarshalIndent(res, "", "\t")
 		return []byte(j), "application/json"
 	case "/api/search-peetprint":
 		if !connectedToDB {
@@ -92,7 +92,7 @@ func Router(path string, res Response) ([]byte, string) {
 			return []byte("{\"error\": \"No 'by' param present\"}"), "application/json"
 		}
 		res := GetByPeetPrint(byParam)
-		j, _ := json.MarshalIndent(res, "    ", "")
+		j, _ := json.MarshalIndent(res, "", "\t")
 		return []byte(j), "application/json"
 	}
 
