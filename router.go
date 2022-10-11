@@ -1,7 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"net/url"
 	"time"
 )
 
@@ -23,8 +25,17 @@ func Router(path string, res Response) ([]byte, string) {
 		SaveRequest(res)
 	}
 
+	byParam := ""
+	u, _ := url.Parse("https://tls.peet.ws" + path)
+	m, _ := url.ParseQuery(u.RawQuery)
+	if val, ok := m["by"]; ok {
+		if len(val) != 0 {
+			byParam = val[0]
+		}
+	}
+
 	// Router
-	switch path {
+	switch u.Path {
 	case "/":
 		b, _ := ReadFile("static/index.html")
 		return b, "text/html"
@@ -52,6 +63,37 @@ func Router(path string, res Response) ([]byte, string) {
 			return []byte("{\"error\": \"Not connected to database.\"}"), "application/json"
 		}
 		return []byte(fmt.Sprintf(`{"total_requests": %v}`, GetTotalRequestCount())), "application/json"
+
+	case "/api/search-ja3":
+		if !connectedToDB {
+			return []byte("{\"error\": \"Not connected to database.\"}"), "application/json"
+		}
+		if byParam == "" {
+			return []byte("{\"error\": \"No 'by' param present\"}"), "application/json"
+		}
+		res := GetByJa3(byParam)
+		j, _ := json.MarshalIndent(res, "    ", "")
+		return []byte(j), "application/json"
+	case "/api/search-h2":
+		if !connectedToDB {
+			return []byte("{\"error\": \"Not connected to database.\"}"), "application/json"
+		}
+		if byParam == "" {
+			return []byte("{\"error\": \"No 'by' param present\"}"), "application/json"
+		}
+		res := GetByH2(byParam)
+		j, _ := json.MarshalIndent(res, "    ", "")
+		return []byte(j), "application/json"
+	case "/api/search-peetprint":
+		if !connectedToDB {
+			return []byte("{\"error\": \"Not connected to database.\"}"), "application/json"
+		}
+		if byParam == "" {
+			return []byte("{\"error\": \"No 'by' param present\"}"), "application/json"
+		}
+		res := GetByPeetPrint(byParam)
+		j, _ := json.MarshalIndent(res, "    ", "")
+		return []byte(j), "application/json"
 	}
 
 	b, _ := ReadFile("static/404.html")
