@@ -27,7 +27,7 @@ type ClientHello struct {
 	SupportedProtos   []string
 	SupportedPoints   []uint8
 	SupportedVersions []uint8
-	SupportedCurves   []uint8
+	SupportedCurves   []uint16
 
 	// For the PeetPrint
 	SupportedTLSVersions      []int
@@ -210,10 +210,11 @@ func parseRawExtensions(exts []Extension, chp ClientHello) ([]interface{}, Clien
 			for tmpC <= length*2 {
 				val := d[tmpC : tmpC+4]
 				if isGrease("0x" + strings.ToUpper(val)) {
+					chp.SupportedCurves = append(chp.SupportedCurves, 6969)
 					c.SupportedGroups = append(c.SupportedGroups, "TLS_GREASE (0x"+val+")")
 				} else {
+					chp.SupportedCurves = append(chp.SupportedCurves, uint16(hexToInt(val)))
 					c.SupportedGroups = append(c.SupportedGroups, GetCurveNameByID(uint16(hexToInt(val))))
-					chp.SupportedCurves = append(chp.SupportedCurves, uint8(hexToInt(val)))
 				}
 				tmpC += 4
 			}
@@ -364,7 +365,7 @@ func parseRawExtensions(exts []Extension, chp ClientHello) ([]interface{}, Clien
 				val := getOrReturnOG(d[count:count+4], mapping)
 				if isGrease("0x" + strings.ToUpper(val)) {
 					val = "TLS_GREASE (0x" + val + ")"
-					// chp.SupportedTLSVersions = append(chp.SupportedTLSVersions, -1)
+					chp.SupportedTLSVersions = append(chp.SupportedTLSVersions, -1)
 				} else {
 					chp.SupportedTLSVersions = append(chp.SupportedTLSVersions, hexToInt(d[count:count+4]))
 				}

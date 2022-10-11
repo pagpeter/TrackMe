@@ -25,6 +25,9 @@ func Router(path string, res Response) ([]byte, string) {
 
 	// Router
 	switch path {
+	case "/":
+		b, _ := ReadFile("static/index.html")
+		return b, "text/html"
 	case "/api/all":
 		return []byte(res.ToJson()), "application/json"
 	case "/api/tls":
@@ -51,6 +54,6 @@ func Router(path string, res Response) ([]byte, string) {
 		return []byte(fmt.Sprintf(`{"total_requests": %v}`, GetTotalRequestCount())), "application/json"
 	}
 
-	b, _ := ReadFile("static/index.html")
+	b, _ := ReadFile("static/404.html")
 	return b, "text/html"
 }

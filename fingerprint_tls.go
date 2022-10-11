@@ -11,7 +11,7 @@ type JA3Calculating struct {
 	JA3Ciphers      []string `json:"-"`
 	ReadableCiphers []string `json:"ciphers"`
 
-	AllCurves []uint8  `json:"-"`
+	AllCurves []uint16 `json:"-"`
 	JA3Curves []string `json:"-"`
 
 	AllExtensions []int    `json:"-"`
@@ -26,6 +26,11 @@ type JA3Calculating struct {
 
 	JA3     string
 	JA3Hash string
+
+	// PeetPrint
+	PeetPrintCiphers    []string
+	PeetPrintExtensions []string
+	PeetPrintCurves     []string
 }
 
 func (j *JA3Calculating) Parse() {
@@ -41,8 +46,10 @@ func (j *JA3Calculating) Parse() {
 		name := GetCipherSuiteName(cipher)
 		if isGrease(name) {
 			name = "TLS_GREASE (" + name + ")"
+			j.PeetPrintCiphers = append(j.PeetPrintCiphers, "GREASE")
 		} else {
 			j.JA3Ciphers = append(j.JA3Ciphers, fmt.Sprintf("%v", cipher))
+			j.PeetPrintCiphers = append(j.PeetPrintCiphers, fmt.Sprintf("%v", cipher))
 		}
 		j.ReadableCiphers = append(j.ReadableCiphers, name)
 	}
@@ -52,6 +59,9 @@ func (j *JA3Calculating) Parse() {
 		hex = "0x" + strings.ToUpper(hex)
 		if !isGrease(hex) {
 			j.JA3Extensions = append(j.JA3Extensions, fmt.Sprintf("%v", extension))
+			j.PeetPrintExtensions = append(j.PeetPrintExtensions, fmt.Sprintf("%v", extension))
+		} else {
+			j.PeetPrintExtensions = append(j.PeetPrintExtensions, "GREASE")
 		}
 	}
 
@@ -59,8 +69,11 @@ func (j *JA3Calculating) Parse() {
 	for _, curve := range j.AllCurves {
 		hex := strconv.FormatUint(uint64(curve), 16)
 		hex = "0x" + strings.ToUpper(hex)
-		if !isGrease(hex) {
+		if !isGrease(hex) && curve != 6969 {
 			j.JA3Curves = append(j.JA3Curves, fmt.Sprintf("%v", curve))
+			j.PeetPrintCurves = append(j.PeetPrintCurves, fmt.Sprintf("%v", curve))
+		} else {
+			j.PeetPrintCurves = append(j.PeetPrintCurves, "GREASE")
 		}
 	}
 
@@ -127,14 +140,23 @@ func CalculatePeetPrint(parsed ClientHello, j JA3Calculating) (string, string) {
 		}
 	}
 
-	tls_versions := joinInts(parsed.SupportedTLSVersions, "-")   // Comma seperated list of supported TLS versions as sent in the `supported_versions` extension.
+	versions := []string{}
+	for _, v := range parsed.SupportedTLSVersions {
+		if v == -1 {
+			versions = append(versions, "GREASE")
+		} else {
+			versions = append(versions, fmt.Sprintf("%v", v))
+		}
+	}
+
+	tls_versions := strings.Join(versions, "-")                  // Comma seperated list of supported TLS versions as sent in the `supported_versions` extension. TODO
 	protos := strings.Join(tmp, "-")                             // Comma seperated list of supported HTTP versions as sent in the `application_layer_protocol_negotiation` extension. http/1.0 => 1.0, http/1.1 => 1.1, http/2 => 2
 	sig_als := joinInts(parsed.SignatureAlgorithms, "-")         // Comma seperated list of supported signatue algorithms as sent in the `signature_algorithms` extension.
 	key_mode := fmt.Sprintf("%v", parsed.PSKKeyExchangeMode)     // The PSK key exchange mode as specified in the`psk_key_exchange_modes` extension. Usually 0 or 1.
 	comp_algs := joinInts(parsed.CertCompressionAlgorithms, "-") // Comma seperated list of the certificate compression algorithms as sent in the `compress_certificate` extension
-	groups := strings.Join(j.JA3Curves, "-")                     // Comma seperated list of supported elliptic curve groups as sent in the `supported_groups` extension.
-	suites := strings.Join(j.JA3Ciphers, "-")                    // Cipher suites
-	extensions := strings.Join(j.JA3Extensions, "-")             // Extensions
+	groups := strings.Join(j.PeetPrintCurves, "-")               // Comma seperated list of supported elliptic curve groups as sent in the `supported_groups` extension.
+	suites := strings.Join(j.PeetPrintCiphers, "-")              // Cipher suites
+	extensions := strings.Join(j.PeetPrintExtensions, "-")       // Extensions
 
 	debug := false
 	if debug {
