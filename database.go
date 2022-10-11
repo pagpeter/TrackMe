@@ -101,9 +101,10 @@ func queryDB(query, val string) []RequestLog {
 
 func GetByJa3(val string) ByJA3 {
 	res := ByJA3{
-		JA3:       val,
-		H2:        map[string]int{},
-		PeetPrint: map[string]int{},
+		JA3:        val,
+		H2:         map[string]int{},
+		PeetPrint:  map[string]int{},
+		UserAgents: map[string]int{},
 	}
 
 	dbRes := queryDB("ja3", val)
@@ -133,9 +134,10 @@ func GetByJa3(val string) ByJA3 {
 
 func GetByH2(val string) ByH2 {
 	res := ByH2{
-		H2:        val,
-		JA3:       map[string]int{},
-		PeetPrint: map[string]int{},
+		H2:         val,
+		JA3:        map[string]int{},
+		PeetPrint:  map[string]int{},
+		UserAgents: map[string]int{},
 	}
 
 	dbRes := queryDB("h2", val)
@@ -165,9 +167,10 @@ func GetByH2(val string) ByH2 {
 
 func GetByPeetPrint(val string) ByPeetPrint {
 	res := ByPeetPrint{
-		PeetPrint: val,
-		H2:        map[string]int{},
-		JA3:       map[string]int{},
+		PeetPrint:  val,
+		H2:         map[string]int{},
+		JA3:        map[string]int{},
+		UserAgents: map[string]int{},
 	}
 
 	dbRes := queryDB("peetprint", val)
