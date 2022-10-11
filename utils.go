@@ -179,7 +179,13 @@ func sortByVal(m map[string]int, x int) map[string]int {
 	})
 
 	res := map[string]int{}
-	for _, obj := range ss[:x] {
+	tmp := []kv{}
+	if len(ss) > x {
+		tmp = ss[:x]
+	} else {
+		tmp = ss
+	}
+	for _, obj := range tmp {
 		res[obj.Key] = obj.Value
 	}
 	return res
