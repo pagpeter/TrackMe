@@ -18,21 +18,24 @@ type RequestLog struct {
 }
 
 type ByJA3 struct {
-	JA3       string         `json:"ja3"`
-	H2        map[string]int `json:"h2_fps"`
-	PeetPrint map[string]int `peet_prints`
+	JA3        string         `json:"ja3"`
+	H2         map[string]int `json:"h2_fps"`
+	PeetPrint  map[string]int `peet_prints`
+	UserAgents map[string]int `user_agents`
 }
 
 type ByPeetPrint struct {
-	PeetPrint string         `json:"peet_print"`
-	JA3       map[string]int `json:"ja3s"`
-	H2        map[string]int `json:"h2_fps"`
+	PeetPrint  string         `json:"peet_print"`
+	JA3        map[string]int `json:"ja3s"`
+	H2         map[string]int `json:"h2_fps"`
+	UserAgents map[string]int `user_agents`
 }
 
 type ByH2 struct {
-	H2        string         `json:"h2_fp"`
-	JA3       map[string]int `json:"ja3s"`
-	PeetPrint map[string]int `peet_prints`
+	H2         string         `json:"h2_fp"`
+	JA3        map[string]int `json:"ja3s"`
+	PeetPrint  map[string]int `peet_prints`
+	UserAgents map[string]int `user_agents`
 }
 
 func SaveRequest(req Response) {
@@ -117,6 +120,12 @@ func GetByJa3(val string) ByJA3 {
 		} else {
 			res.PeetPrint[r.PeetPrint] = 1
 		}
+
+		if v, ok := res.UserAgents[r.UserAgent]; ok {
+			res.UserAgents[r.UserAgent] = v + 1
+		} else {
+			res.UserAgents[r.UserAgent] = 1
+		}
 	}
 
 	return res
@@ -143,6 +152,12 @@ func GetByH2(val string) ByH2 {
 		} else {
 			res.PeetPrint[r.PeetPrint] = 1
 		}
+
+		if v, ok := res.UserAgents[r.UserAgent]; ok {
+			res.UserAgents[r.UserAgent] = v + 1
+		} else {
+			res.UserAgents[r.UserAgent] = 1
+		}
 	}
 
 	return res
@@ -168,6 +183,12 @@ func GetByPeetPrint(val string) ByPeetPrint {
 			res.JA3[r.JA3] = v + 1
 		} else {
 			res.JA3[r.JA3] = 1
+		}
+
+		if v, ok := res.UserAgents[r.UserAgent]; ok {
+			res.UserAgents[r.UserAgent] = v + 1
+		} else {
+			res.UserAgents[r.UserAgent] = 1
 		}
 	}
 
