@@ -223,7 +223,6 @@ func parseRawExtensions(exts []Extension, chp ClientHello) ([]interface{}, Clien
 				Name         string   `json:"name"`
 				PointFormats []string `json:"elliptic_curves_point_formats"`
 			}{}
-			fmt.Println(d, l)
 			c.Name = "ec_point_formats (11)"
 			// length := hexToInt(d[0:1])
 			i := 2
