@@ -25,9 +25,13 @@ You can build a binary by running `go build -o TrackMe *.go`
 
 After that, just run the binary (`sudo ./TrackMe`)
 
-## Custom Fingerpints
+## Different fingerprints
 
-I wanted to extend JA3, so I created my own TLS fingerprint algorithm. It's better suited for fingerprinting TLS1.3 connections, because [JA3 does not really do that](https://github.com/salesforce/ja3/issues/78), and has more datapoints. The designed is inspired by the http/2 fingerprint proposed by akamai.
+The site returns 3 different fingerprints: the [JA3](https://engineering.salesforce.com/tls-fingerprinting-with-ja3-and-ja3s-247362855967/), a TLS fingerprint, an HTTP/2 ["akamai-fingerprint"](https://www.blackhat.com/docs/eu-17/materials/eu-17-Shuster-Passive-Fingerprinting-Of-HTTP2-Clients-wp.pdf) (Only works on HTTP/2 connections) and my own custom "PeetPrint".
+
+### Custom Fingerpint ("PeetPrint")
+
+I wanted to extend JA3, so I created my own TLS fingerprint algorithm. It's better suited for fingerprinting TLS1.3 connections, because [JA3 doesn't really do that well](https://github.com/salesforce/ja3/issues/78), and has more datapoints. The designed is inspired by the http/2 fingerprint proposed by akamai.
 
 It looks like this:
 
@@ -56,8 +60,46 @@ All TLS GREASE values must be replaced with "GREASE".
 That means, a fingerprint could look something like this:
 
 ```
-771,772|1.1,2|GREASE,29,23,24|GREASE,1027,2057,1025,1283,2053,1281,2054,1537|1|2|4865-4866-4867-49195-49199-49196-49200-52393-52392-49171-49172-156-157-47-53|0-23-65281-10-11-35-16-5-13-18-51-45-43-27-17513-41
+GREASE-771,772|1.1,2|GREASE,29,23,24|GREASE,1027,2057,1025,1283,2053,1281,2054,1537|1|2|4865-4866-4867-49195-49199-49196-49200-52393-52392-49171-49172-156-157-47-53|0-23-65281-10-11-35-16-5-13-18-51-45-43-27-17513-41
 ```
+
+## API endpoints
+
+The site exposes a lot of different API endpoints.
+
+### /api/all
+
+Returns all of the collected data about an request
+
+### /api/tls
+
+Returns only the TLS data
+
+### /api/clean
+
+Returns only the different fingerprints (akamai-fp+ja3)
+
+### /api/request-count
+
+Returns the total request count the database captured. Only works when connected to a database.
+
+### /api/search-ja3
+
+Param: `?by=<ja3>`
+
+Returns the most seen other identifiers (user-agent, h2, peetprint) that were seen together with this identifier. Only works when connected to a database.
+
+### /api/search-h2
+
+Param: `?by=<akamai-fp>`
+
+Returns the most seen other identifiers (user-agent, JA3, peetprint) that were seen together with this identifier. Only works when connected to a database.
+
+### /api/search-peetprint
+
+Param: `?by=<peetprint>`
+
+Returns the most seen other identifiers (user-agent, h2, JA3) that were seen together with this identifier. Only works when connected to a database.
 
 ## TLS & HTTP2 fingerprinting resources
 
