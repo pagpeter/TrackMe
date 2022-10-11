@@ -51,12 +51,12 @@ supported-tls-versions|supported-protocols|supported-groups|supported-signature-
 
 **extensions**: Comma seperated list of the supported extensions.
 
-All TLS GREASE values must be omitted everywhere.
+All TLS GREASE values must be replaced with "GREASE".
 
 That means, a fingerprint could look something like this:
 
 ```
-771,772|1.1,2|29,23,24|1027,2057,1025,1283,2053,1281,2054,1537|1|2|4865-4866-4867-49195-49199-49196-49200-52393-52392-49171-49172-156-157-47-53|0-23-65281-10-11-35-16-5-13-18-51-45-43-27-17513-41
+771,772|1.1,2|GREASE,29,23,24|GREASE,1027,2057,1025,1283,2053,1281,2054,1537|1|2|4865-4866-4867-49195-49199-49196-49200-52393-52392-49171-49172-156-157-47-53|0-23-65281-10-11-35-16-5-13-18-51-45-43-27-17513-41
 ```
 
 ## TLS & HTTP2 fingerprinting resources

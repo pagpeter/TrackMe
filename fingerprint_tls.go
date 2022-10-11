@@ -1,11 +1,9 @@
 package main
 
 import (
-	// "crypto/tls"
 	"fmt"
 	"strconv"
 	"strings"
-	//"github.com/honeytrap/honeytrap/services/ja3/crypto/tls"
 )
 
 type JA3Calculating struct {

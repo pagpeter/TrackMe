@@ -364,6 +364,7 @@ func parseRawExtensions(exts []Extension, chp ClientHello) ([]interface{}, Clien
 				val := getOrReturnOG(d[count:count+4], mapping)
 				if isGrease("0x" + strings.ToUpper(val)) {
 					val = "TLS_GREASE (0x" + val + ")"
+					// chp.SupportedTLSVersions = append(chp.SupportedTLSVersions, -1)
 				} else {
 					chp.SupportedTLSVersions = append(chp.SupportedTLSVersions, hexToInt(d[count:count+4]))
 				}

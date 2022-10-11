@@ -22,6 +22,8 @@ func Router(path string, res Response) ([]byte, string) {
 	if c.LogToDB && res.path != "/favicon.ico" {
 		SaveRequest(res)
 	}
+
+	// Router
 	switch path {
 	case "/api/all":
 		return []byte(res.ToJson()), "application/json"
@@ -42,7 +44,13 @@ func Router(path string, res Response) ([]byte, string) {
 			Akamai:     akamai,
 			AkamaiHash: hash,
 		}.ToJson()), "application/json"
+	case "/api/request-count":
+		if !connectedToDB {
+			return []byte("{\"error\": \"Not connected to database.\"}"), "application/json"
+		}
+		return []byte(fmt.Sprintf(`{"total_requests": %v}`, GetTotalRequestCount())), "application/json"
 	}
+
 	b, _ := ReadFile("static/index.html")
 	return b, "text/html"
 }

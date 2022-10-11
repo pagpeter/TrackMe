@@ -87,13 +87,16 @@ type ParsedFrame struct {
 }
 
 type Config struct {
-	LogToDB  bool   `json:"log_to_db"`
-	TLSPort  string `json:"tls_port"`
-	HTTPPort string `json:"http_port"`
-	CertFile string `json:"cert_file"`
-	KeyFile  string `json:"key_file"`
-	Host     string `json:"host"`
-	MongoURL string `json:"mongoURL"`
+	LogToDB    bool   `json:"log_to_db"`
+	TLSPort    string `json:"tls_port"`
+	HTTPPort   string `json:"http_port"`
+	CertFile   string `json:"cert_file"`
+	KeyFile    string `json:"key_file"`
+	Host       string `json:"host"`
+	MongoURL   string `json:"mongoURL"`
+	Collection string `json:"mongo_collection"`
+	DB         string `json:"mongo_database"`
+	LogIPs     bool   `json:"mongo_log_ips"`
 }
 
 func (c *Config) LoadFromFile() error {
@@ -117,6 +120,9 @@ func (c *Config) LoadFromFile() error {
 	c.CertFile = tmp.CertFile
 	c.KeyFile = tmp.KeyFile
 	c.MongoURL = tmp.MongoURL
+	c.Collection = tmp.Collection
+	c.DB = tmp.DB
+	c.LogIPs = tmp.LogIPs
 	return nil
 }
 
@@ -137,4 +143,7 @@ func (c *Config) MakeDefault() {
 	c.CertFile = "certs/chain.pem"
 	c.KeyFile = "certs/key.pem"
 	c.MongoURL = ""
+	c.Collection = "requests"
+	c.DB = "TrackMe"
+	c.LogIPs = false
 }

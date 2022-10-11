@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net"
 	"net/http"
@@ -9,20 +10,17 @@ import (
 
 	tls "github.com/wwhtrbbtt/utls"
 
-	// 	"github.com/honeytrap/honeytrap/services/ja3/crypto/tls"
-	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 var cert tls.Certificate
 var c *Config = &Config{}
-
 var collection *mongo.Collection
 var ctx = context.TODO()
 var client *mongo.Client
-
 var local = false
+var connectedToDB = false
 
 func init() {
 	// Loads the config and connects to database (if enabled)
@@ -46,18 +44,9 @@ func init() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	collection = client.Database("TrackMe").Collection("requests")
-
-	_, err = collection.Indexes().CreateOne(
-		context.Background(),
-		mongo.IndexModel{
-			Keys:    bson.D{{Key: "hash", Value: 1}},
-			Options: options.Index().SetUnique(true),
-		})
-	if err != nil {
-		log.Println(err)
-	}
+	fmt.Println(c.DB, c.Collection)
+	collection = client.Database(c.DB).Collection(c.Collection)
+	connectedToDB = true
 
 }
 
