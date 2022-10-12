@@ -39,6 +39,9 @@ func Router(path string, res Response) ([]byte, string) {
 	case "/":
 		b, _ := ReadFile("static/index.html")
 		return b, "text/html"
+	case "/explore":
+		b, _ := ReadFile("static/explore.html")
+		return b, "text/html"
 	case "/api/all":
 		return []byte(res.ToJson()), "application/json"
 	case "/api/tls":
