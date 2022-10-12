@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="A small website and API to show off server-side tracking technology, that also provides an API for TLS (ja3) )and http2 fingerprinting"
+    />
+    <meta
+      name="keywords"
+      content="ja3, ja3 fingerprinting api, tls fingerprinting, http2 fingerprinting, akamai fingerprinting, cloudflare fingerprinting, bypass ja3, spoof ja3"
+    />
+    <meta name="og:site_name" content="TrackMe - ja3 API" />
+    <meta charset="utf-8" />
+    <title>TrackMe | Explore</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+      * {
+        transition-property: all;
+        transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+        transition-duration: 150ms;
+      }
+    </style>
+  </head>
+
+  <body class="m-5 dark:bg-gray-800 dark:text-gray-50">
+    <h1 class="text-4xl mb-3 font-black"><a href="/">TrackMe</a> - Explore fingerprints</h1>
+
+    <div id="search-box">
+      <h2 class="text-2xl pt-5" id="title">
+        Exploring
+        <span id="fp-type"
+          ><select
+            class="dark:bg-gray-700 rounded shadow p-1 dark:text-gray-50"
+            id="fp-type-dd"
+          >
+            <option value="h2">HTTP/2 fingerprint</option>
+            <option value="ja3">JA3 fingerprint (TLS)</option>
+            <option value="peetprint">Custom "PeetPrint" (TLS)</option>
+          </select></span
+        >
+      </h2>
+
+      <p class="my-2">
+        Query:
+        <input
+          class="dark:bg-gray-700 rounded shadow p-1 dark:text-gray-50"
+          id="input"
+          autocomplete="off"
+        />
+        <span class="dark:text-red-400">(Full fingerprint, no hashes)</span>
+      </p>
+
+      <button
+        onclick="search()"
+        class="dark:bg-gray-900 bg-gray-200 p-3 my-3 rounded-xl shadow"
+      >
+        Search
+      </button>
+    </div>
+
+    <div id="result-box">
+            <h2 class="text-2xl pt-5" id="title">Exploring
+              <span id="fp-type-name">
+            </h2>
+
+            <h2 class="text-3xl my-2">Results for <input class="dark:bg-gray-700 rounded shadow dark:text-gray-50" id="query">:</h2>
+            <hr class="pb-5"/>
+            <div class="text-xs" id="result-data">
+                  <div class="flex flex-wrap">
+                    <div
+                      class="bg-gray-100 dark:bg-gray-900 rounded-md shadow p-3 m-3 hover:bg-gray-50 dark:hover:bg-black min-w-fit grow"
+                    >
+                      <table class="table-auto" id="ja3s">
+                        <thead>
+                          <th>JA3s</th>
+                        </thead>
+                      </table>
+                    </div>
+                    <div
+                      class="bg-gray-100 dark:bg-gray-900 rounded-md shadow p-3 m-3 hover:bg-gray-50 dark:hover:bg-black min-w-fit grow"
+                    >
+                      <table class="table-auto" id="h2-fps">
+                        <thead>
+                          <th>HTTP/2 fingerprints</th>
+                        </thead>
+                      </table>
+                    </div>
+                    <div
+                      class="bg-gray-100 dark:bg-gray-900 rounded-md shadow p-3 m-3 hover:bg-gray-50 dark:hover:bg-black min-w-fit"
+                    >
+                      <table class="table-auto" id="peetprints">
+                        <thead>
+                          <th>PeetPrints</th>
+                        </thead>
+                      </table>
+                    </div>
+                    <div
+                      class="bg-gray-100 dark:bg-gray-900 rounded-md shadow p-3 m-3 hover:bg-gray-50 dark:hover:bg-black min-w-fit grow"
+                    >
+                      <table class="table-auto" id="user-agents">
+                        <thead>
+                          <th>User-Agens</th>
+                        </thead>
+                      </table>
+                    </div>
+                  </div>
+            </div>
+            <p class="text-2xl" id="result-info"></p>
+    </div>
+
+    <script>
+      const search = () => {
+        const type = document.getElementById('fp-type-dd').value;
+        const query = document.getElementById('input').value;
+        if (!type || !query) {
+          alert("Type and query can't be empty");
+        }
+        window.location.href = `/explore?by=${query}&type=${type}`;
+      };
+
+      // https://stackoverflow.com/a/5448635
+      function getSearchParameters() {
+        var prmstr = window.location.search.substr(1);
+        return prmstr != null && prmstr != ''
+          ? transformToAssocArray(prmstr)
+          : {};
+      }
+
+      function transformToAssocArray(prmstr) {
+        var params = {};
+        var prmarr = prmstr.split('&');
+        for (var i = 0; i < prmarr.length; i++) {
+          var tmparr = prmarr[i].split('=');
+          params[tmparr[0]] = tmparr[1];
+        }
+        return params;
+      }
+
+      function isEmpty(obj) {
+        try {
+          return Object.keys(obj).length === 0;
+        } catch(e) {
+          return true
+        }
+      }
+
+      const searchTypes = ['h2', 'ja3', 'peetprint'];
+
+      const readable = {
+        h2: 'HTTP/2 fingerprint',
+        ja3: 'JA3 fingerprint (TLS)',
+        peetprint: 'Custom "PeetPrint" (TLS)',
+      };
+
+      const insert = () => {
+        const params = getSearchParameters();
+
+        if (!searchTypes.includes(params.type) || !params.by) {
+          document.getElementById('result-box').style.display = 'none';
+          // alert('Cant query', params.type);
+          html = `<select class="dark:bg-gray-700 rounded shadow p-1 dark:text-gray-50" id="fp-type-dd">`;
+
+          for (const [k, v] of Object.entries(readable)) {
+            html += `<option value="${k}">${v}</option>`;
+          }
+          html += '</select>';
+          document.getElementById('fp-type').innerHTML = html;
+          document.getElementById('input').innerHTML = `<p class="my-2">Query:
+              <input
+              class="dark:bg-gray-700 rounded shadow p-1 dark:text-gray-50"
+              id="input" autocomplete="off" />
+              <span class="dark:text-red-400">(Full fingerprint, no hashes)</span></p>`;
+          return;
+        } else {
+          document.getElementById('search-box').style.display = 'none';
+          document.getElementById('result-box').style.display = 'block';
+          document.getElementById('query').value = params.by
+          document.getElementById('fp-type-name').innerHTML = readable[params.type];
+          fetch(`/api/search-${params.type}?by=${params.by}`)
+            .then(res => res.json())
+            .then(data => {
+                console.log(data, !data.ja3s, !data.PeetPrint, !data.UserAgents)
+
+                if (isEmpty(data.h2_fps) && isEmpty(data.ja3s) && isEmpty(data.PeetPrint) && isEmpty(data.UserAgents)) {
+                  document.getElementById("result-data").style.display = "none"
+                  document.getElementById("result-info").innerText = "No results"
+                } else {
+
+                  elem = document.getElementById("h2-fps")
+                  if (params.type != "h2") {
+                    i = 1
+                    for (const [k, v] of Object.entries(data.h2_fps)) {
+                        elem.insertRow(i++).innerHTML = `<td>· ${k} <span class="font-black">(${v} times)</span></td>`;
+                    };
+                  } else {
+                    elem.parentElement.style.display = "none"
+                  }
+
+                  elem = document.getElementById("ja3s")
+                  if (params.type != "ja3") {
+                      i=1
+                      for (const [k, v] of Object.entries(data.ja3s)) {
+                        elem.insertRow(i++).innerHTML = `<td>· ${k} <span class="font-black">(${v} times)</span></td>`;
+                    };
+                  } else {
+                    elem.parentElement.style.display = "none"
+                  }
+
+                  elem = document.getElementById("peetprints")
+                  if (params.type != "peetprint") {
+                      i=1
+                      for (const [k, v] of Object.entries(data.PeetPrint))  {
+                        elem.insertRow(i++).innerHTML = `<td>· ${k} <span class="font-black">(${v} times)</span></td>`;
+                    };
+                  } else {
+                    elem.parentElement.style.display = "none"
+                  }
+
+                  i=1
+                  elem = document.getElementById("user-agents")
+                  for (const [k, v] of Object.entries(data.UserAgents)) {
+                        elem.insertRow(i++).innerHTML = `<td>· ${k} <span class="font-black">(${v} times)</span></td>`;
+                    };
+                }
+            })
+        }
+      };
+      insert(window.data);
+    </script>
+  </body>
+</html>
