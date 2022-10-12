@@ -20,22 +20,22 @@ type RequestLog struct {
 type ByJA3 struct {
 	JA3        string         `json:"ja3"`
 	H2         map[string]int `json:"h2_fps"`
-	PeetPrint  map[string]int `peet_prints`
-	UserAgents map[string]int `user_agents`
+	PeetPrint  map[string]int `json:"peet_prints"`
+	UserAgents map[string]int `json:"user_agents"`
 }
 
 type ByPeetPrint struct {
 	PeetPrint  string         `json:"peet_print"`
 	JA3        map[string]int `json:"ja3s"`
 	H2         map[string]int `json:"h2_fps"`
-	UserAgents map[string]int `user_agents`
+	UserAgents map[string]int `json:"user_agents"`
 }
 
 type ByH2 struct {
 	H2         string         `json:"h2_fp"`
 	JA3        map[string]int `json:"ja3s"`
-	PeetPrint  map[string]int `peet_prints`
-	UserAgents map[string]int `user_agents`
+	PeetPrint  map[string]int `json:"peet_prints"`
+	UserAgents map[string]int `json:"user_agents"`
 }
 
 func SaveRequest(req Response) {
@@ -95,7 +95,9 @@ func queryDB(query, val string) []RequestLog {
 		return dbRes
 	}
 
-	cur.Close(ctx)
+	if cur.Close(ctx) != nil {
+		log.Println("Could not close")
+	}
 	return dbRes
 }
 

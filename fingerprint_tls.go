@@ -158,17 +158,16 @@ func CalculatePeetPrint(parsed ClientHello, j JA3Calculating) (string, string) {
 	suites := strings.Join(j.PeetPrintCiphers, "-")              // Cipher suites
 	extensions := strings.Join(j.PeetPrintExtensions, "-")       // Extensions
 
-	debug := false
-	if debug {
-		fmt.Println("tls_versions:", tls_versions)
-		fmt.Println("protos:", protos)
-		fmt.Println("signature algs:", sig_als)
-		fmt.Println("key_mode:", key_mode)
-		fmt.Println("comp_algs:", comp_algs)
-		fmt.Println("groups:", groups)
-		fmt.Println("cipher suites:", suites)
-		fmt.Println("extensions:", extensions)
-	}
+//	if debug {
+//		fmt.Println("tls_versions:", tls_versions)
+//		fmt.Println("protos:", protos)
+//		fmt.Println("signature algs:", sig_als)
+//		fmt.Println("key_mode:", key_mode)
+//		fmt.Println("comp_algs:", comp_algs)
+//		fmt.Println("groups:", groups)
+//		fmt.Println("cipher suites:", suites)
+//		fmt.Println("extensions:", extensions)
+//	}
 
 	fp := fmt.Sprintf("%v|%v|%v|%v|%v|%v|%v|%v", tls_versions, protos, groups, sig_als, key_mode, comp_algs, suites, extensions)
 	return fp, GetMD5Hash(fp)

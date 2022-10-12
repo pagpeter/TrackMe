@@ -28,7 +28,7 @@
     <h1 class="text-4xl mb-3 font-black"><a href="/">TrackMe</a> - Explore fingerprints</h1>
 
     <div id="search-box">
-      <h2 class="text-2xl pt-5" id="title">
+      <h2 class="text-2xl pt-5" id="search-title">
         Exploring
         <span id="fp-type"
           ><select
@@ -61,8 +61,8 @@
     </div>
 
     <div id="result-box">
-            <h2 class="text-2xl pt-5" id="title">Exploring
-              <span id="fp-type-name">
+            <h2 class="text-2xl pt-5" id="result-title">Exploring
+              <span id="fp-type-name"></span>
             </h2>
 
             <h2 class="text-3xl my-2">Results for <input class="dark:bg-gray-700 rounded shadow dark:text-gray-50" id="query">:</h2>
@@ -74,7 +74,7 @@
                     >
                       <table class="table-auto" id="ja3s">
                         <thead>
-                          <th>JA3s</th>
+                          <tr>JA3s</tr>
                         </thead>
                       </table>
                     </div>
@@ -83,7 +83,7 @@
                     >
                       <table class="table-auto" id="h2-fps">
                         <thead>
-                          <th>HTTP/2 fingerprints</th>
+                          <tr>HTTP/2 fingerprints</tr>
                         </thead>
                       </table>
                     </div>
@@ -92,7 +92,7 @@
                     >
                       <table class="table-auto" id="peetprints">
                         <thead>
-                          <th>PeetPrints</th>
+                          <tr>PeetPrints</tr>
                         </thead>
                       </table>
                     </div>
@@ -101,7 +101,7 @@
                     >
                       <table class="table-auto" id="user-agents">
                         <thead>
-                          <th>User-Agens</th>
+                          <tr>User-Agens</tr>
                         </thead>
                       </table>
                     </div>
@@ -121,24 +121,24 @@
       };
 
       // https://stackoverflow.com/a/5448635
-      function getSearchParameters() {
-        var prmstr = window.location.search.substr(1);
-        return prmstr != null && prmstr != ''
+    const getSearchParameters = () => {
+        let prmstr = window.location.search.substr(1);
+        return prmstr != null && prmstr !== ''
           ? transformToAssocArray(prmstr)
           : {};
       }
 
-      function transformToAssocArray(prmstr) {
-        var params = {};
-        var prmarr = prmstr.split('&');
-        for (var i = 0; i < prmarr.length; i++) {
-          var tmparr = prmarr[i].split('=');
+      const transformToAssocArray = (prmstr) => {
+        let params = {};
+        let prmarr = prmstr.split('&');
+        for (let i = 0; i < prmarr.length; i++) {
+          let tmparr = prmarr[i].split('=');
           params[tmparr[0]] = tmparr[1];
         }
         return params;
       }
 
-      function isEmpty(obj) {
+      const isEmpty = (obj) => {
         try {
           return Object.keys(obj).length === 0;
         } catch(e) {
@@ -160,7 +160,7 @@
         if (!searchTypes.includes(params.type) || !params.by) {
           document.getElementById('result-box').style.display = 'none';
           // alert('Cant query', params.type);
-          html = `<select class="dark:bg-gray-700 rounded shadow p-1 dark:text-gray-50" id="fp-type-dd">`;
+          let html = `<select class="dark:bg-gray-700 rounded shadow p-1 dark:text-gray-50" id="fp-type-dd">`;
 
           for (const [k, v] of Object.entries(readable)) {
             html += `<option value="${k}">${v}</option>`;
@@ -172,7 +172,6 @@
               class="dark:bg-gray-700 rounded shadow p-1 dark:text-gray-50"
               id="input" autocomplete="off" />
               <span class="dark:text-red-400">(Full fingerprint, no hashes)</span></p>`;
-          return;
         } else {
           document.getElementById('search-box').style.display = 'none';
           document.getElementById('result-box').style.display = 'block';
@@ -188,41 +187,41 @@
                   document.getElementById("result-info").innerText = "No results"
                 } else {
 
-                  elem = document.getElementById("h2-fps")
-                  if (params.type != "h2") {
-                    i = 1
+                  let elem = document.getElementById("h2-fps")
+                  if (params.type !== "h2") {
+                    let i = 1
                     for (const [k, v] of Object.entries(data.h2_fps)) {
                         elem.insertRow(i++).innerHTML = `<td>· ${k} <span class="font-black">(${v} times)</span></td>`;
-                    };
+                    }
                   } else {
                     elem.parentElement.style.display = "none"
                   }
 
                   elem = document.getElementById("ja3s")
-                  if (params.type != "ja3") {
-                      i=1
+                  if (params.type !== "ja3") {
+                      let i = 1
                       for (const [k, v] of Object.entries(data.ja3s)) {
                         elem.insertRow(i++).innerHTML = `<td>· ${k} <span class="font-black">(${v} times)</span></td>`;
-                    };
+                    }
                   } else {
                     elem.parentElement.style.display = "none"
                   }
 
                   elem = document.getElementById("peetprints")
-                  if (params.type != "peetprint") {
-                      i=1
-                      for (const [k, v] of Object.entries(data.PeetPrint))  {
+                  if (params.type !== "peetprint") {
+                      let i = 1
+                      for (const [k, v] of Object.entries(data.peet_prints))  {
                         elem.insertRow(i++).innerHTML = `<td>· ${k} <span class="font-black">(${v} times)</span></td>`;
-                    };
+                    }
                   } else {
                     elem.parentElement.style.display = "none"
                   }
 
-                  i=1
+                  let i = 1
                   elem = document.getElementById("user-agents")
-                  for (const [k, v] of Object.entries(data.UserAgents)) {
+                  for (const [k, v] of Object.entries(data.user_agents)) {
                         elem.insertRow(i++).innerHTML = `<td>· ${k} <span class="font-black">(${v} times)</span></td>`;
-                    };
+                    }
                 }
             })
         }

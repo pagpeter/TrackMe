@@ -147,7 +147,7 @@ func HandleTLSConnection(conn net.Conn) bool {
 
 	parsedClientHello := ParseClientHello(hs)
 	JA3Data := CalculateJA3(parsedClientHello)
-	peetfp, peetfp_hash := CalculatePeetPrint(parsedClientHello, JA3Data)
+	peetfp, peetprintHash := CalculatePeetPrint(parsedClientHello, JA3Data)
 	tlsDetails := TLSDetails{
 		Ciphers:          JA3Data.ReadableCiphers,
 		Extensions:       parsedClientHello.Extensions,
@@ -156,7 +156,7 @@ func HandleTLSConnection(conn net.Conn) bool {
 		JA3:              JA3Data.JA3,
 		JA3Hash:          JA3Data.JA3Hash,
 		PeetPrint:        peetfp,
-		PeetPrintHash:    peetfp_hash,
+		PeetPrintHash:    peetprintHash,
 		SessionID:        parsedClientHello.SessionID,
 		ClientRandom:     parsedClientHello.ClientRandom,
 	}
@@ -198,19 +198,27 @@ func respondToHTTP1(conn net.Conn, resp Response) {
 	res += string(res1)
 	res += "\r\n\r\n"
 
-	conn.Write([]byte(res))
-	conn.Close()
+	_, err := conn.Write([]byte(res))
+	if err != nil {
+		log.Println("Error writing HTTP/1 data", err)
+		return
+	}
+	err = conn.Close()
+	if err != nil {
+		log.Println("Error closing HTTP/1 connection", err)
+		return
+	}
 }
 
 // https://stackoverflow.com/questions/52002623/golang-tcp-server-how-to-write-http2-data
-func handleHTTP2(conn net.Conn, tls_fingerprint TLSDetails) {
+func handleHTTP2(conn net.Conn, tlsFingerprint TLSDetails) {
 	// make a new framer to encode/decode frames
 	fr := http2.NewFramer(conn, conn)
 	c := make(chan ParsedFrame)
 	var frames []ParsedFrame
 
 	// Same settings that google uses
-	fr.WriteSettings(
+	err := fr.WriteSettings(
 		http2.Setting{
 			ID: http2.SettingInitialWindowSize, Val: 1048576,
 		},
@@ -221,6 +229,10 @@ func handleHTTP2(conn net.Conn, tls_fingerprint TLSDetails) {
 			ID: http2.SettingMaxHeaderListSize, Val: 65536,
 		},
 	)
+	if err != nil {
+		log.Println(err)
+		return
+	}
 
 	var frame ParsedFrame
 	go parseHTTP2(fr, c)
@@ -228,7 +240,10 @@ func handleHTTP2(conn net.Conn, tls_fingerprint TLSDetails) {
 	for {
 		frame = <-c
 		if frame.Type == "ERROR_CLOSE" {
-			conn.Close()
+			err = conn.Close()
+			if err != nil {
+				log.Println("Cant close connection", err)
+			}
 			return
 		} else if frame.Type == "ERROR" {
 			return
@@ -263,7 +278,7 @@ func handleHTTP2(conn net.Conn, tls_fingerprint TLSDetails) {
 			AkamaiFingerprint:     GetAkamaiFingerprint(frames),
 			AkamaiFingerprintHash: GetMD5Hash(GetAkamaiFingerprint(frames)),
 		},
-		TLS: tls_fingerprint,
+		TLS: tlsFingerprint,
 	}
 
 	res, ctype := Router(path, resp)
@@ -277,7 +292,7 @@ func handleHTTP2(conn net.Conn, tls_fingerprint TLSDetails) {
 	encoder.WriteField(hpack.HeaderField{Name: "content-type", Value: ctype})
 
 	// Write HEADERS frame
-	err := fr.WriteHeaders(http2.HeadersFrameParam{StreamID: frame.Stream, BlockFragment: hbuf.Bytes(), EndHeaders: true})
+	err = fr.WriteHeaders(http2.HeadersFrameParam{StreamID: frame.Stream, BlockFragment: hbuf.Bytes(), EndHeaders: true})
 	if err != nil {
 		log.Println("could not write headers: ", err)
 		return
