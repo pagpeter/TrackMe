@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"io/ioutil"
 	"log"
+	"net/url"
 	"os"
 	"sort"
 	"strings"
@@ -189,4 +190,13 @@ func sortByVal(m map[string]int, x int) map[string]int {
 		res[obj.Key] = obj.Value
 	}
 	return res
+}
+
+func getParam(key string, m url.Values) string {
+	if val, ok := m["by"]; ok {
+		if len(val) != 0 {
+			return val[0]
+		}
+	}
+	return ""
 }
