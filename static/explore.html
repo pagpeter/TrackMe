@@ -147,7 +147,9 @@
         if (!type || !query) {
           alert("Type and query can't be empty");
         }
-        window.location.href = `/explore?by=${query}&type=${type}`;
+        window.location.href = `/explore?by=${encodeURIComponent(
+          query
+        )}&type=${type}`;
       };
 
       // https://stackoverflow.com/a/5448635
@@ -257,7 +259,13 @@
                     sorted.forEach((j) => {
                       domElem.insertRow(
                         i++
-                      ).innerHTML = `<td><a href="/explore?type=${elem.notParamType}&by=${j[0]}">· ${j[0]} <span class="font-black">(${j[1]} times)</span></a></td>`;
+                      ).innerHTML = `<td><a href="/explore?type=${
+                        elem.notParamType
+                      }&by=${encodeURIComponent(j[0])}">· ${
+                        j[0]
+                      } <span class="font-black">(${
+                        j[1]
+                      } times)</span></a></td>`;
                     });
                   } else {
                     domElem.parentElement.style.display = 'none';
