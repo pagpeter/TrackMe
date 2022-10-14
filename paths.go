@@ -84,6 +84,18 @@ func apiSearchPeetPrint(_ Response, u url.Values) ([]byte, string) {
 	return j, "application/json"
 }
 
+func apiSearchUserAgent(_ Response, u url.Values) ([]byte, string) {
+	if !connectedToDB {
+		return []byte("{\"error\": \"Not connected to database.\"}"), "application/json"
+	}
+	by := getParam("by", u)
+	if by == "" {
+		return []byte("{\"error\": \"No 'by' param present\"}"), "application/json"
+	}
+	res := GetByUserAgent(by)
+	j, _ := json.MarshalIndent(res, "", "\t")
+	return j, "application/json"
+}
 
 func getAllPaths() map[string]func(Response, url.Values)([]byte, string) {
 	return map[string]func(Response, url.Values)([]byte, string){
@@ -95,5 +107,7 @@ func getAllPaths() map[string]func(Response, url.Values)([]byte, string) {
 		"/api/request-count": apiRequestCount,
 		"/api/search-ja3": apiSearchJA3,
 		"/api/search-h2": apiSearchH2,
+		"/api/search-peetprint": apiSearchPeetPrint,
+		"/api/search-useragent": apiSearchUserAgent,
 	}
 }

@@ -25,7 +25,9 @@
   </head>
 
   <body class="m-5 dark:bg-gray-800 dark:text-gray-50">
-    <h1 class="text-4xl mb-3 font-black"><a href="/">TrackMe</a> - Explore fingerprints</h1>
+    <h1 class="text-4xl mb-3 font-black">
+      <a href="/">TrackMe</a> - Explore fingerprints
+    </h1>
 
     <div id="search-box">
       <h2 class="text-2xl pt-5" id="search-title">
@@ -38,6 +40,7 @@
             <option value="h2">HTTP/2 fingerprint</option>
             <option value="ja3">JA3 fingerprint (TLS)</option>
             <option value="peetprint">Custom "PeetPrint" (TLS)</option>
+            <option value="peetprint">User-Agent</option>
           </select></span
         >
       </h2>
@@ -61,56 +64,83 @@
     </div>
 
     <div id="result-box">
-            <h2 class="text-2xl pt-5" id="result-title">Exploring
-              <span id="fp-type-name"></span>
-            </h2>
+      <h2 class="text-2xl pt-5" id="result-title">
+        Exploring
+        <span id="fp-type-name"></span>
+      </h2>
 
-            <h2 class="text-3xl my-2">Results for <input class="dark:bg-gray-700 rounded shadow dark:text-gray-50" id="query">:</h2>
-            <hr class="pb-5"/>
-            <div class="text-xs" id="result-data">
-                  <div class="flex flex-wrap">
-                    <div
-                      class="bg-gray-100 dark:bg-gray-900 rounded-md shadow p-3 m-3 hover:bg-gray-50 dark:hover:bg-black min-w-fit grow"
-                    >
-                      <table class="table-auto" id="ja3s">
-                        <thead>
-                          <tr>JA3s</tr>
-                        </thead>
-                      </table>
-                    </div>
-                    <div
-                      class="bg-gray-100 dark:bg-gray-900 rounded-md shadow p-3 m-3 hover:bg-gray-50 dark:hover:bg-black min-w-fit grow"
-                    >
-                      <table class="table-auto" id="h2-fps">
-                        <thead>
-                          <tr>HTTP/2 fingerprints</tr>
-                        </thead>
-                      </table>
-                    </div>
-                    <div
-                      class="bg-gray-100 dark:bg-gray-900 rounded-md shadow p-3 m-3 hover:bg-gray-50 dark:hover:bg-black min-w-fit"
-                    >
-                      <table class="table-auto" id="peetprints">
-                        <thead>
-                          <tr>PeetPrints</tr>
-                        </thead>
-                      </table>
-                    </div>
-                    <div
-                      class="bg-gray-100 dark:bg-gray-900 rounded-md shadow p-3 m-3 hover:bg-gray-50 dark:hover:bg-black min-w-fit grow"
-                    >
-                      <table class="table-auto" id="user-agents">
-                        <thead>
-                          <tr>User-Agens</tr>
-                        </thead>
-                      </table>
-                    </div>
-                  </div>
-            </div>
-            <p class="text-2xl" id="result-info"></p>
+      <h2 class="text-3xl my-2">
+        Results for
+        <input
+          class="dark:bg-gray-700 rounded shadow dark:text-gray-50"
+          id="query"
+        />:
+      </h2>
+      <hr class="pb-5" />
+      <div class="text-xs" id="result-data">
+        <div class="flex flex-wrap">
+          <div
+            class="bg-gray-100 dark:bg-gray-900 rounded-md shadow p-3 m-3 hover:bg-gray-50 dark:hover:bg-black min-w-fit grow"
+          >
+            <table class="table-auto" id="ja3s">
+              <thead>
+                <tr>
+                  JA3s
+                </tr>
+              </thead>
+            </table>
+          </div>
+          <div
+            class="bg-gray-100 dark:bg-gray-900 rounded-md shadow p-3 m-3 hover:bg-gray-50 dark:hover:bg-black min-w-fit grow"
+          >
+            <table class="table-auto" id="h2-fps">
+              <thead>
+                <tr>
+                  HTTP/2 fingerprints
+                </tr>
+              </thead>
+            </table>
+          </div>
+          <div
+            class="bg-gray-100 dark:bg-gray-900 rounded-md shadow p-3 m-3 hover:bg-gray-50 dark:hover:bg-black min-w-fit"
+          >
+            <table class="table-auto" id="peetprints">
+              <thead>
+                <tr>
+                  PeetPrints
+                </tr>
+              </thead>
+            </table>
+          </div>
+          <div
+            class="bg-gray-100 dark:bg-gray-900 rounded-md shadow p-3 m-3 hover:bg-gray-50 dark:hover:bg-black min-w-fit grow"
+          >
+            <table class="table-auto" id="user-agents">
+              <thead>
+                <tr>
+                  User-Agens
+                </tr>
+              </thead>
+            </table>
+          </div>
+        </div>
+      </div>
+      <p class="text-2xl" id="result-info"></p>
     </div>
 
     <script>
+      const sortByVal = (dict) => {
+        var items = Object.keys(dict).map(function (key) {
+          return [key, dict[key]];
+        });
+
+        // Sort the array based on the second element
+        items.sort(function (first, second) {
+          return second[1] - first[1];
+        });
+        return items;
+      };
+
       const search = () => {
         const type = document.getElementById('fp-type-dd').value;
         const query = document.getElementById('input').value;
@@ -121,12 +151,12 @@
       };
 
       // https://stackoverflow.com/a/5448635
-    const getSearchParameters = () => {
+      const getSearchParameters = () => {
         let prmstr = window.location.search.substr(1);
         return prmstr != null && prmstr !== ''
           ? transformToAssocArray(prmstr)
           : {};
-      }
+      };
 
       const transformToAssocArray = (prmstr) => {
         let params = {};
@@ -136,22 +166,23 @@
           params[tmparr[0]] = tmparr[1];
         }
         return params;
-      }
+      };
 
       const isEmpty = (obj) => {
         try {
           return Object.keys(obj).length === 0;
-        } catch(e) {
-          return true
+        } catch (e) {
+          return true;
         }
-      }
+      };
 
-      const searchTypes = ['h2', 'ja3', 'peetprint'];
+      const searchTypes = ['h2', 'ja3', 'peetprint', 'useragent'];
 
       const readable = {
         h2: 'HTTP/2 fingerprint',
         ja3: 'JA3 fingerprint (TLS)',
         peetprint: 'Custom "PeetPrint" (TLS)',
+        useragent: 'User-Agent',
       };
 
       const insert = () => {
@@ -175,55 +206,65 @@
         } else {
           document.getElementById('search-box').style.display = 'none';
           document.getElementById('result-box').style.display = 'block';
-          document.getElementById('query').value = params.by
-          document.getElementById('fp-type-name').innerHTML = readable[params.type];
-          fetch(`/api/search-${params.type}?by=${params.by}`)
-            .then(res => res.json())
-            .then(data => {
-                console.log(data, !data.ja3s, !data.PeetPrint, !data.UserAgents)
+          document.getElementById('query').value = decodeURIComponent(
+            params.by
+          );
+          document.getElementById('fp-type-name').innerHTML =
+            readable[params.type];
 
-                if (isEmpty(data.h2_fps) && isEmpty(data.ja3s) && isEmpty(data.PeetPrint) && isEmpty(data.UserAgents)) {
-                  document.getElementById("result-data").style.display = "none"
-                  document.getElementById("result-info").innerText = "No results"
-                } else {
+          fetch(
+            `/api/search-${params.type}?by=${encodeURIComponent(params.by)}`
+          )
+            .then((res) => res.json())
+            .then((data) => {
+              if (
+                isEmpty(data.h2_fps) &&
+                isEmpty(data.ja3s) &&
+                isEmpty(data.PeetPrint) &&
+                isEmpty(data.UserAgents)
+              ) {
+                document.getElementById('result-data').style.display = 'none';
+                document.getElementById('result-info').innerText = 'No results';
+              } else {
+                const mapping = [
+                  {
+                    notParamType: 'h2',
+                    dataKey: 'h2_fps',
+                    elemID: 'h2-fps',
+                  },
+                  {
+                    notParamType: 'ja3',
+                    dataKey: 'ja3s',
+                    elemID: 'ja3s',
+                  },
+                  {
+                    notParamType: 'peetprint',
+                    dataKey: 'peet_prints',
+                    elemID: 'peetprints',
+                  },
+                  {
+                    notParamType: 'useragent',
+                    dataKey: 'user_agents',
+                    elemID: 'user-agents',
+                  },
+                ];
 
-                  let elem = document.getElementById("h2-fps")
-                  if (params.type !== "h2") {
-                    let i = 1
-                    for (const [k, v] of Object.entries(data.h2_fps)) {
-                        elem.insertRow(i++).innerHTML = `<td>· ${k} <span class="font-black">(${v} times)</span></td>`;
-                    }
+                mapping.forEach((elem) => {
+                  let domElem = document.getElementById(elem.elemID);
+                  if (params.type !== elem.notParamType) {
+                    let i = 1;
+                    const sorted = sortByVal(data[elem.dataKey]);
+                    sorted.forEach((j) => {
+                      domElem.insertRow(
+                        i++
+                      ).innerHTML = `<td><a href="/explore?type=${elem.notParamType}&by=${j[0]}">· ${j[0]} <span class="font-black">(${j[1]} times)</span></a></td>`;
+                    });
                   } else {
-                    elem.parentElement.style.display = "none"
+                    domElem.parentElement.style.display = 'none';
                   }
-
-                  elem = document.getElementById("ja3s")
-                  if (params.type !== "ja3") {
-                      let i = 1
-                      for (const [k, v] of Object.entries(data.ja3s)) {
-                        elem.insertRow(i++).innerHTML = `<td>· ${k} <span class="font-black">(${v} times)</span></td>`;
-                    }
-                  } else {
-                    elem.parentElement.style.display = "none"
-                  }
-
-                  elem = document.getElementById("peetprints")
-                  if (params.type !== "peetprint") {
-                      let i = 1
-                      for (const [k, v] of Object.entries(data.peet_prints))  {
-                        elem.insertRow(i++).innerHTML = `<td>· ${k} <span class="font-black">(${v} times)</span></td>`;
-                    }
-                  } else {
-                    elem.parentElement.style.display = "none"
-                  }
-
-                  let i = 1
-                  elem = document.getElementById("user-agents")
-                  for (const [k, v] of Object.entries(data.user_agents)) {
-                        elem.insertRow(i++).innerHTML = `<td>· ${k} <span class="font-black">(${v} times)</span></td>`;
-                    }
-                }
-            })
+                });
+              }
+            });
         }
       };
       insert(window.data);

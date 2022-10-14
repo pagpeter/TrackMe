@@ -1,7 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"log"
+	"net/url"
 	"strings"
 	"time"
 
@@ -36,6 +38,13 @@ type ByH2 struct {
 	JA3        map[string]int `json:"ja3s"`
 	PeetPrint  map[string]int `json:"peet_prints"`
 	UserAgents map[string]int `json:"user_agents"`
+}
+
+type ByUserAgent struct {
+	UserAgent string `json:"useragent"`
+	H2         map[string]int         `json:"h2_fps"`
+	JA3        map[string]int `json:"ja3s"`
+	PeetPrint  map[string]int `json:"peet_prints"`
 }
 
 func SaveRequest(req Response) {
@@ -208,6 +217,48 @@ func GetByPeetPrint(val string) ByPeetPrint {
 	res.JA3 = sortByVal(res.JA3, COUNT)
 	res.H2 = sortByVal(res.H2, COUNT)
 	res.UserAgents = sortByVal(res.UserAgents, COUNT)
+
+	return res
+}
+
+func GetByUserAgent(val string) ByUserAgent {
+	res := ByUserAgent{
+		UserAgent:  val,
+		H2:         map[string]int{},
+		JA3:        map[string]int{},
+		PeetPrint: map[string]int{},
+	}
+
+	decodedValue, err := url.QueryUnescape(val)
+	if err != nil {
+		return res
+	}
+	fmt.Println(val)
+
+	dbRes := queryDB("user_agent", decodedValue)
+
+	for _, r := range dbRes {
+		if v, ok := res.H2[r.H2]; ok {
+			res.H2[r.H2] = v + 1
+		} else {
+			res.H2[r.H2] = 1
+		}
+
+		if v, ok := res.JA3[r.JA3]; ok {
+			res.JA3[r.JA3] = v + 1
+		} else {
+			res.JA3[r.JA3] = 1
+		}
+
+		if v, ok := res.PeetPrint[r.PeetPrint]; ok {
+			res.PeetPrint[r.PeetPrint] = v + 1
+		} else {
+			res.PeetPrint[r.PeetPrint] = 1
+		}
+	}
+	res.JA3 = sortByVal(res.JA3, COUNT)
+	res.H2 = sortByVal(res.H2, COUNT)
+	res.PeetPrint = sortByVal(res.PeetPrint, COUNT)
 
 	return res
 }
