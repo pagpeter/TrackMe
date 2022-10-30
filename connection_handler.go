@@ -118,6 +118,11 @@ func parseHTTP2(f *http2.Framer, c chan ParsedFrame) {
 			if frame.PriorityParam.Exclusive {
 				p.Priority.Exclusive = 1
 			}
+		case *http2.GoAwayFrame:
+			p.GoAway = &GoAway{}
+			p.GoAway.LastStreamID = frame.LastStreamID
+			p.GoAway.ErrCode = uint32(frame.ErrCode)
+			p.GoAway.DebugData = frame.DebugData()
 		}
 
 		c <- p
@@ -235,6 +240,8 @@ func handleHTTP2(conn net.Conn, tlsFingerprint TLSDetails) {
 	}
 
 	var frame ParsedFrame
+	var headerFrame ParsedFrame
+
 	go parseHTTP2(fr, c)
 
 	for {
@@ -251,20 +258,27 @@ func handleHTTP2(conn net.Conn, tlsFingerprint TLSDetails) {
 		// log.Println(frame)
 		frames = append(frames, frame)
 		if frame.Type == "HEADERS" {
+			headerFrame = frame
+		}
+		if len(frame.Flags) > 0 && frame.Flags[0] == "EndStream (0x1)" {
 			break
 		}
 	}
 
-	// get method and path from the first headers frame
+	// get method, path and user-agent from the header frame
 	var path string
 	var method string
+	var userAgent string
 
-	for _, h := range frame.Headers {
+	for _, h := range headerFrame.Headers {
 		if strings.HasPrefix(h, ":method") {
 			method = strings.Split(h, ": ")[1]
 		}
 		if strings.HasPrefix(h, ":path") {
 			path = strings.Split(h, ": ")[1]
+		}
+		if strings.HasPrefix(h, "user-agent") {
+			userAgent = strings.Split(h, ": ")[1]
 		}
 	}
 
@@ -273,6 +287,7 @@ func handleHTTP2(conn net.Conn, tlsFingerprint TLSDetails) {
 		HTTPVersion: "h2",
 		path:        path,
 		Method:      method,
+		UserAgent:   userAgent,
 		Http2: &Http2Details{
 			SendFrames:            frames,
 			AkamaiFingerprint:     GetAkamaiFingerprint(frames),
@@ -292,7 +307,7 @@ func handleHTTP2(conn net.Conn, tlsFingerprint TLSDetails) {
 	encoder.WriteField(hpack.HeaderField{Name: "content-type", Value: ctype})
 
 	// Write HEADERS frame
-	err = fr.WriteHeaders(http2.HeadersFrameParam{StreamID: frame.Stream, BlockFragment: hbuf.Bytes(), EndHeaders: true})
+	err = fr.WriteHeaders(http2.HeadersFrameParam{StreamID: headerFrame.Stream, BlockFragment: hbuf.Bytes(), EndHeaders: true})
 	if err != nil {
 		log.Println("could not write headers: ", err)
 		return
@@ -300,10 +315,10 @@ func handleHTTP2(conn net.Conn, tlsFingerprint TLSDetails) {
 
 	chunks := splitBytesIntoChunks(res, 1024)
 	for _, c := range chunks {
-		fr.WriteData(frame.Stream, false, c)
+		fr.WriteData(headerFrame.Stream, false, c)
 	}
-	fr.WriteData(frame.Stream, true, []byte{})
-	fr.WriteGoAway(frame.Stream, http2.ErrCodeNo, []byte{})
+	fr.WriteData(headerFrame.Stream, true, []byte{})
+	fr.WriteGoAway(headerFrame.Stream, http2.ErrCodeNo, []byte{})
 
 	time.Sleep(time.Millisecond * 500)
 	conn.Close()
