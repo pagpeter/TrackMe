@@ -38,7 +38,7 @@ type Response struct {
 	HTTPVersion string        `json:"http_version"`
 	path        string        `json:"-"`
 	Method      string        `json:"method"`
-	UserAgent   string        `json:"user_agent"`
+	UserAgent   string        `json:"user_agent,omitempty"`
 	TLS         TLSDetails    `json:"tls"`
 	Http1       *Http1Details `json:"http1,omitempty"`
 	Http2       *Http2Details `json:"http2,omitempty"`
