@@ -38,6 +38,7 @@ type Response struct {
 	HTTPVersion string        `json:"http_version"`
 	path        string        `json:"-"`
 	Method      string        `json:"method"`
+	UserAgent   string        `json:"user_agent,omitempty"`
 	TLS         TLSDetails    `json:"tls"`
 	Http1       *Http1Details `json:"http1,omitempty"`
 	Http2       *Http2Details `json:"http2,omitempty"`
@@ -74,6 +75,12 @@ type Priority struct {
 	Exclusive int `json:"exclusive"`
 }
 
+type GoAway struct {
+	LastStreamID uint32
+	ErrCode      uint32
+	DebugData    []byte
+}
+
 type ParsedFrame struct {
 	Type      string    `json:"frame_type,omitempty"`
 	Stream    uint32    `json:"stream_id,omitempty"`
@@ -84,6 +91,7 @@ type ParsedFrame struct {
 	Increment uint32    `json:"increment,omitempty"`
 	Flags     []string  `json:"flags,omitempty"`
 	Priority  *Priority `json:"priority,omitempty"`
+	GoAway    *GoAway   `json:"goaway,omitempty"`
 }
 
 type Config struct {
