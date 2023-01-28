@@ -1,5 +1,5 @@
 {
-  "log_to_db": true,
+  "log_to_db": false,
   "tls_port": "443",
   "http_port": "80",
   "cert_file": "certs/chain.pem",
