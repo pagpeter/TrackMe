@@ -7,6 +7,6 @@
   "host": "0.0.0.0",
   "mongoURL": "",
   "mongo_database": "TrackMe",
-  "mongo_collection": "requests"
-  "mongo_log_ips": false,
+  "mongo_collection": "requests",
+  "mongo_log_ips": false
 }
