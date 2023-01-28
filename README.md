@@ -102,6 +102,16 @@ Param: `?by=<peetprint>`
 
 Returns the most seen other identifiers (user-agent, h2, JA3) that were seen together with this identifier. Only works when connected to a database.
 
+## Docker
+
+You can also run the server in a docker container using docker-compose.
+
+```bash
+# generate certs and update your config.json
+docker-compose -up --build
+# visit https://localhost/api/all
+```
+
 ## TLS & HTTP2 fingerprinting resources
 
 - [TLS 1.3, every byte explained](https://tls13.xargs.org/)
