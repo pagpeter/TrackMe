@@ -3,7 +3,6 @@ module main
 go 1.17
 
 require (
-	github.com/honeytrap/honeytrap v0.0.0-20211220121207-05965fc67dea
 	github.com/wwhtrbbtt/utls v0.0.0-20220918194152-45ee2a20799c
 	go.mongodb.org/mongo-driver v1.9.0
 	golang.org/x/net v0.0.0-20220708220712-1185a9018129

@@ -1,0 +1,15 @@
+version: "2.2"
+
+services:
+  peet-tls:
+    image: peet-tls
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ${PWD}/certs/:/app/certs
+      - ${PWD}/config.json:/app/config.json
+      - ${PWD}/blockedIPs:/app/blockedIPs
+    ports:
+      - "443:443"
+      - "80:80"
