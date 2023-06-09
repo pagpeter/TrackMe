@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -149,6 +150,9 @@ func CalculatePeetPrint(parsed ClientHello, j JA3Calculating) (string, string) {
 		}
 	}
 
+	// Sort extensions because the order is randomized
+	sort.Strings(j.PeetPrintExtensions)
+
 	tls_versions := strings.Join(versions, "-")                  // Comma seperated list of supported TLS versions as sent in the `supported_versions` extension. TODO
 	protos := strings.Join(tmp, "-")                             // Comma seperated list of supported HTTP versions as sent in the `application_layer_protocol_negotiation` extension. http/1.0 => 1.0, http/1.1 => 1.1, http/2 => 2
 	sig_als := joinInts(parsed.SignatureAlgorithms, "-")         // Comma seperated list of supported signatue algorithms as sent in the `signature_algorithms` extension.
@@ -158,16 +162,16 @@ func CalculatePeetPrint(parsed ClientHello, j JA3Calculating) (string, string) {
 	suites := strings.Join(j.PeetPrintCiphers, "-")              // Cipher suites
 	extensions := strings.Join(j.PeetPrintExtensions, "-")       // Extensions
 
-//	if debug {
-//		fmt.Println("tls_versions:", tls_versions)
-//		fmt.Println("protos:", protos)
-//		fmt.Println("signature algs:", sig_als)
-//		fmt.Println("key_mode:", key_mode)
-//		fmt.Println("comp_algs:", comp_algs)
-//		fmt.Println("groups:", groups)
-//		fmt.Println("cipher suites:", suites)
-//		fmt.Println("extensions:", extensions)
-//	}
+	//	if debug {
+	//		fmt.Println("tls_versions:", tls_versions)
+	//		fmt.Println("protos:", protos)
+	//		fmt.Println("signature algs:", sig_als)
+	//		fmt.Println("key_mode:", key_mode)
+	//		fmt.Println("comp_algs:", comp_algs)
+	//		fmt.Println("groups:", groups)
+	//		fmt.Println("cipher suites:", suites)
+	//		fmt.Println("extensions:", extensions)
+	//	}
 
 	fp := fmt.Sprintf("%v|%v|%v|%v|%v|%v|%v|%v", tls_versions, protos, groups, sig_als, key_mode, comp_algs, suites, extensions)
 	return fp, GetMD5Hash(fp)

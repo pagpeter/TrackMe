@@ -15,8 +15,8 @@ type TLSDetails struct {
 	JA3     string `json:"ja3"`
 	JA3Hash string `json:"ja3_hash"`
 
-	PeetPrint     string `json:"peetprint (WIP)"`
-	PeetPrintHash string `json:"peetprint_hash (WIP)"`
+	PeetPrint     string `json:"peetprint"`
+	PeetPrintHash string `json:"peetprint_hash"`
 
 	ClientRandom string `json:"client_random"`
 	SessionID    string `json:"session_id"`

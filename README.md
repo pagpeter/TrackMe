@@ -36,8 +36,9 @@ I wanted to extend JA3, so I created my own TLS fingerprint algorithm. It's bett
 It looks like this:
 
 ```
-supported-tls-versions|supported-protocols|supported-groups|supported-signature-algorithms|psk-key-exchange-mode|certificate-compression-algorithms|cipher-suites|extensions
+supported-tls-versions|supported-protocols|supported-groups|supported-signature-algorithms|psk-key-exchange-mode|certificate-compression-algorithms|cipher-suites|sorted-extensions
 ```
+
 "-" is used as the seperator.
 
 **supported-tls-versions**: Seperated list of supported TLS versions as sent in the `supported_versions` extension.
@@ -54,7 +55,7 @@ supported-tls-versions|supported-protocols|supported-groups|supported-signature-
 
 **cipher-suites**: Seperated list of the supported cipher suites.
 
-**extensions**: Seperated list of the supported extensions.
+**sorted-extensions**: Sorted list of the supported extensions. (Sorted because of order randomization used by chrome)
 
 All TLS GREASE values must be replaced with "GREASE".
 
