@@ -4,7 +4,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="A small website and API to show off server-side tracking technology, that also provides an API for TLS (ja3) )and http2 fingerprinting"
+      content="A small website and API to show off server-side tracking technology, that also provides an API for TLS (JA3) and HTTP/2 fingerprinting"
     />
     <meta
       name="keywords"
@@ -51,6 +51,10 @@
         d.getElementById('akamai-hash').innerText =
           data.http2.akamai_fingerprint_hash;
         d.getElementById('akamai').innerText = data.http2.akamai_fingerprint;
+
+        d.getElementById('peetprint-hash').innerText =
+          data.tls.peetprint_hasj;
+        d.getElementById('peetprint').innerText = data.tls.peetprint;
 
         d.getElementById('tls-version').innerText =
           data.tls.tls_version_negotiated;
@@ -137,6 +141,12 @@
         <p class="text-2xl break-all" id="akamai-hash">Loading...</p>
         <p class="text-sm break-all" id="akamai">Loading...</p>
       </a>
+      <a id="h2-link"
+        class="bg-gray-100 dark:bg-gray-900 rounded-md shadow p-3 m-3 hover:bg-gray-50 dark:hover:bg-black min-w-fit max-w-full grow">
+        <h2 class="font-bold">PeetPrint</h2>
+        <p class="text-2xl break-all" id="peetprint-hash">Loading...</p>
+        <p class="text-sm break-all" id="peetprint">Loading...</p>
+      </a>
     </div>
 
     <h2 class="text-2xl pt-5">Request details</h2>
@@ -211,6 +221,9 @@
 
    <ul>
       <li>
+        <a href="https://github.com/wwhtrbbtt/TrackMe">Source code</a>
+      </li>
+      <li>
          <a href="https://en-academic.com/dic.nsf/enwiki/868408">TCP/IP stack fingerprinting (lots of links)</a>
       </li>
       <li>
@@ -221,9 +234,6 @@
       </li>
       <li>
          <a href="https://github.com/bogdanfinn/tls-client/">HTTP client to bypass fingerprinting</a>
-      </li>
-      <li>
-         <a href="https://github.com/wwhtrbbtt/TrackMe">Source code of TrackMe</a>
       </li>
       <li>
          <a href="https://http2-explained.haxx.se/en/part1">HTTP2 Explained - haxx.se</a>
@@ -336,7 +346,7 @@
         class="bg-blue-100 dark:bg-blue-900 dark:hover:bg-blue-800 rounded-md shadow p-3 m-3 hover:bg-blue-50 min-w-fit grow"
       >
         <h2 class="font-bold">Discord</h2>
-        <p class="text-xl break-all">p33t v4#4245</p>
+        <p class="text-xl break-all">@.peeet.</p>
       </div>
       <div
         class="bg-yellow-100 dark:bg-sky-900 dark:hover:bg-sky-800 rounded-md shadow p-3 m-3 hover:bg-yellow-50 min-w-fit grow"
