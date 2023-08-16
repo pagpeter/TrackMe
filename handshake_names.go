@@ -38,6 +38,7 @@ func isGrease(cipher string) bool {
 // https://testssl.sh/openssl-iana.mapping.html
 
 // for i in c.split("\n"):
+//
 //	print(i.split("\t")[0][1:-1] + ': "' + i.split("\t")[-1] + '",')
 var ciphers = map[uint16]string{
 	0x00: "TLS_NULL_WITH_NULL_NULL",
@@ -524,6 +525,11 @@ var curves = map[uint16]string{
 	259:   "ffdhe6144 (259)",
 	260:   "ffdhe8192 (260)",
 	16696: "CECPQ2 (16696)",
+
+	// https://pq.cloudflareresearch.com/
+	0xfe30: "X25519Kyber512 (65072)",
+	0xfe31: "X25519Kyber768 (65073)",
+	0x6399: "X25519Kyber768 (25497)",
 }
 
 func GetCurveNameByID(id uint16) string {
