@@ -16,9 +16,9 @@ func Log(msg string) {
 func Router(path string, res Response) ([]byte, string) {
 	// res.Donate = "Please consider donating to keep this API running."
 	Log(fmt.Sprintf("%v %v %v %v %v", res.IP, res.Method, res.HTTPVersion, res.path, res.TLS.JA3Hash))
-	if GetUserAgent(res) == "" {
-		return []byte("{\"error\": \"No user-agent\"}"), "text/html"
-	}
+	// if GetUserAgent(res) == "" {
+	//	return []byte("{\"error\": \"No user-agent\"}"), "text/html"
+	// }
 	if c.LogToDB && res.path != "/favicon.ico" {
 		SaveRequest(res)
 	}
