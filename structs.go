@@ -54,10 +54,12 @@ func (res Response) ToJson() string {
 }
 
 type SmallResponse struct {
-	JA3        string `json:"ja3"`
-	JA3Hash    string `json:"ja3_hash"`
-	Akamai     string `json:"akamai"`
-	AkamaiHash string `json:"akamai_hash"`
+	JA3           string `json:"ja3"`
+	JA3Hash       string `json:"ja3_hash"`
+	Akamai        string `json:"akamai"`
+	AkamaiHash    string `json:"akamai_hash"`
+	PeetPrint     string `json:"peetprint"`
+	PeetPrintHash string `json:"peetprint_hash"`
 }
 
 func (res SmallResponse) ToJson() string {

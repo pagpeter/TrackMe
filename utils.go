@@ -101,7 +101,7 @@ func GetMD5Hash(text string) string {
 func ReadFile(filename string) ([]byte, error) {
 	body, err := ioutil.ReadFile(filename)
 	if err != nil {
-		log.Println("unable to read file: %v", err)
+		log.Printf("unable to read file: %v\n", err)
 		return nil, err
 	}
 	return body, nil
@@ -140,7 +140,7 @@ func IsIPBlocked(ip string) bool {
 
 func getKeysInOrder(m map[http2.Flags]string) []http2.Flags {
 	keys := make([]http2.Flags, 0)
-	for k, _ := range m {
+	for k := range m {
 		keys = append(keys, k)
 	}
 	sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
@@ -156,7 +156,7 @@ func splitBytesIntoChunks(buf []byte, lim int) [][]byte {
 		chunks = append(chunks, chunk)
 	}
 	if len(buf) > 0 {
-		chunks = append(chunks, buf[:len(buf)])
+		chunks = append(chunks, buf[:])
 	}
 	return chunks
 }
@@ -180,7 +180,7 @@ func sortByVal(m map[string]int, x int) map[string]int {
 	})
 
 	res := map[string]int{}
-	tmp := []kv{}
+	var tmp []kv
 	if len(ss) > x {
 		tmp = ss[:x]
 	} else {

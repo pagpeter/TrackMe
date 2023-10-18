@@ -8,7 +8,7 @@ import (
 
 func Log(msg string) {
 	t := time.Now()
-	formatted := t.Format("2006-02-01 15:04:05")
+	formatted := t.Format("2006-01-02 15:04:05")
 	fmt.Printf("[%v] %v\n", formatted, msg)
 }
 

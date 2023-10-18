@@ -41,10 +41,10 @@ type ByH2 struct {
 }
 
 type ByUserAgent struct {
-	UserAgent string `json:"useragent"`
-	H2         map[string]int         `json:"h2_fps"`
-	JA3        map[string]int `json:"ja3s"`
-	PeetPrint  map[string]int `json:"peet_prints"`
+	UserAgent string         `json:"useragent"`
+	H2        map[string]int `json:"h2_fps"`
+	JA3       map[string]int `json:"ja3s"`
+	PeetPrint map[string]int `json:"peet_prints"`
 }
 
 func SaveRequest(req Response) {
@@ -83,7 +83,7 @@ func GetTotalRequestCount() int64 {
 
 func queryDB(query, val string) []RequestLog {
 	dbRes := []RequestLog{}
-	cur, err := collection.Find(ctx, bson.D{{query, val}})
+	cur, err := collection.Find(ctx, bson.D{{Key: query, Value: val}})
 	if err != nil {
 		log.Println("Error quering data:", err)
 		return dbRes
@@ -223,9 +223,9 @@ func GetByPeetPrint(val string) ByPeetPrint {
 
 func GetByUserAgent(val string) ByUserAgent {
 	res := ByUserAgent{
-		UserAgent:  val,
-		H2:         map[string]int{},
-		JA3:        map[string]int{},
+		UserAgent: val,
+		H2:        map[string]int{},
+		JA3:       map[string]int{},
 		PeetPrint: map[string]int{},
 	}
 

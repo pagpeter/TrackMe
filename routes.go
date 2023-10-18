@@ -6,8 +6,8 @@ import (
 	"net/url"
 )
 
-func staticFile(file string) func(Response, url.Values)([]byte, string) {
-	return func(Response, url.Values)([]byte, string){
+func staticFile(file string) func(Response, url.Values) ([]byte, string) {
+	return func(Response, url.Values) ([]byte, string) {
 		b, _ := ReadFile(file)
 		return b, "text/html"
 	}
@@ -20,7 +20,7 @@ func apiAll(res Response, _ url.Values) ([]byte, string) {
 func apiTLS(res Response, _ url.Values) ([]byte, string) {
 	return []byte(Response{
 		TLS: res.TLS,
-		}.ToJson()), "application/json"
+	}.ToJson()), "application/json"
 }
 
 func apiClean(res Response, _ url.Values) ([]byte, string) {
@@ -31,11 +31,13 @@ func apiClean(res Response, _ url.Values) ([]byte, string) {
 		hash = GetMD5Hash(res.Http2.AkamaiFingerprint)
 	}
 	return []byte(SmallResponse{
-		JA3:        res.TLS.JA3,
-		JA3Hash:    res.TLS.JA3Hash,
-		Akamai:     akamai,
-		AkamaiHash: hash,
-		}.ToJson()), "application/json"
+		JA3:           res.TLS.JA3,
+		JA3Hash:       res.TLS.JA3Hash,
+		Akamai:        akamai,
+		AkamaiHash:    hash,
+		PeetPrint:     res.TLS.PeetPrint,
+		PeetPrintHash: res.TLS.PeetPrintHash,
+	}.ToJson()), "application/json"
 }
 
 func apiRequestCount(_ Response, _ url.Values) ([]byte, string) {
@@ -97,16 +99,16 @@ func apiSearchUserAgent(_ Response, u url.Values) ([]byte, string) {
 	return j, "application/json"
 }
 
-func getAllPaths() map[string]func(Response, url.Values)([]byte, string) {
-	return map[string]func(Response, url.Values)([]byte, string){
-		"/": staticFile("static/index.html"),
-		"/explore": staticFile("static/explore.html"),
-		"/api/all": apiAll,
-		"/api/tls": apiTLS,
-		"/api/clean": apiClean,
-		"/api/request-count": apiRequestCount,
-		"/api/search-ja3": apiSearchJA3,
-		"/api/search-h2": apiSearchH2,
+func getAllPaths() map[string]func(Response, url.Values) ([]byte, string) {
+	return map[string]func(Response, url.Values) ([]byte, string){
+		"/":                     staticFile("static/index.html"),
+		"/explore":              staticFile("static/explore.html"),
+		"/api/all":              apiAll,
+		"/api/tls":              apiTLS,
+		"/api/clean":            apiClean,
+		"/api/request-count":    apiRequestCount,
+		"/api/search-ja3":       apiSearchJA3,
+		"/api/search-h2":        apiSearchH2,
 		"/api/search-peetprint": apiSearchPeetPrint,
 		"/api/search-useragent": apiSearchUserAgent,
 	}

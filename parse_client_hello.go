@@ -493,7 +493,7 @@ func ParseClientHello(ch string) ClientHello {
 	chp.SessionID, c = parseSessionID(ch, c)
 	chp.CipherSuites, c = parseCipherSuites(ch, c)
 	chp.CompressionMethods, c = parseCompressionMethods(ch, c)
-	exts, c := parseExtensions(ch, c)
+	exts, _ := parseExtensions(ch, c)
 	for _, ext := range exts {
 		chp.AllExtensions = append(chp.AllExtensions, hexToInt(ext.Type))
 	}

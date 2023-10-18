@@ -51,7 +51,7 @@ func init() {
 }
 
 func redirect(w http.ResponseWriter, r *http.Request) {
-	http.Redirect(w, r, "http://tls.peet.ws", 301)
+	http.Redirect(w, r, "http://tls.peet.ws", http.StatusMovedPermanently)
 }
 
 func StartRedirectServer(host, port string) {
