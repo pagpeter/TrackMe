@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/url"
+	"strings"
 	"time"
 )
 
@@ -12,10 +13,15 @@ func Log(msg string) {
 	fmt.Printf("[%v] %v\n", formatted, msg)
 }
 
+func cleanIP(ip string) string {
+	return strings.Replace(strings.Replace(ip, "]", "", -1), "[", "", -1)
+}
+
 // Router returns bytes and content type that should be sent to the client
 func Router(path string, res Response) ([]byte, string) {
+	res.TCPIP = TCPFingerprints[cleanIP(res.IP)]
 	// res.Donate = "Please consider donating to keep this API running."
-	Log(fmt.Sprintf("%v %v %v %v %v", res.IP, res.Method, res.HTTPVersion, res.path, res.TLS.JA3Hash))
+	Log(fmt.Sprintf("%v %v %v %v %v", cleanIP(res.IP), res.Method, res.HTTPVersion, res.path, res.TLS.JA3Hash))
 	// if GetUserAgent(res) == "" {
 	//	return []byte("{\"error\": \"No user-agent\"}"), "text/html"
 	// }

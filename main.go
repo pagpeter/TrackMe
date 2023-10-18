@@ -21,6 +21,7 @@ var ctx = context.TODO()
 var client *mongo.Client
 var local = false
 var connectedToDB = false
+var TCPFingerprints = map[string]TCPIPDetails{}
 
 func init() {
 	// Loads the config and connects to database (if enabled)
@@ -109,6 +110,7 @@ func main() {
 
 	defer listener.Close()
 	go StartRedirectServer(c.Host, c.HTTPPort)
+	go sniffTCP()
 
 	for {
 		conn, err := listener.Accept()

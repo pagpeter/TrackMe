@@ -42,6 +42,7 @@ type Response struct {
 	TLS         TLSDetails    `json:"tls"`
 	Http1       *Http1Details `json:"http1,omitempty"`
 	Http2       *Http2Details `json:"http2,omitempty"`
+	TCPIP       TCPIPDetails  `json:"tcpip,omitempty"`
 }
 
 func (res Response) ToJson() string {
