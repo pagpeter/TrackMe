@@ -15,6 +15,8 @@ type TLSDetails struct {
 	JA3     string `json:"ja3"`
 	JA3Hash string `json:"ja3_hash"`
 
+	JA4 string `json:"ja4"`
+
 	PeetPrint     string `json:"peetprint"`
 	PeetPrintHash string `json:"peetprint_hash"`
 

@@ -11,9 +11,10 @@ import (
 )
 
 var (
-	device       string = "eth0"
-	snapshot_len int32  = 1024
-	promiscuous  bool   = false
+	device string = "eth0"
+	// device       string = "en0"
+	snapshot_len int32 = 1024
+	promiscuous  bool  = false
 	err          error
 	timeout      time.Duration = 1 * time.Millisecond
 	handle       *pcap.Handle
@@ -62,25 +63,25 @@ type TCPIPDetails struct {
 	TCP       TCPDetails `json:"tcp,omitempty"`
 }
 
-func devices() {
-	// Find all devices
-	devices, err := pcap.FindAllDevs()
-	if err != nil {
-		log.Fatal(err)
-	}
+// func devices() {
+// 	// Find all devices
+// 	devices, err := pcap.FindAllDevs()
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
 
-	// Print device information
-	fmt.Println("Devices found:")
-	for _, device := range devices {
-		fmt.Println("\nName: ", device.Name)
-		fmt.Println("Description: ", device.Description)
-		fmt.Println("Devices addresses: ", device.Description)
-		for _, address := range device.Addresses {
-			fmt.Println("- IP address: ", address.IP)
-			fmt.Println("- Subnet mask: ", address.Netmask)
-		}
-	}
-}
+// 	// Print device information
+// 	fmt.Println("Devices found:")
+// 	for _, device := range devices {
+// 		fmt.Println("\nName: ", device.Name)
+// 		fmt.Println("Description: ", device.Description)
+// 		fmt.Println("Devices addresses: ", device.Description)
+// 		for _, address := range device.Addresses {
+// 			fmt.Println("- IP address: ", address.IP)
+// 			fmt.Println("- Subnet mask: ", address.Netmask)
+// 		}
+// 	}
+// }
 
 func parseIP(packet gopacket.Packet) *IPDetails {
 	if ipLayer := packet.Layer(layers.LayerTypeIPv4); ipLayer == nil {

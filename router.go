@@ -20,6 +20,7 @@ func cleanIP(ip string) string {
 // Router returns bytes and content type that should be sent to the client
 func Router(path string, res Response) ([]byte, string) {
 	res.TCPIP = TCPFingerprints[cleanIP(res.IP)]
+	res.TLS.JA4 = CalculateJa4(res.TLS)
 	// res.Donate = "Please consider donating to keep this API running."
 	Log(fmt.Sprintf("%v %v %v %v %v", cleanIP(res.IP), res.Method, res.HTTPVersion, res.path, res.TLS.JA3Hash))
 	// if GetUserAgent(res) == "" {

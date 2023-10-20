@@ -8,9 +8,9 @@
     />
     <meta
       name="keywords"
-      content="ja3, ja3 fingerprinting api, tls fingerprinting, http2 fingerprinting, akamai fingerprinting, cloudflare fingerprinting, bypass ja3, spoof ja3"
+      content="JA3, JA4, TCP fingerprinting, JA4 fingerprinting api, tls fingerprinting, http2 fingerprinting, akamai fingerprinting, cloudflare fingerprinting, bypass ja3, spoof ja3"
     />
-    <meta name="og:site_name" content="TrackMe - ja3 API" />
+    <meta name="og:site_name" content="TrackMe - Fingerprinting API" />
     <meta charset="utf-8" />
     <title>TrackMe | Home</title>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -47,6 +47,10 @@
 
         d.getElementById("ja3-hash").innerText = data.tls.ja3_hash;
         d.getElementById("ja3").innerText = data.tls.ja3;
+
+        d.getElementById("ja4").innerText = data.tls.ja4;
+
+        d.getElementById("ttl").innerText = data.tcpip?.ip?.ttl || "-";
 
         d.getElementById("akamai-hash").innerText =
           data.http2.akamai_fingerprint_hash;
@@ -132,6 +136,13 @@
         <p class="text-2xl break-all" id="ja3-hash">Loading...</p>
         <p class="text-sm break-all" id="ja3">Loading...</p>
       </a>
+      <div
+        id="h2-link"
+        class="bg-gray-100 dark:bg-gray-900 rounded-md shadow p-3 m-3 hover:bg-gray-50 dark:hover:bg-black min-w-fit max-w-full grow"
+      >
+        <h2 class="font-bold">JA4 fingerprint</h2>
+        <p class="text-2xl break-all" id="ja4">Loading...</p>
+    </div>
       <a
         id="h2-link"
         class="bg-gray-100 dark:bg-gray-900 rounded-md shadow p-3 m-3 hover:bg-gray-50 dark:hover:bg-black min-w-fit max-w-full grow"
@@ -185,6 +196,12 @@
         <h2 class="font-bold">Supported TLS versions</h2>
         <p class="text-2xl" id="tls-versions">Loading...</p>
       </div>
+        <div
+        class="bg-yellow-100 dark:bg-yellow-900 dark:hover:bg-yellow-800 rounded-md shadow p-3 m-3 hover:bg-violet-50 min-w-fit grow"
+      >
+        <h2 class="font-bold">IP TTL</h2>
+        <p class="text-2xl" id="ttl">Loading...</p>
+      </div>
     </div>
 
     <div class="flex flex-wrap">
@@ -226,7 +243,7 @@
       </li>
       <li>
         <a href="https://en-academic.com/dic.nsf/enwiki/868408"
-          >TCP/IP stack fingerprinting (lots of links)</a
+          >TCP/IP stack fingerprinting</a
         >
       </li>
       <li>
@@ -237,7 +254,13 @@
       <li>
         <a
           href="https://engineering.salesforce.com/tls-fingerprinting-with-ja3-and-ja3s-247362855967/"
-          >Ja3 explanation - Salesforce</a
+          >JA3 explanation - Salesforce</a
+        >
+      </li>
+            <li>
+        <a
+          href="https://www.foxio.io/"
+          >JA4 explanation - FoxIO</a
         >
       </li>
       <li>
