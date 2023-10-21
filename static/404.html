@@ -23,17 +23,8 @@
       }
     </style>
     <script>
-      const insert = () => {
-        document.getElementById("total").innerText = window.data.total_requests + " people"
-      }
-
       const track = () => {
-        fetch('/api/request-count')
-          .then((res) => res.json())
-          .then((res) => {
-            window.data = res;
-          })
-          .then(() => insert(window.data));
+        document.getElementById("total").innerText = `/*DATA*/` + " people"
       };
     </script>
   </head>

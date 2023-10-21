@@ -110,14 +110,7 @@
         }
       };
 
-      const track = () => {
-        fetch("/api/all")
-          .then((res) => res.json())
-          .then((res) => {
-            window.data = res;
-          })
-          .then(() => insert(window.data));
-      };
+      const track = () => insert(/*DATA*/)
     </script>
   </head>
 

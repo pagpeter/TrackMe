@@ -39,5 +39,5 @@ func Router(path string, res Response) ([]byte, string) {
 	}
 	// 404
 	b, _ := ReadFile("static/404.html")
-	return b, "text/html"
+	return []byte(strings.ReplaceAll(string(b), "/*DATA*/", fmt.Sprintf("%v", GetTotalRequestCount()))), "text/html"
 }

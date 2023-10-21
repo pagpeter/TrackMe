@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"strings"
 )
 
 func staticFile(file string) func(Response, url.Values) ([]byte, string) {
@@ -99,9 +100,15 @@ func apiSearchUserAgent(_ Response, u url.Values) ([]byte, string) {
 	return j, "application/json"
 }
 
+func index(r Response, v url.Values) ([]byte, string) {
+	res, ct := staticFile("static/index.html")(r, v)
+	data, _ := json.Marshal(r)
+	return []byte(strings.ReplaceAll(string(res), "/*DATA*/", string(data))), ct
+}
+
 func getAllPaths() map[string]func(Response, url.Values) ([]byte, string) {
 	return map[string]func(Response, url.Values) ([]byte, string){
-		"/":                     staticFile("static/index.html"),
+		"/":                     index,
 		"/explore":              staticFile("static/explore.html"),
 		"/api/all":              apiAll,
 		"/api/tls":              apiTLS,
