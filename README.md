@@ -4,7 +4,7 @@ TrackMe is a custom, low-level http/1 and h2 server, that responds with the fine
 
 It returns the ja3, akamai h2 fingerprint, header + header order, h2 frames, and much more.
 
-## Running it
+## Generating the certificates and config
 
 You first need to generate the certificate.pem and the key.pem files.
 
@@ -20,6 +20,15 @@ $ cp config.example.json config.json
 $ nano config.json
 ...
 ```
+
+## Running it (Docker)
+
+```bash
+$ docker build -t "trackme:Dockerfile" .
+$ docker run trackme:Dockerfile
+```
+
+## Running it (Without Docker)
 
 You can build a binary by running `go build -o TrackMe *.go`
 
