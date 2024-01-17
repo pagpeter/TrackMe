@@ -25,7 +25,7 @@ $ nano config.json
 
 ```bash
 $ docker build -t "trackme:Dockerfile" .
-$ docker run trackme:Dockerfile
+$ docker run -p 80:80 -p 443:443 "trackme:Dockerfile"
 ```
 
 ## Running it (Without Docker)
