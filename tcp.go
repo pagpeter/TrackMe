@@ -11,10 +11,10 @@ import (
 )
 
 var (
-	device string = "eth0"
-	// device       string = "en0"
-	snapshot_len int32 = 1024
-	promiscuous  bool  = false
+	// device string = "eth0"
+	device       string = "en0"
+	snapshot_len int32  = 1024
+	promiscuous  bool   = false
 	err          error
 	timeout      time.Duration = 1 * time.Millisecond
 	handle       *pcap.Handle

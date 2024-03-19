@@ -73,6 +73,9 @@ func SaveRequest(req Response) {
 }
 
 func GetTotalRequestCount() int64 {
+	if !connectedToDB {
+		return 999
+	}
 	itemCount, err := collection.CountDocuments(ctx, bson.M{})
 	if err != nil {
 		log.Println(err)

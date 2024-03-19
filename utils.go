@@ -3,12 +3,15 @@ package main
 import (
 	"crypto/md5"
 	"encoding/hex"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/url"
 	"os"
 	"sort"
+	"strconv"
 	"strings"
+	"time"
 
 	"golang.org/x/net/http2"
 )
@@ -162,8 +165,8 @@ func splitBytesIntoChunks(buf []byte, lim int) [][]byte {
 }
 
 type kv struct {
-	Key   string
-	Value int
+	Key   string `json:"key"`
+	Value int    `json:"value"`
 }
 
 func sortByVal(m map[string]int, x int) map[string]int {
@@ -199,4 +202,14 @@ func getParam(key string, m url.Values) string {
 		}
 	}
 	return ""
+}
+
+func parseInt(s string) int {
+	i, _ := strconv.Atoi(s)
+	return i
+}
+
+func getTime() string {
+	t := time.Now().Unix()
+	return fmt.Sprintf("%v", t)
 }
