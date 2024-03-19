@@ -3,7 +3,6 @@ package main
 import (
 	"crypto/md5"
 	"encoding/hex"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"net/url"
@@ -209,7 +208,7 @@ func parseInt(s string) int {
 	return i
 }
 
-func getTime() string {
+func getTime() int64 {
 	t := time.Now().Unix()
-	return fmt.Sprintf("%v", t)
+	return t
 }

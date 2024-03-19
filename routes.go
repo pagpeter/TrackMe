@@ -106,6 +106,20 @@ func index(r Response, v url.Values) ([]byte, string) {
 	return []byte(strings.ReplaceAll(string(res), "/*DATA*/", string(data))), ct
 }
 
+func collect(r Response, v url.Values) ([]byte, string) {
+	// postData := ""
+	// if r.Http1 != nil {
+	// }
+	var postData string
+	for _, frame := range r.Http2.SendFrames {
+		if frame.Type == "DATA" {
+			postData += string(frame.Payload)
+		}
+	}
+	HandleCollectedData(r, postData)
+	return []byte("success"), "text/html"
+}
+
 func getAllPaths() map[string]func(Response, url.Values) ([]byte, string) {
 	return map[string]func(Response, url.Values) ([]byte, string){
 		"/":                     index,
@@ -118,5 +132,6 @@ func getAllPaths() map[string]func(Response, url.Values) ([]byte, string) {
 		"/api/search-h2":        apiSearchH2,
 		"/api/search-peetprint": apiSearchPeetPrint,
 		"/api/search-useragent": apiSearchUserAgent,
+		"/img.png":              collect,
 	}
 }
