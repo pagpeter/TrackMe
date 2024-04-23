@@ -6,6 +6,8 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"strconv"
+	"sync"
 	"time"
 
 	tls "github.com/wwhtrbbtt/utls"
@@ -21,7 +23,7 @@ var ctx = context.TODO()
 var client *mongo.Client
 var local = false
 var connectedToDB = false
-var TCPFingerprints = map[string]TCPIPDetails{}
+var TCPFingerprints sync.Map
 
 func init() {
 	// Loads the config and connects to database (if enabled)
@@ -108,9 +110,16 @@ func main() {
 		log.Fatal("Error starting tcp listener", err)
 	}
 
+	tlsPort, err := strconv.Atoi(c.TLSPort)
+	if err != nil {
+		log.Fatal("Error parsing tls port", err)
+	}
+
 	defer listener.Close()
 	go StartRedirectServer(c.Host, c.HTTPPort)
-	go sniffTCP()
+	if c.Device != "" {
+		go sniffTCP(c.Device, tlsPort)
+	}
 
 	for {
 		conn, err := listener.Accept()

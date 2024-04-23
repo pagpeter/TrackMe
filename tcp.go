@@ -11,10 +11,8 @@ import (
 )
 
 var (
-	// device string = "eth0"
-	device       string = "en0"
-	snapshot_len int32  = 1024
-	promiscuous  bool   = false
+	snapshot_len int32 = 1024
+	promiscuous  bool  = false
 	err          error
 	timeout      time.Duration = 1 * time.Millisecond
 	handle       *pcap.Handle
@@ -113,7 +111,7 @@ func parseIP(packet gopacket.Packet) *IPDetails {
 	}
 }
 
-func sniffTCP() {
+func sniffTCP(device string, tlsPort int) {
 	// devices()
 	// Open device
 	handle, err = pcap.OpenLive(device, snapshot_len, promiscuous, timeout)
@@ -129,7 +127,7 @@ func sniffTCP() {
 
 			ip := parseIP(packet) //
 			tcp := tcpLayer.(*layers.TCP)
-			if !tcp.ACK || tcp.DstPort != 443 || ip.IPVersion == 0 {
+			if !tcp.ACK || int(tcp.DstPort) != tlsPort || ip.IPVersion == 0 {
 				continue
 			}
 			// Process packet here
@@ -165,7 +163,7 @@ func sniffTCP() {
 			src := fmt.Sprintf("%s:%v", pack.IP.SrcIP, pack.SrcPort)
 			// dst := fmt.Sprintf("%s:%v", pack.IP.DstIp, pack.DstPort)
 			// fmt.Printf("TCP Packet %v -> %v\n", src, dst)
-			TCPFingerprints[src] = pack
+			TCPFingerprints.Store(src, pack)
 		}
 	}
 }
