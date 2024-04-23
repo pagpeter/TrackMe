@@ -110,6 +110,7 @@ type Config struct {
 	Collection string `json:"mongo_collection"`
 	DB         string `json:"mongo_database"`
 	LogIPs     bool   `json:"mongo_log_ips"`
+	Device     string `json:"device"`
 }
 
 func (c *Config) LoadFromFile() error {
@@ -136,6 +137,7 @@ func (c *Config) LoadFromFile() error {
 	c.Collection = tmp.Collection
 	c.DB = tmp.DB
 	c.LogIPs = tmp.LogIPs
+	c.Device = tmp.Device
 	return nil
 }
 
