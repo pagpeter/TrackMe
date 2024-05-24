@@ -5,6 +5,7 @@
   "cert_file": "certs/chain.pem",
   "key_file": "certs/key.pem",
   "host": "0.0.0.0",
+  "http_redirect": "https://tls.peet.ws",
   "mongoURL": "",
   "mongo_database": "TrackMe",
   "mongo_collection": "requests",

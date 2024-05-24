@@ -52,7 +52,7 @@ func init() {
 }
 
 func redirect(w http.ResponseWriter, r *http.Request) {
-	http.Redirect(w, r, "https://tls.peet.ws", http.StatusMovedPermanently)
+	http.Redirect(w, r, c.HTTPRedirect, http.StatusMovedPermanently)
 }
 
 func StartRedirectServer(host, port string) {
