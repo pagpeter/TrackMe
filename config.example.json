@@ -9,5 +9,6 @@
   "mongoURL": "",
   "mongo_database": "TrackMe",
   "mongo_collection": "requests",
-  "mongo_log_ips": false
+  "mongo_log_ips": false,
+  "device": "eth0"
 }

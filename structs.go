@@ -59,6 +59,7 @@ func (res Response) ToJson() string {
 type SmallResponse struct {
 	JA3           string `json:"ja3"`
 	JA3Hash       string `json:"ja3_hash"`
+	JA4           string `json:"ja4"`
 	Akamai        string `json:"akamai"`
 	AkamaiHash    string `json:"akamai_hash"`
 	PeetPrint     string `json:"peetprint"`
@@ -111,6 +112,7 @@ type Config struct {
 	DB           string `json:"mongo_database"`
 	LogIPs       bool   `json:"mongo_log_ips"`
 	HTTPRedirect string `json:"http_redirect"`
+	Device       string `json:"device"`
 }
 
 func (c *Config) LoadFromFile() error {
@@ -138,6 +140,7 @@ func (c *Config) LoadFromFile() error {
 	c.DB = tmp.DB
 	c.LogIPs = tmp.LogIPs
 	c.HTTPRedirect = tmp.HTTPRedirect
+	c.Device = tmp.Device
 	return nil
 }
 
