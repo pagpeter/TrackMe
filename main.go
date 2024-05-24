@@ -62,7 +62,7 @@ func StartRedirectServer(host, port string) {
 
 	local = host == "" && port != "443"
 
-	log.Println("Starting Redirect Server")
+	log.Println("Starting Redirect Server:", c.HTTPRedirect)
 	log.Println("Listening on", host+":"+port)
 
 	http.HandleFunc("/", redirect)
