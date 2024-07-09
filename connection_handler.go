@@ -286,7 +286,6 @@ func handleHTTP2(conn net.Conn, tlsFingerprint TLSDetails) {
 	var method string
 	var userAgent string
 	key, isKeySet := GetAdmin()
-	println("Key:", key, "set:", isKeySet)
 
 	for _, h := range headerFrame.Headers {
 		if strings.HasPrefix(h, ":method") {
