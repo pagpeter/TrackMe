@@ -195,9 +195,24 @@ func respondToHTTP1(conn net.Conn, resp Response) {
 
 	res1, ctype := Router(resp.path, resp)
 
+	var isAdmin bool
+	key, isKeySet := GetAdmin()
+	if isKeySet {
+		for _, a := range resp.Http1.Headers {
+			if strings.HasPrefix(a, key) {
+				isAdmin = true
+			}
+		}
+	}
+
 	res := "HTTP/1.1 200 OK\r\n"
 	res += "Content-Length: " + fmt.Sprintf("%v\r\n", len(res1))
 	res += "Content-Type: " + ctype + "; charset=utf-8\r\n"
+	if isAdmin {
+		res += "Access-Control-Allow-Origin: *\r\n"
+		res += "Access-Control-Allow-Methods: *\r\n"
+		res += "Access-Control-Allow-Headers: *\r\n"
+	}
 	res += "Server: TrackMe\r\n"
 	res += "\r\n"
 	res += string(res1)
@@ -241,6 +256,7 @@ func handleHTTP2(conn net.Conn, tlsFingerprint TLSDetails) {
 
 	var frame ParsedFrame
 	var headerFrame ParsedFrame
+	var isAdmin bool
 
 	go parseHTTP2(fr, c)
 
@@ -269,6 +285,8 @@ func handleHTTP2(conn net.Conn, tlsFingerprint TLSDetails) {
 	var path string
 	var method string
 	var userAgent string
+	key, isKeySet := GetAdmin()
+	println("Key:", key, "set:", isKeySet)
 
 	for _, h := range headerFrame.Headers {
 		if strings.HasPrefix(h, ":method") {
@@ -279,6 +297,9 @@ func handleHTTP2(conn net.Conn, tlsFingerprint TLSDetails) {
 		}
 		if strings.HasPrefix(h, "user-agent") {
 			userAgent = strings.Split(h, ": ")[1]
+		}
+		if isKeySet && strings.HasPrefix(h, key) {
+			isAdmin = true
 		}
 	}
 
@@ -305,6 +326,11 @@ func handleHTTP2(conn net.Conn, tlsFingerprint TLSDetails) {
 	encoder.WriteField(hpack.HeaderField{Name: "server", Value: "TrackMe.peet.ws"})
 	encoder.WriteField(hpack.HeaderField{Name: "content-length", Value: strconv.Itoa(len(res))})
 	encoder.WriteField(hpack.HeaderField{Name: "content-type", Value: ctype})
+	if isAdmin {
+		encoder.WriteField(hpack.HeaderField{Name: "access-control-allow-origin", Value: "*"})
+		encoder.WriteField(hpack.HeaderField{Name: "access-control-allow-methods", Value: "*"})
+		encoder.WriteField(hpack.HeaderField{Name: "access-control-allow-headers", Value: "*"})
+	}
 
 	// Write HEADERS frame
 	err = fr.WriteHeaders(http2.HeadersFrameParam{StreamID: headerFrame.Stream, BlockFragment: hbuf.Bytes(), EndHeaders: true})

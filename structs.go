@@ -107,12 +107,13 @@ type Config struct {
 	CertFile     string `json:"cert_file"`
 	KeyFile      string `json:"key_file"`
 	Host         string `json:"host"`
-	MongoURL     string `json:"mongoURL"`
+	MongoURL     string `json:"mongo_url"`
 	Collection   string `json:"mongo_collection"`
 	DB           string `json:"mongo_database"`
 	LogIPs       bool   `json:"mongo_log_ips"`
 	HTTPRedirect string `json:"http_redirect"`
 	Device       string `json:"device"`
+	CorsKey      string `json:"cors_key"`
 }
 
 func (c *Config) LoadFromFile() error {
@@ -141,6 +142,7 @@ func (c *Config) LoadFromFile() error {
 	c.LogIPs = tmp.LogIPs
 	c.HTTPRedirect = tmp.HTTPRedirect
 	c.Device = tmp.Device
+	c.CorsKey = tmp.CorsKey
 	return nil
 }
 
@@ -165,4 +167,5 @@ func (c *Config) MakeDefault() {
 	c.DB = "TrackMe"
 	c.LogIPs = false
 	c.HTTPRedirect = "https://tls.peet.ws"
+	c.CorsKey = "X-CORS"
 }

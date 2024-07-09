@@ -125,6 +125,10 @@ func WriteToFile(filename string, data []byte) error {
 	return nil
 }
 
+func GetAdmin() (string, bool) {
+	return LoadedConfig.CorsKey, LoadedConfig.CorsKey != ""
+}
+
 func IsIPBlocked(ip string) bool {
 	rawIPs, err := ReadFile("blockedIPs")
 	if err != nil {

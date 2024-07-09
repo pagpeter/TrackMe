@@ -59,7 +59,7 @@ func SaveRequest(req Response) {
 	} else if req.HTTPVersion == "http/1.1" {
 		reqLog.H2 = "-"
 	}
-	if c.LogIPs {
+	if LoadedConfig.LogIPs {
 		parts := strings.Split(req.IP, ":")
 		ip := strings.Join(parts[0:len(parts)-1], ":")
 		reqLog.IP = ip

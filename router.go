@@ -28,7 +28,7 @@ func Router(path string, res Response) ([]byte, string) {
 	// if GetUserAgent(res) == "" {
 	//	return []byte("{\"error\": \"No user-agent\"}"), "text/html"
 	// }
-	if c.LogToDB && res.path != "/favicon.ico" {
+	if LoadedConfig.LogToDB && res.path != "/favicon.ico" {
 		SaveRequest(res)
 	}
 

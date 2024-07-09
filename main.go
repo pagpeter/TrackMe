@@ -17,7 +17,7 @@ import (
 )
 
 var cert tls.Certificate
-var c *Config = &Config{}
+var LoadedConfig *Config = &Config{}
 var collection *mongo.Collection
 var ctx = context.TODO()
 var client *mongo.Client
@@ -28,16 +28,16 @@ var TCPFingerprints sync.Map
 func init() {
 	// Loads the config and connects to database (if enabled)
 
-	err := c.LoadFromFile()
+	err := LoadedConfig.LoadFromFile()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	if len(c.MongoURL) == 0 { // Don't attempt to setup mongo if its not populated in the config
+	if len(LoadedConfig.MongoURL) == 0 { // Don't attempt to setup mongo if its not populated in the config
 		return
 	}
 
-	clientOptions := options.Client().ApplyURI(c.MongoURL)
+	clientOptions := options.Client().ApplyURI(LoadedConfig.MongoURL)
 	client, err = mongo.Connect(ctx, clientOptions)
 	if err != nil {
 		log.Fatal(err)
@@ -47,14 +47,14 @@ func init() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println(c.DB, c.Collection)
-	collection = client.Database(c.DB).Collection(c.Collection)
+	fmt.Println(LoadedConfig.DB, LoadedConfig.Collection)
+	collection = client.Database(LoadedConfig.DB).Collection(LoadedConfig.Collection)
 	connectedToDB = true
 
 }
 
 func redirect(w http.ResponseWriter, r *http.Request) {
-	http.Redirect(w, r, c.HTTPRedirect, http.StatusMovedPermanently)
+	http.Redirect(w, r, LoadedConfig.HTTPRedirect, http.StatusMovedPermanently)
 }
 
 func StartRedirectServer(host, port string) {
@@ -62,7 +62,7 @@ func StartRedirectServer(host, port string) {
 
 	local = host == "" && port != "443"
 
-	log.Println("Starting Redirect Server:", c.HTTPRedirect)
+	log.Println("Starting Redirect Server:", LoadedConfig.HTTPRedirect)
 	log.Println("Listening on", host+":"+port)
 
 	http.HandleFunc("/", redirect)
@@ -88,37 +88,37 @@ func timeoutHandleTLSConnection(conn net.Conn) bool {
 
 func main() {
 	log.Println("Starting server...")
-	log.Println("Listening on " + c.Host + ":" + c.TLSPort)
+	log.Println("Listening on " + LoadedConfig.Host + ":" + LoadedConfig.TLSPort)
 
 	// Load the TLS certificates
 	var err error
-	cert, err = tls.LoadX509KeyPair(c.CertFile, c.KeyFile)
+	cert, err = tls.LoadX509KeyPair(LoadedConfig.CertFile, LoadedConfig.KeyFile)
 	if err != nil {
 		log.Fatal("Error loading TLS certificates", err)
 	}
 	// Create a TLS configuration
 	config := tls.Config{
-		ServerName: c.Host,
+		ServerName: LoadedConfig.Host,
 		NextProtos: []string{
 			"h2",
 		},
 		Certificates: []tls.Certificate{cert},
 	}
 
-	listener, err := tls.Listen("tcp", c.Host+":"+c.TLSPort, &config)
+	listener, err := tls.Listen("tcp", LoadedConfig.Host+":"+LoadedConfig.TLSPort, &config)
 	if err != nil {
 		log.Fatal("Error starting tcp listener", err)
 	}
 
-	tlsPort, err := strconv.Atoi(c.TLSPort)
+	tlsPort, err := strconv.Atoi(LoadedConfig.TLSPort)
 	if err != nil {
 		log.Fatal("Error parsing tls port", err)
 	}
 
 	defer listener.Close()
-	go StartRedirectServer(c.Host, c.HTTPPort)
-	if c.Device != "" {
-		go sniffTCP(c.Device, tlsPort)
+	go StartRedirectServer(LoadedConfig.Host, LoadedConfig.HTTPPort)
+	if LoadedConfig.Device != "" {
+		go sniffTCP(LoadedConfig.Device, tlsPort)
 	}
 
 	for {
