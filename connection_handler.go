@@ -193,9 +193,15 @@ func respondToHTTP1(conn net.Conn, resp Response) {
 	// log.Println("Request:", resp.ToJson())
 	// log.Println(len(resp.ToJson()))
 
-	res1, ctype := Router(resp.path, resp)
-
 	var isAdmin bool
+	var res []byte
+	var ctype = "text/plain"
+	if resp.Method != "OPTIONS" {
+		res, ctype = Router(resp.path, resp)
+	} else {
+		isAdmin = true
+	}
+
 	key, isKeySet := GetAdmin()
 	if isKeySet {
 		for _, a := range resp.Http1.Headers {
@@ -205,20 +211,20 @@ func respondToHTTP1(conn net.Conn, resp Response) {
 		}
 	}
 
-	res := "HTTP/1.1 200 OK\r\n"
-	res += "Content-Length: " + fmt.Sprintf("%v\r\n", len(res1))
-	res += "Content-Type: " + ctype + "; charset=utf-8\r\n"
+	res1 := "HTTP/1.1 200 OK\r\n"
+	res1 += "Content-Length: " + fmt.Sprintf("%v\r\n", len(res1))
+	res1 += "Content-Type: " + ctype + "; charset=utf-8\r\n"
 	if isAdmin {
-		res += "Access-Control-Allow-Origin: *\r\n"
-		res += "Access-Control-Allow-Methods: *\r\n"
-		res += "Access-Control-Allow-Headers: *\r\n"
+		res1 += "Access-Control-Allow-Origin: *\r\n"
+		res1 += "Access-Control-Allow-Methods: *\r\n"
+		res1 += "Access-Control-Allow-Headers: *\r\n"
 	}
-	res += "Server: TrackMe\r\n"
-	res += "\r\n"
-	res += string(res1)
-	res += "\r\n\r\n"
+	res1 += "Server: TrackMe\r\n"
+	res1 += "\r\n"
+	res1 += string(res)
+	res1 += "\r\n\r\n"
 
-	_, err := conn.Write([]byte(res))
+	_, err := conn.Write([]byte(res1))
 	if err != nil {
 		log.Println("Error writing HTTP/1 data", err)
 		return
@@ -316,7 +322,13 @@ func handleHTTP2(conn net.Conn, tlsFingerprint TLSDetails) {
 		TLS: tlsFingerprint,
 	}
 
-	res, ctype := Router(path, resp)
+	var res []byte
+	var ctype = "text/plain"
+	if method != "OPTIONS" {
+		res, ctype = Router(path, resp)
+	} else {
+		isAdmin = true
+	}
 
 	// Prepare HEADERS
 	hbuf := bytes.NewBuffer([]byte{})
