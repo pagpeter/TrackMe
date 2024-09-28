@@ -212,7 +212,7 @@ func respondToHTTP1(conn net.Conn, resp Response) {
 	}
 
 	res1 := "HTTP/1.1 200 OK\r\n"
-	res1 += "Content-Length: " + fmt.Sprintf("%v\r\n", len(res1))
+	res1 += "Content-Length: " + fmt.Sprintf("%v\r\n", len(res))
 	res1 += "Content-Type: " + ctype + "; charset=utf-8\r\n"
 	if isAdmin {
 		res1 += "Access-Control-Allow-Origin: *\r\n"

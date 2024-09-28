@@ -35,7 +35,7 @@ type Http2Details struct {
 }
 
 type Response struct {
-	// Donate      string        `json:"donate"`
+	Donate      string        `json:"donate"`
 	IP          string        `json:"ip"`
 	HTTPVersion string        `json:"http_version"`
 	path        string        `json:"-"`
