@@ -168,13 +168,13 @@ func sniffTCP(device string, tlsPort int) {
 	}
 }
 
-func parseTCPOptions(TCPOption []layers.TCPOption) string {
+func parseTCPOptions(_ []layers.TCPOption) string {
 	// for _, opt := range TCPOption {
 	// 	 fmt.Println("OPTION:", opt.OptionType.String(), opt.String())
 	// }
 	return ""
 }
 
-func parseTCPOptionsOrder(TCPOption []layers.TCPOption) string {
+func parseTCPOptionsOrder(_ []layers.TCPOption) string {
 	return ""
 }
