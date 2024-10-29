@@ -5,14 +5,13 @@ import (
 	"strings"
 )
 
-// based on https://www.blackhat.com/docs/eu-17/materials/eu-17-Shuster-Passive-Fingerprinting-Of-HTTP2-Clients-wp.pdf
+// Based on https://www.blackhat.com/docs/eu-17/materials/eu-17-Shuster-Passive-Fingerprinting-Of-HTTP2-Clients-wp.pdf
 // Fingerprint format:
 // S[;]|WU|P[,]#|PS[,]
 // S: Settings param
 // WU: Window Update
 // P: Priority
 // PS: Pseudo-header order (eg: "m,p,a,s")
-
 func getSettingsFingerprint(frames []ParsedFrame) string {
 	var sf string // SettingsFingerprint
 	mapping := map[string]string{
@@ -31,7 +30,7 @@ func getSettingsFingerprint(frames []ParsedFrame) string {
 				if len(parts) != 2 {
 					return "error"
 				}
-				sf += mapping[parts[0]] + ":" + parts[1] + ","
+				sf += mapping[parts[0]] + ":" + parts[1] + ";"
 			}
 			break
 		}

@@ -3,15 +3,12 @@ package main
 import (
 	"crypto/md5"
 	"encoding/hex"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"net/url"
 	"os"
 	"sort"
-	"strconv"
 	"strings"
-	"time"
 
 	"golang.org/x/net/http2"
 )
@@ -199,21 +196,11 @@ func sortByVal(m map[string]int, x int) map[string]int {
 	return res
 }
 
-func getParam(key string, m url.Values) string {
+func getParam(_ string, m url.Values) string {
 	if val, ok := m["by"]; ok {
 		if len(val) != 0 {
 			return val[0]
 		}
 	}
 	return ""
-}
-
-func parseInt(s string) int {
-	i, _ := strconv.Atoi(s)
-	return i
-}
-
-func getTime() string {
-	t := time.Now().Unix()
-	return fmt.Sprintf("%v", t)
 }
