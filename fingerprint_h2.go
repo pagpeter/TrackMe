@@ -37,7 +37,7 @@ func getSettingsFingerprint(frames []ParsedFrame) string {
 		}
 	}
 
-	return strings.TrimRight(sf, ",")
+	return strings.TrimRight(sf, ";")
 }
 
 func getWindowUpdateFingerprint(frames []ParsedFrame) string {
