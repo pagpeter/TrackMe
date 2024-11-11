@@ -21,6 +21,7 @@ func getSettingsFingerprint(frames []ParsedFrame) string {
 		"INITIAL_WINDOW_SIZE":    "4",
 		"MAX_FRAME_SIZE":         "5",
 		"MAX_HEADER_LIST_SIZE":   "6",
+		"NO_RFC7540_PRIORITIES":  "9",
 	}
 
 	for _, frame := range frames {
