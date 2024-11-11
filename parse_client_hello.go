@@ -324,6 +324,7 @@ func parseRawExtensions(exts []Extension, chp ClientHello) ([]interface{}, Clien
 			mapping := map[string]string{
 				"0001": "zlib (1)",
 				"0002": "brotli (2)",
+				"0003": "zstd (3)",
 			}
 			for len(c.Algorithms)*2 < c.AlgsLength {
 				chp.CertCompressionAlgorithms = append(chp.CertCompressionAlgorithms, hexToInt(d[count:count+4]))
