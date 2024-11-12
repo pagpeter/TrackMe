@@ -530,6 +530,7 @@ var curves = map[uint16]string{
 	0xfe30: "X25519Kyber512 (65072)",
 	0xfe31: "X25519Kyber768 (65073)",
 	0x6399: "X25519Kyber768 (25497)",
+	0x11ec: "X25519MLKEM768 (4588)",
 }
 
 func GetCurveNameByID(id uint16) string {

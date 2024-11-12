@@ -76,6 +76,14 @@ func parseHTTP2(f *http2.Framer, c chan ParsedFrame) {
 				setting = strings.Replace(setting, "[", "", -1)
 				setting = strings.Replace(setting, "]", "", -1)
 
+				// SETTINGS_NO_RFC7540_PRIORITIES
+				// https://www.rfc-editor.org/rfc/rfc9218.html#section-2.1
+				// https://github.com/golang/go/issues/69917
+				// TODO: when net/http2 is updated to support it, remove this as it won't be needed (this is ugly code too)
+				if strings.HasPrefix(setting, "UNKNOWN_SETTING_9 = ") {
+					setting = strings.ReplaceAll(setting, "UNKNOWN_SETTING_9", "NO_RFC7540_PRIORITIES")
+				}
+
 				p.Settings = append(p.Settings, setting)
 				return nil
 			})
