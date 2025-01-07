@@ -23,6 +23,7 @@ func Router(path string, res Response) ([]byte, string) {
 		res.TCPIP = v.(TCPIPDetails)
 	}
 	res.TLS.JA4 = CalculateJa4(res.TLS)
+	res.TLS.JA4_r = CalculateJa4_r(res.TLS)
 	res.Donate = "Please consider donating to keep this API running. Visit https://tls.peet.ws"
 	Log(fmt.Sprintf("%v %v %v %v %v", cleanIP(res.IP), res.Method, res.HTTPVersion, res.path, res.TLS.JA3Hash))
 	// if GetUserAgent(res) == "" {
