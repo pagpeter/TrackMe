@@ -1,7 +1,11 @@
 package main
 
 import (
+	"context"
+	"database/sql"
 	"fmt"
+	"log"
+	"main/database"
 	"net/url"
 	"strings"
 	"time"
@@ -29,10 +33,44 @@ func Router(path string, res Response) ([]byte, string) {
 	//	return []byte("{\"error\": \"No user-agent\"}"), "text/html"
 	// }
 	if LoadedConfig.LogToDB && res.path != "/favicon.ico" {
-		SaveRequest(res)
+		// SaveRequest(res)
 	}
 
-	u, _ := url.Parse("https://tls.peet.ws" + path)
+	parts := strings.Split(res.IP, ":")
+	ip := strings.Join(parts[0:len(parts)-1], ":")
+
+	h2i := "-"
+	if res.HTTPVersion == "h2" {
+		h2i = res.Http2.AkamaiFingerprint
+	}
+
+	err := queries.InsertRequestLog(context.Background(), database.InsertRequestLogParams{
+		CreatedAt: time.Now(),
+		UserAgent: sql.NullString{
+			String: GetUserAgent(res),
+			Valid:  GetUserAgent(res) != "",
+		},
+		Ja3: sql.NullString{
+			String: res.TLS.JA3,
+			Valid:  res.TLS.JA3 != "",
+		},
+		H2: sql.NullString{
+			String: h2i,
+			Valid:  h2i != "",
+		},
+		PeetPrint: sql.NullString{
+			String: res.TLS.PeetPrint,
+			Valid:  res.TLS.PeetPrint != "",
+		},
+		IpAddress: sql.NullString{
+			String: ip,
+			Valid:  ip != "",
+		},
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	u, _ := url.Parse("https://localhost" + path)
 	m, _ := url.ParseQuery(u.RawQuery)
 
 	paths := getAllPaths()
@@ -41,5 +79,6 @@ func Router(path string, res Response) ([]byte, string) {
 	}
 	// 404
 	b, _ := ReadFile("static/404.html")
-	return []byte(strings.ReplaceAll(string(b), "/*DATA*/", fmt.Sprintf("%v", GetTotalRequestCount()))), "text/html"
+	// return []byte(strings.ReplaceAll(string(b), "/*DATA*/", fmt.Sprintf("%v", GetTotalRequestCount()))), "text/html"
+	return []byte(strings.ReplaceAll(string(b), "/*DATA*/", "TODO")), "text/html" //TODO
 }

@@ -10,3 +10,4 @@ requests-db/
 config.json
 .idea
 adminKey
+database.db

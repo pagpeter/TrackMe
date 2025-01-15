@@ -2,7 +2,7 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
+	// "fmt"
 	"net/url"
 	"strings"
 )
@@ -42,64 +42,64 @@ func apiClean(res Response, _ url.Values) ([]byte, string) {
 	}.ToJson()), "application/json"
 }
 
-func apiRequestCount(_ Response, _ url.Values) ([]byte, string) {
-	if !connectedToDB {
-		return []byte("{\"error\": \"Not connected to database.\"}"), "application/json"
-	}
-	return []byte(fmt.Sprintf(`{"total_requests": %v}`, GetTotalRequestCount())), "application/json"
-}
+// func apiRequestCount(_ Response, _ url.Values) ([]byte, string) {
+// 	if !connectedToDB {
+// 		return []byte("{\"error\": \"Not connected to database.\"}"), "application/json"
+// 	}
+// 	return []byte(fmt.Sprintf(`{"total_requests": %v}`, GetTotalRequestCount())), "application/json"
+// }
 
-func apiSearchJA3(_ Response, u url.Values) ([]byte, string) {
-	if !connectedToDB {
-		return []byte("{\"error\": \"Not connected to database.\"}"), "application/json"
-	}
-	by := getParam("by", u)
-	if by == "" {
-		return []byte("{\"error\": \"No 'by' param present\"}"), "application/json"
-	}
-	res := GetByJa3(by)
-	j, _ := json.MarshalIndent(res, "", "\t")
-	return j, "application/json"
-}
+// func apiSearchJA3(_ Response, u url.Values) ([]byte, string) {
+// 	if !connectedToDB {
+// 		return []byte("{\"error\": \"Not connected to database.\"}"), "application/json"
+// 	}
+// 	by := getParam("by", u)
+// 	if by == "" {
+// 		return []byte("{\"error\": \"No 'by' param present\"}"), "application/json"
+// 	}
+// 	res := GetByJa3(by)
+// 	j, _ := json.MarshalIndent(res, "", "\t")
+// 	return j, "application/json"
+// }
 
-func apiSearchH2(_ Response, u url.Values) ([]byte, string) {
-	if !connectedToDB {
-		return []byte("{\"error\": \"Not connected to database.\"}"), "application/json"
-	}
-	by := getParam("by", u)
-	if by == "" {
-		return []byte("{\"error\": \"No 'by' param present\"}"), "application/json"
-	}
-	res := GetByH2(by)
-	j, _ := json.MarshalIndent(res, "", "\t")
-	return j, "application/json"
-}
+// func apiSearchH2(_ Response, u url.Values) ([]byte, string) {
+// 	if !connectedToDB {
+// 		return []byte("{\"error\": \"Not connected to database.\"}"), "application/json"
+// 	}
+// 	by := getParam("by", u)
+// 	if by == "" {
+// 		return []byte("{\"error\": \"No 'by' param present\"}"), "application/json"
+// 	}
+// 	res := GetByH2(by)
+// 	j, _ := json.MarshalIndent(res, "", "\t")
+// 	return j, "application/json"
+// }
 
-func apiSearchPeetPrint(_ Response, u url.Values) ([]byte, string) {
-	if !connectedToDB {
-		return []byte("{\"error\": \"Not connected to database.\"}"), "application/json"
-	}
-	by := getParam("by", u)
-	if by == "" {
-		return []byte("{\"error\": \"No 'by' param present\"}"), "application/json"
-	}
-	res := GetByPeetPrint(by)
-	j, _ := json.MarshalIndent(res, "", "\t")
-	return j, "application/json"
-}
+// func apiSearchPeetPrint(_ Response, u url.Values) ([]byte, string) {
+// 	if !connectedToDB {
+// 		return []byte("{\"error\": \"Not connected to database.\"}"), "application/json"
+// 	}
+// 	by := getParam("by", u)
+// 	if by == "" {
+// 		return []byte("{\"error\": \"No 'by' param present\"}"), "application/json"
+// 	}
+// 	res := GetByPeetPrint(by)
+// 	j, _ := json.MarshalIndent(res, "", "\t")
+// 	return j, "application/json"
+// }
 
-func apiSearchUserAgent(_ Response, u url.Values) ([]byte, string) {
-	if !connectedToDB {
-		return []byte("{\"error\": \"Not connected to database.\"}"), "application/json"
-	}
-	by := getParam("by", u)
-	if by == "" {
-		return []byte("{\"error\": \"No 'by' param present\"}"), "application/json"
-	}
-	res := GetByUserAgent(by)
-	j, _ := json.MarshalIndent(res, "", "\t")
-	return j, "application/json"
-}
+// func apiSearchUserAgent(_ Response, u url.Values) ([]byte, string) {
+// 	if !connectedToDB {
+// 		return []byte("{\"error\": \"Not connected to database.\"}"), "application/json"
+// 	}
+// 	by := getParam("by", u)
+// 	if by == "" {
+// 		return []byte("{\"error\": \"No 'by' param present\"}"), "application/json"
+// 	}
+// 	res := GetByUserAgent(by)
+// 	j, _ := json.MarshalIndent(res, "", "\t")
+// 	return j, "application/json"
+// }
 
 func index(r Response, v url.Values) ([]byte, string) {
 	res, ct := staticFile("static/index.html")(r, v)
@@ -114,10 +114,10 @@ func getAllPaths() map[string]func(Response, url.Values) ([]byte, string) {
 		"/api/all":              apiAll,
 		"/api/tls":              apiTLS,
 		"/api/clean":            apiClean,
-		"/api/request-count":    apiRequestCount,
-		"/api/search-ja3":       apiSearchJA3,
-		"/api/search-h2":        apiSearchH2,
-		"/api/search-peetprint": apiSearchPeetPrint,
-		"/api/search-useragent": apiSearchUserAgent,
+		// "/api/request-count":    apiRequestCount,
+		// "/api/search-ja3":       apiSearchJA3,
+		// "/api/search-h2":        apiSearchH2,
+		// "/api/search-peetprint": apiSearchPeetPrint,
+		// "/api/search-useragent": apiSearchUserAgent,
 	}
 }
