@@ -68,14 +68,20 @@ func ja4a(tls TLSDetails) string {
 
 	return fmt.Sprintf("%v%v%v%v%v%v", proto, tlsVersion, sniMode, numSuites, numExtensions, firstALPN)
 }
-func ja4b(tls TLSDetails) string {
+
+func ja4b_r(tls TLSDetails) string {
 	suites := strings.Split(strings.Split(tls.JA3, ",")[1], "-")
 	parsed := toHexAll(suites, false, true)
 	// fmt.Println("ja4b:", strings.Join(parsed, ","))
-	return sha256trunc(strings.Join(parsed, ","))
+	return strings.Join(parsed, ",")
 }
 
-func ja4c(tls TLSDetails) string {
+func ja4b(tls TLSDetails) string {
+	result := ja4b_r(tls)
+	return sha256trunc(result)
+}
+
+func ja4c_r(tls TLSDetails) string {
 	extensions := strings.Split(strings.Split(tls.JA3, ",")[2], "-")
 	sigAlgs := strings.Split(strings.Split(tls.PeetPrint, "|")[3], "-")
 
@@ -88,9 +94,18 @@ func ja4c(tls TLSDetails) string {
 	parsedAlg := toHexAll(sigAlgs, false, false)
 	parsed := strings.Join(parsedExt, ",") + "_" + strings.Join(parsedAlg, ",")
 	// fmt.Println("ja4c:", parsed)
-	return sha256trunc(parsed)
+	return parsed
+}
+
+func ja4c(tls TLSDetails) string {
+	result := ja4c_r(tls)
+	return sha256trunc(result)
 }
 
 func CalculateJa4(tls TLSDetails) string {
 	return ja4a(tls) + "_" + ja4b(tls) + "_" + ja4c(tls)
+}
+
+func CalculateJa4_r(tls TLSDetails) string {
+	return ja4a(tls) + "_" + ja4b_r(tls) + "_" + ja4c_r(tls)
 }
