@@ -2,8 +2,11 @@ package main
 
 import (
 	"context"
-	"fmt"
+	"database/sql"
+
+	// "fmt"
 	"log"
+	"main/database"
 	"net"
 	"net/http"
 	"strconv"
@@ -11,9 +14,9 @@ import (
 	"time"
 
 	tls "github.com/wwhtrbbtt/utls"
-
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	_ "modernc.org/sqlite"
+	// "go.mongodb.org/mongo-driver/mongo/options"
 )
 
 var cert tls.Certificate
@@ -24,6 +27,7 @@ var client *mongo.Client
 var local = false
 var connectedToDB = false
 var TCPFingerprints sync.Map
+var queries *database.Queries
 
 func init() {
 	// Loads the config and connects to database (if enabled)
@@ -33,23 +37,32 @@ func init() {
 		log.Fatal(err)
 	}
 
-	if len(LoadedConfig.MongoURL) == 0 { // Don't attempt to setup mongo if its not populated in the config
-		return
-	}
+	// if len(LoadedConfig.MongoURL) == 0 { // Don't attempt to setup mongo if its not populated in the config
+	// 	return
+	// }
 
-	clientOptions := options.Client().ApplyURI(LoadedConfig.MongoURL)
-	client, err = mongo.Connect(ctx, clientOptions)
+	// clientOptions := options.Client().ApplyURI(LoadedConfig.MongoURL)
+	// client, err = mongo.Connect(ctx, clientOptions)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+
+	// err = client.Ping(ctx, nil)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+	// fmt.Println(LoadedConfig.DB, LoadedConfig.Collection)
+	// collection = client.Database(LoadedConfig.DB).Collection(LoadedConfig.Collection)
+
+	// ctx := context.Background()
+
+	db, err := sql.Open("sqlite", "database.db")
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	err = client.Ping(ctx, nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Println(LoadedConfig.DB, LoadedConfig.Collection)
-	collection = client.Database(LoadedConfig.DB).Collection(LoadedConfig.Collection)
 	connectedToDB = true
+
+	queries = database.New(db)
 
 }
 
