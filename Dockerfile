@@ -1,4 +1,4 @@
-FROM golang:1.18-alpine3.16
+FROM golang:1.23-alpine
 
 RUN apk add build-base
 RUN apk add libpcap-dev

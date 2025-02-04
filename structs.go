@@ -16,6 +16,7 @@ type TLSDetails struct {
 	JA3Hash string `json:"ja3_hash"`
 
 	JA4 string `json:"ja4"`
+	JA4_r string `json:"ja4_r"`
 
 	PeetPrint     string `json:"peetprint"`
 	PeetPrintHash string `json:"peetprint_hash"`
@@ -60,6 +61,7 @@ type SmallResponse struct {
 	JA3           string `json:"ja3"`
 	JA3Hash       string `json:"ja3_hash"`
 	JA4           string `json:"ja4"`
+	JA4_r           string `json:"ja4_r"`
 	Akamai        string `json:"akamai"`
 	AkamaiHash    string `json:"akamai_hash"`
 	PeetPrint     string `json:"peetprint"`
