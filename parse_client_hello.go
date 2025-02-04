@@ -182,17 +182,23 @@ func parseRawExtensions(exts []Extension, chp ClientHello) ([]interface{}, Clien
 			c.ServerName = hexToString(d[10:])
 
 			tmp = c
-		case "0005": // status_request
+		case "0005", "0011": // status_request, status_request_v2
 			type StatusRequest struct {
 				CertificateStatusType   string `json:"certificate_status_type"`
 				ResponderIDListLength   int    `json:"responder_id_list_length"`
 				RequestExtensionsLength int    `json:"request_extensions_length"`
 			}
+
+			var name = "status_request (5)"
+			if t == "0011" {
+				name = "status_request_v2 (17)"
+			}
+
 			tmp = struct {
 				Name          string        `json:"name"`
 				StatusRequest StatusRequest `json:"status_request"`
 			}{
-				Name: "status_request (5)",
+				Name: name,
 				StatusRequest: StatusRequest{
 					CertificateStatusType:   fmt.Sprintf("OSCP (%d)", hexToInt(d[0:2])),
 					ResponderIDListLength:   hexToInt(d[2:4]),
@@ -239,7 +245,7 @@ func parseRawExtensions(exts []Extension, chp ClientHello) ([]interface{}, Clien
 			}
 
 			tmp = c
-		case "000d": // signature_algorithms
+		case "000d", "0035": // signature_algorithms, signature_algorithms_cert
 			c := struct {
 				Name       string   `json:"name"`
 				AlgsLength int      `json:"-"`
@@ -248,6 +254,11 @@ func parseRawExtensions(exts []Extension, chp ClientHello) ([]interface{}, Clien
 				Name:       "signature_algorithms (13)",
 				AlgsLength: hexToInt(d[0:4]) / 2,
 			}
+
+			if t == "0035" {
+				c.Name = "signature_algorithms_cert (50)"
+			}
+
 			tmpC := 4
 			for tmpC <= (c.AlgsLength * 4) {
 				asInt := uint16(hexToInt(d[tmpC : tmpC+4]))
@@ -428,13 +439,19 @@ func parseRawExtensions(exts []Extension, chp ClientHello) ([]interface{}, Clien
 				c.SharedKeys = append(c.SharedKeys, map[string]string{name: data})
 			}
 			tmp = c
-		case "4469": // application_settings
+		case "4469", "44cd": // application_settings
 			c := struct {
 				Name       string   `json:"name"`
 				ALPSLength int      `json:"-"`
 				Protocols  []string `json:"protocols"`
 			}{}
-			c.Name = "application_settings (17513)"
+
+			c.Name = "application_settings_old (17513)"
+			if t == "44cd" {
+				// https://chromestatus.com/feature/5149147365900288
+				c.Name = "application_settings (17613)"
+			}
+
 			tmp = c
 			if len(d) <= 4 {
 				break
