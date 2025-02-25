@@ -25,13 +25,13 @@ func parseHTTP1(request []byte) Response {
 
 	// Split the headers into an array
 	var headers []string
-    var userAgent string
+	var userAgent string
 	for _, line := range lines {
 		if strings.Contains(line, ":") {
 			headers = append(headers, line)
-            if strings.HasPrefix(strings.ToLower(line), "user-agent") {
-                userAgent = strings.TrimSpace(strings.Split(line, ": ")[1])
-            }
+			if strings.HasPrefix(strings.ToLower(line), "user-agent") {
+				userAgent = strings.TrimSpace(strings.Split(line, ": ")[1])
+			}
 		}
 	}
 
@@ -46,7 +46,7 @@ func parseHTTP1(request []byte) Response {
 		HTTPVersion: firstLine[2],
 		path:        firstLine[1],
 		Method:      firstLine[0],
-        UserAgent:   userAgent,
+		UserAgent:   userAgent,
 		Http1: &Http1Details{
 			Headers: headers,
 		},
