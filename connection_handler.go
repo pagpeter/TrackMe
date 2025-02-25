@@ -30,7 +30,7 @@ func parseHTTP1(request []byte) Response {
 		if strings.Contains(line, ":") {
 			headers = append(headers, line)
 			if strings.HasPrefix(strings.ToLower(line), "user-agent") {
-				userAgent = strings.TrimSpace(strings.Split(line, ": ")[1])
+				userAgent = strings.TrimSpace(strings.Split(line, ":")[1])
 			}
 		}
 	}
