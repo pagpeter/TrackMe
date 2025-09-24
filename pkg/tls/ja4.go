@@ -60,7 +60,7 @@ func ja4c_r(tls types.TLSDetails) string {
 		num, _ := strconv.Atoi(ext)
 		hexStr := fmt.Sprintf("%04x", num)
 		// Skip if it's a GREASE value or padding extension
-		if types.IsGrease("0x"+strings.ToUpper(hexStr)) || hexStr == "0010" {
+		if types.IsGrease("0x"+strings.ToUpper(hexStr)) || hexStr == "0010" || hexStr == "0000" || hexStr == "0015" {
 			continue
 		}
 		parsedExt = append(parsedExt, hexStr)
