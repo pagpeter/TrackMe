@@ -37,12 +37,19 @@ func Router(path string, res types.Response, srv *Server) ([]byte, string) {
 		SaveRequest(res, srv)
 	}
 
-	u, _ := url.Parse("https://tls.peet.ws" + path)
-	m, _ := url.ParseQuery(u.RawQuery)
+	u, err := url.Parse("https://tls.peet.ws" + path)
+	var m map[string][]string
+	if err != nil || u == nil {
+		m = make(map[string][]string)
+	} else {
+		m, _ = url.ParseQuery(u.RawQuery)
+	}
 
 	paths := getAllPaths(srv)
-	if val, ok := paths[u.Path]; ok {
-		return val(res, m)
+	if u != nil {
+		if val, ok := paths[u.Path]; ok {
+			return val(res, m)
+		}
 	}
 	// 404
 	b, _ := utils.ReadFile("static/404.html")
