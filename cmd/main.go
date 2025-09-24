@@ -5,6 +5,8 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"os"
+	"runtime"
 	"strconv"
 	"time"
 
@@ -20,6 +22,32 @@ import (
 var cert tls.Certificate
 var srv *server.Server
 var local = false
+
+func logCrash(r interface{}) {
+	crashInfo := fmt.Sprintf("PANIC: %v\n", r)
+	crashInfo += fmt.Sprintf("Time: %v\n", time.Now().Format(time.RFC3339))
+
+	// Get stack trace
+	buf := make([]byte, 1024*1024)
+	n := runtime.Stack(buf, false)
+	crashInfo += fmt.Sprintf("Stack trace:\n%s\n", buf[:n])
+	crashInfo += "----------------------------------------\n\n"
+
+	// Write to crashes.txt
+	file, err := os.OpenFile("crashes.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Printf("Error opening crashes.txt: %v", err)
+		return
+	}
+	defer file.Close()
+
+	if _, err := file.WriteString(crashInfo); err != nil {
+		log.Printf("Error writing to crashes.txt: %v", err)
+	}
+
+	log.Printf("PANIC: %v", r)
+	log.Println("Crash details written to crashes.txt")
+}
 
 func init() {
 	// Initialize server and load config
@@ -84,6 +112,13 @@ func timeoutHandleTLSConnection(conn net.Conn) bool {
 }
 
 func main() {
+	defer func() {
+		if r := recover(); r != nil {
+			logCrash(r)
+			os.Exit(1)
+		}
+	}()
+
 	log.Println("Starting server...")
 	log.Println("Listening on " + srv.GetConfig().Host + ":" + srv.GetConfig().TLSPort)
 
@@ -119,29 +154,46 @@ func main() {
 	}
 
 	for {
-		conn, err := listener.Accept()
-		//fmt.Println(reflect.TypeOf(conn))
-		if err != nil {
-			log.Println("Error accepting connection", err)
-		}
-		var ip string
-		if addr, ok := conn.RemoteAddr().(*net.TCPAddr); ok {
-			ip = addr.IP.String()
-		}
-		if utils.IsIPBlocked(ip) {
-			server.Log("Request from IP " + ip + " blocked")
-			conn.Write([]byte("Don't waste proxies"))
-			conn.Close()
-		} else {
-			go func() {
-				success := timeoutHandleTLSConnection(conn)
-				if !success {
-					server.Log("Request aborted - " + ip)
-					conn.Close()
+		func() {
+			defer func() {
+				if r := recover(); r != nil {
+					logCrash(r)
+					log.Println("Recovered from panic in main loop, continuing to serve requests")
 				}
 			}()
-		}
 
+			conn, err := listener.Accept()
+			//fmt.Println(reflect.TypeOf(conn))
+			if err != nil {
+				log.Println("Error accepting connection", err)
+				return
+			}
+			var ip string
+			if addr, ok := conn.RemoteAddr().(*net.TCPAddr); ok {
+				ip = addr.IP.String()
+			}
+			if utils.IsIPBlocked(ip) {
+				server.Log("Request from IP " + ip + " blocked")
+				conn.Write([]byte("Don't waste proxies"))
+				conn.Close()
+			} else {
+				go func() {
+					defer func() {
+						if r := recover(); r != nil {
+							logCrash(r)
+							log.Printf("Recovered from panic in connection handler for IP %s", ip)
+							conn.Close()
+						}
+					}()
+
+					success := timeoutHandleTLSConnection(conn)
+					if !success {
+						server.Log("Request aborted - " + ip)
+						conn.Close()
+					}
+				}()
+			}
+		}()
 	}
 
 }

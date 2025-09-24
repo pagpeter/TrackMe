@@ -2,6 +2,8 @@ package server
 
 import (
 	"bytes"
+	"encoding/base64"
+	"encoding/hex"
 	"fmt"
 	"log"
 	"net"
@@ -170,6 +172,11 @@ func (srv *Server) HandleTLSConnection(conn net.Conn) bool {
 	parsedClientHello := tls.ParseClientHello(hs)
 	JA3Data := tls.CalculateJA3(parsedClientHello)
 	peetfp, peetprintHash := tls.CalculatePeetPrint(parsedClientHello, JA3Data)
+
+	// Convert raw bytes to hex and base64
+	rawBytes, _ := hex.DecodeString(hs)
+	rawB64 := base64.StdEncoding.EncodeToString(rawBytes)
+
 	tlsDetails := types.TLSDetails{
 		Ciphers:          JA3Data.ReadableCiphers,
 		Extensions:       parsedClientHello.Extensions,
@@ -181,6 +188,8 @@ func (srv *Server) HandleTLSConnection(conn net.Conn) bool {
 		PeetPrintHash:    peetprintHash,
 		SessionID:        parsedClientHello.SessionID,
 		ClientRandom:     parsedClientHello.ClientRandom,
+		RawBytes:         hs,
+		RawB64:           rawB64,
 	}
 
 	// Check if the first line is HTTP/2

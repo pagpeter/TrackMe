@@ -46,6 +46,10 @@ func apiClean(res types.Response, _ url.Values) ([]byte, string) {
 	}.ToJson()), "application/json"
 }
 
+func apiRaw(res types.Response, _ url.Values) ([]byte, string) {
+	return []byte(fmt.Sprintf(`{"raw": "%s", "raw_b64": "%s"}`, res.TLS.RawBytes, res.TLS.RawB64)), "application/json"
+}
+
 func apiRequestCount(srv *Server) func(types.Response, url.Values) ([]byte, string) {
 	return func(_ types.Response, _ url.Values) ([]byte, string) {
 		if !srv.IsConnectedToDB() {
@@ -128,6 +132,7 @@ func getAllPaths(srv *Server) map[string]func(types.Response, url.Values) ([]byt
 		"/api/all":              apiAll,
 		"/api/tls":              apiTLS,
 		"/api/clean":            apiClean,
+		"/api/raw":              apiRaw,
 		"/api/request-count":    apiRequestCount(srv),
 		"/api/search-ja3":       apiSearchJA3(srv),
 		"/api/search-h2":        apiSearchH2(srv),

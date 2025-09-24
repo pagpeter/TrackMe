@@ -24,6 +24,8 @@ type TLSDetails struct {
 
 	ClientRandom string `json:"client_random"`
 	SessionID    string `json:"session_id"`
+	RawBytes     string `json:"-"`
+	RawB64       string `json:"-"`
 }
 
 type Http1Details struct {

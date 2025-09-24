@@ -10,3 +10,5 @@ requests-db/
 config.json
 .idea
 adminKey
+crashes.txt
+cmd/cmd

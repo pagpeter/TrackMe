@@ -23,7 +23,7 @@ func cleanIP(ip string) string {
 
 // Router returns bytes and content type that should be sent to the client
 func Router(path string, res types.Response, srv *Server) ([]byte, string) {
-	if v, ok := srv.GetTCPFingerprints().Load(cleanIP(res.IP)); ok {
+	if v, ok := srv.GetTCPFingerprints().Load(res.IP); ok {
 		res.TCPIP = v.(types.TCPIPDetails)
 	}
 	res.TLS.JA4 = tls.CalculateJa4(res.TLS)
