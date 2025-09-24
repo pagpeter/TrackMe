@@ -1,8 +1,10 @@
-package main
+package http
 
 import (
 	"fmt"
 	"strings"
+
+	"github.com/pagpeter/trackme/pkg/types"
 )
 
 // Based on https://www.blackhat.com/docs/eu-17/materials/eu-17-Shuster-Passive-Fingerprinting-Of-HTTP2-Clients-wp.pdf
@@ -12,7 +14,7 @@ import (
 // WU: Window Update
 // P: Priority
 // PS: Pseudo-header order (eg: "m,p,a,s")
-func getSettingsFingerprint(frames []ParsedFrame) string {
+func getSettingsFingerprint(frames []types.ParsedFrame) string {
 	var sf string // SettingsFingerprint
 	mapping := map[string]string{
 		"HEADER_TABLE_SIZE":      "1",
@@ -40,7 +42,7 @@ func getSettingsFingerprint(frames []ParsedFrame) string {
 	return strings.TrimRight(sf, ";")
 }
 
-func getWindowUpdateFingerprint(frames []ParsedFrame) string {
+func getWindowUpdateFingerprint(frames []types.ParsedFrame) string {
 	// TODO: there might be multiple WINDOW_UPDATE frames, but I am not sure
 	for _, frame := range frames {
 		if frame.Type == "WINDOW_UPDATE" {
@@ -51,7 +53,7 @@ func getWindowUpdateFingerprint(frames []ParsedFrame) string {
 	return "00"
 }
 
-func getPriorityFingerprint(frames []ParsedFrame) string {
+func getPriorityFingerprint(frames []types.ParsedFrame) string {
 	var pf string // PriorityFingerprint
 
 	for _, frame := range frames {
@@ -66,7 +68,7 @@ func getPriorityFingerprint(frames []ParsedFrame) string {
 	}
 	return "0"
 }
-func getHeaderOrderFingerprint(frames []ParsedFrame) string {
+func getHeaderOrderFingerprint(frames []types.ParsedFrame) string {
 	var hofp string // HeaderOrderFingerprint
 
 	for _, frame := range frames {
@@ -86,7 +88,7 @@ func getHeaderOrderFingerprint(frames []ParsedFrame) string {
 	return hofp
 }
 
-func GetAkamaiFingerprint(frames []ParsedFrame) string {
+func GetAkamaiFingerprint(frames []types.ParsedFrame) string {
 	var akamaiFingerprint string
 
 	akamaiFingerprint += getSettingsFingerprint(frames) + "|"

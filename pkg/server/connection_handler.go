@@ -1,4 +1,4 @@
-package main
+package server
 
 import (
 	"bytes"
@@ -9,14 +9,18 @@ import (
 	"strings"
 	"time"
 
-	tls "github.com/wwhtrbbtt/utls"
+	"github.com/pagpeter/trackme/pkg/http"
+	"github.com/pagpeter/trackme/pkg/tls"
+	"github.com/pagpeter/trackme/pkg/types"
+	"github.com/pagpeter/trackme/pkg/utils"
+	utls "github.com/wwhtrbbtt/utls"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/hpack"
 )
 
 const HTTP2_PREAMBLE = "PRI * HTTP/2.0\r\n\r\nSM\r\n\r\n"
 
-func parseHTTP1(request []byte) Response {
+func parseHTTP1(request []byte) types.Response {
 	// Split the request into lines
 	lines := strings.Split(string(request), "\r\n")
 
@@ -36,24 +40,24 @@ func parseHTTP1(request []byte) Response {
 	}
 
 	if len(firstLine) != 3 {
-		return Response{
+		return types.Response{
 			HTTPVersion: "--",
 			Method:      "--",
-			path:        "--",
+			Path:        "--",
 		}
 	}
-	return Response{
+	return types.Response{
 		HTTPVersion: firstLine[2],
-		path:        firstLine[1],
+		Path:        firstLine[1],
 		Method:      firstLine[0],
 		UserAgent:   userAgent,
-		Http1: &Http1Details{
+		Http1: &types.Http1Details{
 			Headers: headers,
 		},
 	}
 }
 
-func parseHTTP2(f *http2.Framer, c chan ParsedFrame) {
+func parseHTTP2(f *http2.Framer, c chan types.ParsedFrame) {
 	for {
 		frame, err := f.ReadFrame()
 		if err != nil {
@@ -62,15 +66,15 @@ func parseHTTP2(f *http2.Framer, c chan ParsedFrame) {
 				r = "ERROR"
 			}
 			// log.Println("Error reading frame", err, r)
-			c <- ParsedFrame{Type: r}
+			c <- types.ParsedFrame{Type: r}
 			return
 		}
 
-		p := ParsedFrame{}
+		p := types.ParsedFrame{}
 		p.Type = frame.Header().Type.String()
 		p.Stream = frame.Header().StreamID
 		p.Length = frame.Header().Length
-		p.Flags = GetAllFlags(frame)
+		p.Flags = utils.GetAllFlags(frame)
 
 		switch frame := frame.(type) {
 		case *http2.SettingsFrame:
@@ -108,7 +112,7 @@ func parseHTTP2(f *http2.Framer, c chan ParsedFrame) {
 				p.Headers = append(p.Headers, h)
 			}
 			if frame.HasPriority() {
-				prio := Priority{}
+				prio := types.Priority{}
 				p.Priority = &prio
 				// 6.2: Weight: An 8-bit weight for the stream; Add one to the value to obtain a weight between 1 and 256
 				p.Priority.Weight = int(frame.Priority.Weight) + 1
@@ -123,7 +127,7 @@ func parseHTTP2(f *http2.Framer, c chan ParsedFrame) {
 			p.Increment = frame.Increment
 		case *http2.PriorityFrame:
 
-			prio := Priority{}
+			prio := types.Priority{}
 			p.Priority = &prio
 			// 6.3: Weight: An 8-bit weight for the stream; Add one to the value to obtain a weight between 1 and 256
 			p.Priority.Weight = int(frame.PriorityParam.Weight) + 1
@@ -132,7 +136,7 @@ func parseHTTP2(f *http2.Framer, c chan ParsedFrame) {
 				p.Priority.Exclusive = 1
 			}
 		case *http2.GoAwayFrame:
-			p.GoAway = &GoAway{}
+			p.GoAway = &types.GoAway{}
 			p.GoAway.LastStreamID = frame.LastStreamID
 			p.GoAway.ErrCode = uint32(frame.ErrCode)
 			p.GoAway.DebugData = frame.DebugData()
@@ -142,7 +146,7 @@ func parseHTTP2(f *http2.Framer, c chan ParsedFrame) {
 	}
 }
 
-func HandleTLSConnection(conn net.Conn) bool {
+func (srv *Server) HandleTLSConnection(conn net.Conn) bool {
 	// Read the first line of the request
 	// We only read the first line to determine if the connection is HTTP1 or HTTP2
 	// If we know that it isnt HTTP2, we can read the rest of the request and then start processing it
@@ -154,23 +158,23 @@ func HandleTLSConnection(conn net.Conn) bool {
 	_, err := conn.Read(request)
 	if err != nil {
 		//log.Println("Error reading request", err)
-		if strings.HasSuffix(err.Error(), "unknown certificate") && local {
+		if strings.HasSuffix(err.Error(), "unknown certificate") && srv.IsLocal() {
 			log.Println("Local error (probably developement) - not closing conn")
 			return true
 		}
 		return false
 	}
 
-	hs := conn.(*tls.Conn).ClientHello
+	hs := conn.(*utls.Conn).ClientHello
 
-	parsedClientHello := ParseClientHello(hs)
-	JA3Data := CalculateJA3(parsedClientHello)
-	peetfp, peetprintHash := CalculatePeetPrint(parsedClientHello, JA3Data)
-	tlsDetails := TLSDetails{
+	parsedClientHello := tls.ParseClientHello(hs)
+	JA3Data := tls.CalculateJA3(parsedClientHello)
+	peetfp, peetprintHash := tls.CalculatePeetPrint(parsedClientHello, JA3Data)
+	tlsDetails := types.TLSDetails{
 		Ciphers:          JA3Data.ReadableCiphers,
 		Extensions:       parsedClientHello.Extensions,
 		RecordVersion:    JA3Data.Version,
-		NegotiatedVesion: fmt.Sprintf("%v", conn.(*tls.Conn).ConnectionState().Version),
+		NegotiatedVesion: fmt.Sprintf("%v", conn.(*utls.Conn).ConnectionState().Version),
 		JA3:              JA3Data.JA3,
 		JA3Hash:          JA3Data.JA3Hash,
 		PeetPrint:        peetfp,
@@ -181,7 +185,7 @@ func HandleTLSConnection(conn net.Conn) bool {
 
 	// Check if the first line is HTTP/2
 	if string(request) == HTTP2_PREAMBLE {
-		handleHTTP2(conn, tlsDetails)
+		srv.handleHTTP2(conn, tlsDetails)
 	} else {
 		// Read the rest of the request
 		r2 := make([]byte, 1024-l)
@@ -197,12 +201,12 @@ func HandleTLSConnection(conn net.Conn) bool {
 		details := parseHTTP1(request)
 		details.IP = conn.RemoteAddr().String()
 		details.TLS = tlsDetails
-		respondToHTTP1(conn, details)
+		srv.respondToHTTP1(conn, details)
 	}
 	return true
 }
 
-func respondToHTTP1(conn net.Conn, resp Response) {
+func (srv *Server) respondToHTTP1(conn net.Conn, resp types.Response) {
 	// log.Println("Request:", resp.ToJson())
 	// log.Println(len(resp.ToJson()))
 
@@ -210,12 +214,12 @@ func respondToHTTP1(conn net.Conn, resp Response) {
 	var res []byte
 	var ctype = "text/plain"
 	if resp.Method != "OPTIONS" {
-		res, ctype = Router(resp.path, resp)
+		res, ctype = Router(resp.Path, resp, srv)
 	} else {
 		isAdmin = true
 	}
 
-	key, isKeySet := GetAdmin()
+	key, isKeySet := srv.GetAdmin()
 	if isKeySet {
 		for _, a := range resp.Http1.Headers {
 			if strings.HasPrefix(a, key) {
@@ -250,11 +254,11 @@ func respondToHTTP1(conn net.Conn, resp Response) {
 }
 
 // https://stackoverflow.com/questions/52002623/golang-tcp-server-how-to-write-http2-data
-func handleHTTP2(conn net.Conn, tlsFingerprint TLSDetails) {
+func (srv *Server) handleHTTP2(conn net.Conn, tlsFingerprint types.TLSDetails) {
 	// make a new framer to encode/decode frames
 	fr := http2.NewFramer(conn, conn)
-	c := make(chan ParsedFrame)
-	var frames []ParsedFrame
+	c := make(chan types.ParsedFrame)
+	var frames []types.ParsedFrame
 
 	// Same settings that google uses
 	err := fr.WriteSettings(
@@ -273,8 +277,8 @@ func handleHTTP2(conn net.Conn, tlsFingerprint TLSDetails) {
 		return
 	}
 
-	var frame ParsedFrame
-	var headerFrame ParsedFrame
+	var frame types.ParsedFrame
+	var headerFrame types.ParsedFrame
 	var isAdmin bool
 
 	go parseHTTP2(fr, c)
@@ -304,7 +308,7 @@ func handleHTTP2(conn net.Conn, tlsFingerprint TLSDetails) {
 	var path string
 	var method string
 	var userAgent string
-	key, isKeySet := GetAdmin()
+	key, isKeySet := srv.GetAdmin()
 
 	for _, h := range headerFrame.Headers {
 		if strings.HasPrefix(h, ":method") {
@@ -321,16 +325,16 @@ func handleHTTP2(conn net.Conn, tlsFingerprint TLSDetails) {
 		}
 	}
 
-	resp := Response{
+	resp := types.Response{
 		IP:          conn.RemoteAddr().String(),
 		HTTPVersion: "h2",
-		path:        path,
+		Path:        path,
 		Method:      method,
 		UserAgent:   userAgent,
-		Http2: &Http2Details{
+		Http2: &types.Http2Details{
 			SendFrames:            frames,
-			AkamaiFingerprint:     GetAkamaiFingerprint(frames),
-			AkamaiFingerprintHash: GetMD5Hash(GetAkamaiFingerprint(frames)),
+			AkamaiFingerprint:     http.GetAkamaiFingerprint(frames),
+			AkamaiFingerprintHash: utils.GetMD5Hash(http.GetAkamaiFingerprint(frames)),
 		},
 		TLS: tlsFingerprint,
 	}
@@ -338,7 +342,7 @@ func handleHTTP2(conn net.Conn, tlsFingerprint TLSDetails) {
 	var res []byte
 	var ctype = "text/plain"
 	if method != "OPTIONS" {
-		res, ctype = Router(path, resp)
+		res, ctype = Router(path, resp, srv)
 	} else {
 		isAdmin = true
 	}
@@ -363,7 +367,7 @@ func handleHTTP2(conn net.Conn, tlsFingerprint TLSDetails) {
 		return
 	}
 
-	chunks := splitBytesIntoChunks(res, 1024)
+	chunks := utils.SplitBytesIntoChunks(res, 1024)
 	for _, c := range chunks {
 		fr.WriteData(headerFrame.Stream, false, c)
 	}

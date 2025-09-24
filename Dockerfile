@@ -10,6 +10,6 @@ COPY certs ./certs/
 COPY static ./static/
 
 RUN go mod download
-RUN go build -o ./out/app *.go
+RUN go build -o ./out/app ./cmd/main.go
 
 CMD [ "./out/app" ]

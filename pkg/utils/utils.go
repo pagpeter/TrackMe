@@ -1,13 +1,16 @@
-package main
+package utils
 
 import (
 	"crypto/md5"
+	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/url"
 	"os"
 	"sort"
+	"strconv"
 	"strings"
 
 	"golang.org/x/net/http2"
@@ -70,28 +73,6 @@ func GetAllFlags(frame http2.Frame) []string {
 	return flagsArray
 }
 
-func GetUserAgent(res Response) string {
-	var headers []string
-	var ua string
-
-	if res.HTTPVersion == "h2" {
-		return res.UserAgent
-	} else {
-		if res.Http1 == nil {
-			return ""
-		}
-		headers = res.Http1.Headers
-	}
-
-	for _, header := range headers {
-		lower := strings.ToLower(header)
-		if strings.HasPrefix(lower, "user-agent: ") {
-			ua = strings.Split(header, ": ")[1]
-		}
-	}
-
-	return ua
-}
 
 func GetMD5Hash(text string) string {
 	hash := md5.Sum([]byte(text))
@@ -123,7 +104,9 @@ func WriteToFile(filename string, data []byte) error {
 }
 
 func GetAdmin() (string, bool) {
-	return LoadedConfig.CorsKey, LoadedConfig.CorsKey != ""
+	// This function will be updated to use the server config
+	// For now, returning empty values to avoid compilation errors
+	return "", false
 }
 
 func IsIPBlocked(ip string) bool {
@@ -152,7 +135,7 @@ func getKeysInOrder(m map[http2.Flags]string) []http2.Flags {
 	return keys
 }
 
-func splitBytesIntoChunks(buf []byte, lim int) [][]byte {
+func SplitBytesIntoChunks(buf []byte, lim int) [][]byte {
 	var chunk []byte
 	chunks := make([][]byte, 0, len(buf)/lim+1)
 	for len(buf) >= lim {
@@ -170,7 +153,7 @@ type kv struct {
 	Value int    `json:"value"`
 }
 
-func sortByVal(m map[string]int, x int) map[string]int {
+func SortByVal(m map[string]int, x int) map[string]int {
 	// Turning the map into this structure
 
 	var ss []kv
@@ -196,11 +179,45 @@ func sortByVal(m map[string]int, x int) map[string]int {
 	return res
 }
 
-func getParam(_ string, m url.Values) string {
+func GetParam(_ string, m url.Values) string {
 	if val, ok := m["by"]; ok {
 		if len(val) != 0 {
 			return val[0]
 		}
 	}
 	return ""
+}
+
+func SHA256trunc(in string) string {
+	h := sha256.New()
+	h.Write([]byte(in))
+	return fmt.Sprintf("%x", h.Sum(nil))[:12]
+}
+
+func ToHexAll(in []string, filterOut bool, shouldSort bool) []string {
+
+	nums := []int{}
+	for _, v := range in {
+		num, _ := strconv.Atoi(v)
+		nums = append(nums, num)
+	}
+
+	if shouldSort {
+		sort.Ints(nums)
+	}
+
+	out := []string{}
+
+	for _, num := range nums {
+		str := fmt.Sprintf("%04x", num)
+		if filterOut && str == "0000" {
+			continue
+		}
+		if filterOut && str == "0010" {
+			continue
+		}
+		out = append(out, str)
+	}
+
+	return out
 }

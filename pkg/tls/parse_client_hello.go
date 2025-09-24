@@ -1,4 +1,4 @@
-package main
+package tls
 
 import (
 	"encoding/hex"
@@ -6,6 +6,8 @@ import (
 	"log"
 	"strconv"
 	"strings"
+
+	"github.com/pagpeter/trackme/pkg/types"
 )
 
 type Extension struct {
@@ -215,12 +217,12 @@ func parseRawExtensions(exts []Extension, chp ClientHello) ([]interface{}, Clien
 			tmpC := 4
 			for tmpC <= length*2 {
 				val := d[tmpC : tmpC+4]
-				if isGrease("0x" + strings.ToUpper(val)) {
+				if types.IsGrease("0x" + strings.ToUpper(val)) {
 					chp.SupportedCurves = append(chp.SupportedCurves, 6969)
 					c.SupportedGroups = append(c.SupportedGroups, "TLS_GREASE (0x"+val+")")
 				} else {
 					chp.SupportedCurves = append(chp.SupportedCurves, uint16(hexToInt(val)))
-					c.SupportedGroups = append(c.SupportedGroups, GetCurveNameByID(uint16(hexToInt(val))))
+					c.SupportedGroups = append(c.SupportedGroups, types.GetCurveNameByID(uint16(hexToInt(val))))
 				}
 				tmpC += 4
 			}
@@ -263,7 +265,7 @@ func parseRawExtensions(exts []Extension, chp ClientHello) ([]interface{}, Clien
 			for tmpC <= (c.AlgsLength * 4) {
 				asInt := uint16(hexToInt(d[tmpC : tmpC+4]))
 				chp.SignatureAlgorithms = append(chp.SignatureAlgorithms, int(asInt))
-				c.Algorithms = append(c.Algorithms, GetSignatureNameByID(asInt))
+				c.Algorithms = append(c.Algorithms, types.GetSignatureNameByID(asInt))
 				tmpC += 4
 			}
 			tmp = c
@@ -354,7 +356,7 @@ func parseRawExtensions(exts []Extension, chp ClientHello) ([]interface{}, Clien
 			for len(c.SignatureHashAlgorithms)*4 < length {
 				name := uint16(hexToInt(d[tmpC : tmpC+4]))
 				tmpC += 4
-				c.SignatureHashAlgorithms = append(c.SignatureHashAlgorithms, GetSignatureNameByID(name))
+				c.SignatureHashAlgorithms = append(c.SignatureHashAlgorithms, types.GetSignatureNameByID(name))
 			}
 			tmp = c
 
@@ -375,7 +377,7 @@ func parseRawExtensions(exts []Extension, chp ClientHello) ([]interface{}, Clien
 			}
 			for len(c.Versions)*2 < c.VersionsLength {
 				val := getOrReturnOG(d[count:count+4], mapping)
-				if isGrease("0x" + strings.ToUpper(val)) {
+				if types.IsGrease("0x" + strings.ToUpper(val)) {
 					val = "TLS_GREASE (0x" + val + ")"
 					chp.SupportedTLSVersions = append(chp.SupportedTLSVersions, -1)
 				} else {
@@ -431,10 +433,10 @@ func parseRawExtensions(exts []Extension, chp ClientHello) ([]interface{}, Clien
 				data := d[tmpC : tmpC+keyLength]
 				tmpC += keyLength
 
-				if isGrease("0x" + strings.ToUpper(name)) {
+				if types.IsGrease("0x" + strings.ToUpper(name)) {
 					name = "TLS_GREASE (0x" + name + ")"
 				} else {
-					name = GetCurveNameByID(uint16(hexToInt(name)))
+					name = types.GetCurveNameByID(uint16(hexToInt(name)))
 				}
 				c.SharedKeys = append(c.SharedKeys, map[string]string{name: data})
 			}
@@ -469,7 +471,7 @@ func parseRawExtensions(exts []Extension, chp ClientHello) ([]interface{}, Clien
 			}
 			tmp = c
 		default:
-			if isGrease("0x" + strings.ToUpper(ext.Type)) {
+			if types.IsGrease("0x" + strings.ToUpper(ext.Type)) {
 				tmp = struct {
 					Name string `json:"name"`
 				}{
@@ -481,7 +483,7 @@ func parseRawExtensions(exts []Extension, chp ClientHello) ([]interface{}, Clien
 					Name string `json:"name"`
 					Data string `json:"data"`
 				}{
-					Name: GetExtensionNameByID(uint16(hexToInt(t))),
+					Name: types.GetExtensionNameByID(uint16(hexToInt(t))),
 					Data: d,
 				}
 			}

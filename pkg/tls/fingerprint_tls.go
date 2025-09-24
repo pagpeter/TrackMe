@@ -1,10 +1,13 @@
-package main
+package tls
 
 import (
 	"fmt"
 	"sort"
 	"strconv"
 	"strings"
+
+	"github.com/pagpeter/trackme/pkg/types"
+	"github.com/pagpeter/trackme/pkg/utils"
 )
 
 type JA3Calculating struct {
@@ -44,8 +47,8 @@ func (j *JA3Calculating) Parse() {
 	j.JA3Points = []string{}
 
 	for _, cipher := range j.AllCiphers {
-		name := GetCipherSuiteName(cipher)
-		if isGrease(name) {
+		name := types.GetCipherSuiteName(cipher)
+		if types.IsGrease(name) {
 			name = "TLS_GREASE (" + name + ")"
 			j.PeetPrintCiphers = append(j.PeetPrintCiphers, "GREASE")
 		} else {
@@ -58,7 +61,7 @@ func (j *JA3Calculating) Parse() {
 	for _, extension := range j.AllExtensions {
 		hex := strconv.FormatUint(uint64(extension), 16)
 		hex = "0x" + strings.ToUpper(hex)
-		if !isGrease(hex) {
+		if !types.IsGrease(hex) {
 			j.JA3Extensions = append(j.JA3Extensions, fmt.Sprintf("%v", extension))
 			j.PeetPrintExtensions = append(j.PeetPrintExtensions, fmt.Sprintf("%v", extension))
 		} else {
@@ -70,7 +73,7 @@ func (j *JA3Calculating) Parse() {
 	for _, curve := range j.AllCurves {
 		hex := strconv.FormatUint(uint64(curve), 16)
 		hex = "0x" + strings.ToUpper(hex)
-		if !isGrease(hex) && curve != 6969 {
+		if !types.IsGrease(hex) && curve != 6969 {
 			j.JA3Curves = append(j.JA3Curves, fmt.Sprintf("%v", curve))
 			j.PeetPrintCurves = append(j.PeetPrintCurves, fmt.Sprintf("%v", curve))
 		} else {
@@ -94,7 +97,7 @@ func (j *JA3Calculating) Calculate() {
 	ja3 += strings.Join(j.JA3Curves, "-") + ","
 	ja3 += strings.Join(j.JA3Points, "-")
 	j.JA3 = ja3
-	j.JA3Hash = GetMD5Hash(ja3)
+	j.JA3Hash = utils.GetMD5Hash(ja3)
 }
 
 func CalculateJA3(parsed ClientHello) JA3Calculating {
@@ -102,7 +105,7 @@ func CalculateJA3(parsed ClientHello) JA3Calculating {
 	for _, version := range parsed.SupportedVersions {
 		hex := strconv.FormatUint(uint64(version), 16)
 		hex = "0x" + strings.ToUpper(hex)
-		if !isGrease(hex) {
+		if !types.IsGrease(hex) {
 			versions = append(versions, fmt.Sprintf("%v", version))
 		}
 	}
@@ -174,5 +177,5 @@ func CalculatePeetPrint(parsed ClientHello, j JA3Calculating) (string, string) {
 	//	}
 
 	fp := fmt.Sprintf("%v|%v|%v|%v|%v|%v|%v|%v", tls_versions, protos, groups, sig_als, key_mode, comp_algs, suites, extensions)
-	return fp, GetMD5Hash(fp)
+	return fp, utils.GetMD5Hash(fp)
 }

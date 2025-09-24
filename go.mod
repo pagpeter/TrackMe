@@ -1,4 +1,4 @@
-module main
+module github.com/pagpeter/trackme
 
 go 1.23.2
 

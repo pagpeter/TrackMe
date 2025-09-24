@@ -1,9 +1,10 @@
-package main
+package types
 
 import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"os"
 )
 
 type TLSDetails struct {
@@ -15,7 +16,7 @@ type TLSDetails struct {
 	JA3     string `json:"ja3"`
 	JA3Hash string `json:"ja3_hash"`
 
-	JA4 string `json:"ja4"`
+	JA4   string `json:"ja4"`
 	JA4_r string `json:"ja4_r"`
 
 	PeetPrint     string `json:"peetprint"`
@@ -35,11 +36,54 @@ type Http2Details struct {
 	SendFrames            []ParsedFrame `json:"sent_frames"`
 }
 
+type IPDetails struct {
+	DF          int    `json:"df,omitempty"`
+	HDRLength   int    `json:"hdr_length,omitempty"`
+	ID          int    `json:"id,omitempty"`
+	MF          int    `json:"mf,omitempty"`
+	NXT         int    `json:"nxt,omitempty"`
+	OFF         int    `json:"off,omitempty"`
+	PLEN        int    `json:"plen,omitempty"`
+	Protocol    int    `json:"protocol,omitempty"`
+	RF          int    `json:"rf,omitempty"`
+	TOS         int    `json:"tos,omitempty"`
+	TotalLength int    `json:"total_length,omitempty"`
+	TTL         int    `json:"ttl,omitempty"`
+	IPVersion   int    `json:"ip_version,omitempty"`
+	DstIp       string `json:"dst_ip,omitempty"`
+	SrcIP       string `json:"src_ip,omitempty"`
+}
+type TCPDetails struct {
+	Ack                int    `json:"ack,omitempty"`
+	Checksum           int    `json:"checksum,omitempty"`
+	Flags              int    `json:"flags,omitempty"`
+	HeaderLength       int    `json:"header_length,omitempty"`
+	MSS                int    `json:"mss,omitempty"`
+	OFF                int    `json:"off,omitempty"`
+	Options            string `json:"options,omitempty"`
+	OptionsOrder       string `json:"options_order,omitempty"`
+	Seq                int    `json:"seq,omitempty"`
+	Timestamp          int    `json:"timestamp,omitempty"`
+	TimestampEchoReply int    `json:"timestamp_echo_reply,omitempty"`
+	URP                int    `json:"urp,omitempty"`
+	Window             int    `json:"window,omitempty"`
+	// WindowSize         int    `json:"window_size,omitempty"`
+}
+type TCPIPDetails struct {
+	CapLen    int        `json:"cap_length,omitempty"`
+	DstPort   int        `json:"dst_port,omitempty"`
+	SrcPort   int        `json:"src_port,omitempty"`
+	HeaderLen int        `json:"header_length,omitempty"`
+	TS        []int      `json:"ts,omitempty"`
+	IP        IPDetails  `json:"ip,omitempty"`
+	TCP       TCPDetails `json:"tcp,omitempty"`
+}
+
 type Response struct {
 	Donate      string        `json:"donate"`
 	IP          string        `json:"ip"`
 	HTTPVersion string        `json:"http_version"`
-	path        string        `json:"-"`
+	Path        string        `json:"-"`
 	Method      string        `json:"method"`
 	UserAgent   string        `json:"user_agent,omitempty"`
 	TLS         TLSDetails    `json:"tls"`
@@ -61,7 +105,7 @@ type SmallResponse struct {
 	JA3           string `json:"ja3"`
 	JA3Hash       string `json:"ja3_hash"`
 	JA4           string `json:"ja4"`
-	JA4_r           string `json:"ja4_r"`
+	JA4_r         string `json:"ja4_r"`
 	Akamai        string `json:"akamai"`
 	AkamaiHash    string `json:"akamai_hash"`
 	PeetPrint     string `json:"peetprint"`
@@ -119,7 +163,7 @@ type Config struct {
 }
 
 func (c *Config) LoadFromFile() error {
-	data, err := ReadFile("config.json")
+	data, err := os.ReadFile("config.json")
 	fmt.Println(string(data))
 	if err != nil {
 		fmt.Println("No config file found: generating one", err)
@@ -154,7 +198,7 @@ func (c *Config) WriteToFile(file string) error {
 		log.Println("Error marshalling config", err)
 		return err
 	}
-	return WriteToFile(file, j)
+	return os.WriteFile(file, j, 0644)
 }
 
 func (c *Config) MakeDefault() {

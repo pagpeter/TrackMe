@@ -30,7 +30,7 @@ $ docker run -p 80:80 -p 443:443 "trackme:Dockerfile"
 
 ## Running it (Without Docker)
 
-You can build a binary by running `go build -o TrackMe *.go`
+You can build a binary by running `go build -o TrackMe cmd/main.go`
 
 After that, just run the binary (`sudo ./TrackMe`)
 

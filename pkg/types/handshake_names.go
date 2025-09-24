@@ -1,4 +1,4 @@
-package main
+package types
 
 import (
 	"crypto/tls"
@@ -26,7 +26,7 @@ var GREASE_values = []string{
 	"0xA0A",
 }
 
-func isGrease(cipher string) bool {
+func IsGrease(cipher string) bool {
 	for _, g := range GREASE_values {
 		if g == cipher {
 			return true

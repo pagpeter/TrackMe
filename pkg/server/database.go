@@ -1,4 +1,4 @@
-package main
+package server
 
 import (
 	"fmt"
@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/pagpeter/trackme/pkg/types"
+	"github.com/pagpeter/trackme/pkg/utils"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -47,7 +49,7 @@ type ByUserAgent struct {
 	PeetPrint map[string]int `json:"peet_prints"`
 }
 
-func SaveRequest(req Response) {
+func SaveRequest(req types.Response, srv *Server) {
 	reqLog := RequestLog{
 		JA3:       req.TLS.JA3,
 		PeetPrint: req.TLS.PeetPrint,
@@ -59,24 +61,26 @@ func SaveRequest(req Response) {
 	} else if req.HTTPVersion == "http/1.1" {
 		reqLog.H2 = "-"
 	}
-	if LoadedConfig.LogIPs {
+	if srv.GetConfig().LogIPs {
 		parts := strings.Split(req.IP, ":")
 		ip := strings.Join(parts[0:len(parts)-1], ":")
 		reqLog.IP = ip
 	}
 	reqLog.UserAgent = GetUserAgent(req)
 
-	_, err := collection.InsertOne(ctx, reqLog)
-	if err != nil {
-		log.Println(err)
+	if srv.IsConnectedToDB() && srv.State.Config.LogToDB {
+		_, err := srv.GetMongoCollection().InsertOne(srv.GetMongoContext(), reqLog)
+		if err != nil {
+			log.Println(err)
+		}
 	}
 }
 
-func GetTotalRequestCount() int64 {
-	if !connectedToDB {
+func GetTotalRequestCount(srv *Server) int64 {
+	if !srv.IsConnectedToDB() {
 		return 999
 	}
-	itemCount, err := collection.CountDocuments(ctx, bson.M{})
+	itemCount, err := srv.GetMongoCollection().CountDocuments(srv.GetMongoContext(), bson.M{})
 	if err != nil {
 		log.Println(err)
 		return -1
@@ -84,15 +88,15 @@ func GetTotalRequestCount() int64 {
 	return itemCount
 }
 
-func queryDB(query, val string) []RequestLog {
+func queryDB(query, val string, srv *Server) []RequestLog {
 	dbRes := []RequestLog{}
-	cur, err := collection.Find(ctx, bson.D{{Key: query, Value: val}})
+	cur, err := srv.GetMongoCollection().Find(srv.GetMongoContext(), bson.D{{Key: query, Value: val}})
 	if err != nil {
 		log.Println("Error quering data:", err)
 		return dbRes
 	}
 
-	for cur.Next(ctx) {
+	for cur.Next(srv.GetMongoContext()) {
 		var b RequestLog
 		err := cur.Decode(&b)
 		if err != nil {
@@ -107,7 +111,7 @@ func queryDB(query, val string) []RequestLog {
 		return dbRes
 	}
 
-	if cur.Close(ctx) != nil {
+	if cur.Close(srv.GetMongoContext()) != nil {
 		log.Println("Could not close")
 	}
 	return dbRes
@@ -115,7 +119,7 @@ func queryDB(query, val string) []RequestLog {
 
 const COUNT = 10
 
-func GetByJa3(val string) ByJA3 {
+func GetByJa3(val string, srv *Server) ByJA3 {
 	res := ByJA3{
 		JA3:        val,
 		H2:         map[string]int{},
@@ -123,7 +127,7 @@ func GetByJa3(val string) ByJA3 {
 		UserAgents: map[string]int{},
 	}
 
-	dbRes := queryDB("ja3", val)
+	dbRes := queryDB("ja3", val, srv)
 
 	for _, r := range dbRes {
 		if v, ok := res.H2[r.H2]; ok {
@@ -145,14 +149,14 @@ func GetByJa3(val string) ByJA3 {
 		}
 	}
 
-	res.PeetPrint = sortByVal(res.PeetPrint, COUNT)
-	res.H2 = sortByVal(res.H2, COUNT)
-	res.UserAgents = sortByVal(res.UserAgents, COUNT)
+	res.PeetPrint = utils.SortByVal(res.PeetPrint, COUNT)
+	res.H2 = utils.SortByVal(res.H2, COUNT)
+	res.UserAgents = utils.SortByVal(res.UserAgents, COUNT)
 
 	return res
 }
 
-func GetByH2(val string) ByH2 {
+func GetByH2(val string, srv *Server) ByH2 {
 	res := ByH2{
 		H2:         val,
 		JA3:        map[string]int{},
@@ -160,7 +164,7 @@ func GetByH2(val string) ByH2 {
 		UserAgents: map[string]int{},
 	}
 
-	dbRes := queryDB("h2", val)
+	dbRes := queryDB("h2", val, srv)
 
 	for _, r := range dbRes {
 		if v, ok := res.JA3[r.JA3]; ok {
@@ -182,13 +186,13 @@ func GetByH2(val string) ByH2 {
 		}
 	}
 
-	res.PeetPrint = sortByVal(res.PeetPrint, COUNT)
-	res.JA3 = sortByVal(res.JA3, COUNT)
-	res.UserAgents = sortByVal(res.UserAgents, COUNT)
+	res.PeetPrint = utils.SortByVal(res.PeetPrint, COUNT)
+	res.JA3 = utils.SortByVal(res.JA3, COUNT)
+	res.UserAgents = utils.SortByVal(res.UserAgents, COUNT)
 	return res
 }
 
-func GetByPeetPrint(val string) ByPeetPrint {
+func GetByPeetPrint(val string, srv *Server) ByPeetPrint {
 	res := ByPeetPrint{
 		PeetPrint:  val,
 		H2:         map[string]int{},
@@ -196,7 +200,7 @@ func GetByPeetPrint(val string) ByPeetPrint {
 		UserAgents: map[string]int{},
 	}
 
-	dbRes := queryDB("peetprint", val)
+	dbRes := queryDB("peetprint", val, srv)
 
 	for _, r := range dbRes {
 		if v, ok := res.H2[r.H2]; ok {
@@ -217,14 +221,14 @@ func GetByPeetPrint(val string) ByPeetPrint {
 			res.UserAgents[r.UserAgent] = 1
 		}
 	}
-	res.JA3 = sortByVal(res.JA3, COUNT)
-	res.H2 = sortByVal(res.H2, COUNT)
-	res.UserAgents = sortByVal(res.UserAgents, COUNT)
+	res.JA3 = utils.SortByVal(res.JA3, COUNT)
+	res.H2 = utils.SortByVal(res.H2, COUNT)
+	res.UserAgents = utils.SortByVal(res.UserAgents, COUNT)
 
 	return res
 }
 
-func GetByUserAgent(val string) ByUserAgent {
+func GetByUserAgent(val string, srv *Server) ByUserAgent {
 	res := ByUserAgent{
 		UserAgent: val,
 		H2:        map[string]int{},
@@ -238,7 +242,7 @@ func GetByUserAgent(val string) ByUserAgent {
 	}
 	fmt.Println(val)
 
-	dbRes := queryDB("user_agent", decodedValue)
+	dbRes := queryDB("user_agent", decodedValue, srv)
 
 	for _, r := range dbRes {
 		if v, ok := res.H2[r.H2]; ok {
@@ -259,9 +263,9 @@ func GetByUserAgent(val string) ByUserAgent {
 			res.PeetPrint[r.PeetPrint] = 1
 		}
 	}
-	res.JA3 = sortByVal(res.JA3, COUNT)
-	res.H2 = sortByVal(res.H2, COUNT)
-	res.PeetPrint = sortByVal(res.PeetPrint, COUNT)
+	res.JA3 = utils.SortByVal(res.JA3, COUNT)
+	res.H2 = utils.SortByVal(res.H2, COUNT)
+	res.PeetPrint = utils.SortByVal(res.PeetPrint, COUNT)
 
 	return res
 }
