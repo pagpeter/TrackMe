@@ -24,8 +24,6 @@
     </style>
     <script>
       const insert = (data) => {
-        console.log(data);
-
         d = document;
 
         let groups = [];
@@ -53,8 +51,8 @@
         d.getElementById("ttl").innerText = data.tcpip?.ip?.ttl || "-";
 
         d.getElementById("akamai-hash").innerText =
-          data.http2.akamai_fingerprint_hash;
-        d.getElementById("akamai").innerText = data.http2.akamai_fingerprint;
+          data.http2?.akamai_fingerprint_hash || "-";
+        d.getElementById("akamai").innerText = data.http2?.akamai_fingerprint || "-";
 
         d.getElementById("peetprint-hash").innerText = data.tls.peetprint_hash;
         d.getElementById("peetprint").innerText = data.tls.peetprint;
@@ -65,9 +63,8 @@
           data.http_version == "h2" ? "HTTP/2" : "HTTP/1.1";
         d.getElementById("tls-versions").innerText = versions.join(", ");
         d.getElementById("http-versions").innerText = protos.join(", ");
-        if (data.http_version == "h2") {
-          d.getElementById("h2-frames").innerText =
-            data.http2.sent_frames.length;
+        if (data.http_version == "h2" && data.http2) {
+          d.getElementById("h2-frames").innerText = data.http2.sent_frames.length;
         } else {
           d.getElementById("h2-frames").innerText = "N/A";
         }
@@ -94,7 +91,7 @@
 
         document.getElementById(
           "h2-link"
-        ).href = `/explore?type=h2&by=${data.http2?.akamai_fingerprint}`;
+        ).href = `/explore?type=h2&by=${data.http2?.akamai_fingerprint || ''}`;
         document.getElementById(
           "ja3-link"
         ).href = `/explore?type=ja3&by=${data.tls.ja3}`;
