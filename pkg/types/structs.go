@@ -38,6 +38,22 @@ type Http2Details struct {
 	SendFrames            []ParsedFrame `json:"sent_frames"`
 }
 
+type Http3Details struct {
+	Information                        string `json:"important_info"`
+	Used0RTT                           bool   `json:"used_0rtt"`
+	SupportsDatagrams                  bool   `json:"supports_datagrams"`
+	SupportsStreamResetPartialDelivery bool   `json:"supports_stream_reset_partial_delivery"`
+	Version                            uint32 `json:"version"`
+	GSO                                bool   `json:"gso"`
+	Settings                           any    `json:"settings"`
+}
+
+type Http3Settings struct {
+	EnableDatagrams       bool              `json:"enable_datagrams"`
+	EnableExtendedConnect bool              `json:"enable_extended_connect"`
+	Other                 map[uint64]uint64 `json:"other"`
+}
+
 type IPDetails struct {
 	DF          int    `json:"df,omitempty"`
 	HDRLength   int    `json:"hdr_length,omitempty"`
@@ -88,9 +104,10 @@ type Response struct {
 	Path        string        `json:"-"`
 	Method      string        `json:"method"`
 	UserAgent   string        `json:"user_agent,omitempty"`
-	TLS         TLSDetails    `json:"tls"`
+	TLS         *TLSDetails   `json:"tls"`
 	Http1       *Http1Details `json:"http1,omitempty"`
 	Http2       *Http2Details `json:"http2,omitempty"`
+	Http3       *Http3Details `json:"http3,omitempty"`
 	TCPIP       TCPIPDetails  `json:"tcpip,omitempty"`
 }
 

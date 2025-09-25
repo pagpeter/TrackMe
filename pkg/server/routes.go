@@ -34,16 +34,22 @@ func apiClean(res types.Response, _ url.Values) ([]byte, string) {
 		akamai = res.Http2.AkamaiFingerprint
 		hash = utils.GetMD5Hash(res.Http2.AkamaiFingerprint)
 	}
-	return []byte(types.SmallResponse{
-		JA3:           res.TLS.JA3,
-		JA3Hash:       res.TLS.JA3Hash,
-		JA4:           res.TLS.JA4,
-		JA4_r:         res.TLS.JA4_r,
-		Akamai:        akamai,
-		AkamaiHash:    hash,
-		PeetPrint:     res.TLS.PeetPrint,
-		PeetPrintHash: res.TLS.PeetPrintHash,
-	}.ToJson()), "application/json"
+
+	smallRes := types.SmallResponse{
+		Akamai:     akamai,
+		AkamaiHash: hash,
+	}
+
+	if res.TLS != nil {
+		smallRes.JA3 = res.TLS.JA3
+		smallRes.JA3Hash = res.TLS.JA3Hash
+		smallRes.JA4 = res.TLS.JA4
+		smallRes.JA4_r = res.TLS.JA4_r
+		smallRes.PeetPrint = res.TLS.PeetPrint
+		smallRes.PeetPrintHash = res.TLS.PeetPrintHash
+	}
+
+	return []byte(smallRes.ToJson()), "application/json"
 }
 
 func apiRaw(res types.Response, _ url.Values) ([]byte, string) {

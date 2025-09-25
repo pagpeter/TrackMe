@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"fmt"
 	"log"
 	"net"
@@ -10,16 +11,19 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/pagpeter/quic-go"
+	"github.com/pagpeter/quic-go/http3"
 	"github.com/pagpeter/trackme/pkg/server"
 	"github.com/pagpeter/trackme/pkg/tcp"
 	"github.com/pagpeter/trackme/pkg/utils"
-	tls "github.com/wwhtrbbtt/utls"
+	utls "github.com/wwhtrbbtt/utls"
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 var cert tls.Certificate
+var utlsCert utls.Certificate
 var srv *server.Server
 var local = false
 
@@ -111,6 +115,32 @@ func timeoutHandleTLSConnection(conn net.Conn) bool {
 	}
 }
 
+func StartHTTP3Server(host, port string) {
+	// Use the server's HTTP/3 handler
+	handler := srv.HandleHTTP3()
+
+	// Configure TLS for HTTP/3
+	h3TLSConfig := http3.ConfigureTLSConfig(&tls.Config{
+		Certificates: []tls.Certificate{cert},
+		NextProtos:   []string{"h3"},
+	})
+
+	h3Server := &http3.Server{
+		Handler:   handler,
+		Addr:      host + ":" + port,
+		TLSConfig: h3TLSConfig,
+		QUICConfig: &quic.Config{
+			Allow0RTT: true,
+		},
+	}
+
+	log.Println("Starting HTTP/3 server on", host+":"+port)
+	err := h3Server.ListenAndServe()
+	if err != nil {
+		log.Printf("HTTP/3 server error: %v", err)
+	}
+}
+
 func main() {
 	defer func() {
 		if r := recover(); r != nil {
@@ -128,16 +158,24 @@ func main() {
 	if err != nil {
 		log.Fatal("Error loading TLS certificates", err)
 	}
+
+	// Convert standard TLS cert to utls cert
+	utlsCert = utls.Certificate{
+		Certificate: cert.Certificate,
+		PrivateKey:  cert.PrivateKey,
+		Leaf:        cert.Leaf,
+	}
+
 	// Create a TLS configuration
-	config := tls.Config{
+	config := utls.Config{
 		ServerName: srv.GetConfig().Host,
 		NextProtos: []string{
 			"h2",
 		},
-		Certificates: []tls.Certificate{cert},
+		Certificates: []utls.Certificate{utlsCert},
 	}
 
-	listener, err := tls.Listen("tcp", srv.GetConfig().Host+":"+srv.GetConfig().TLSPort, &config)
+	listener, err := utls.Listen("tcp", srv.GetConfig().Host+":"+srv.GetConfig().TLSPort, &config)
 	if err != nil {
 		log.Fatal("Error starting tcp listener", err)
 	}
@@ -149,6 +187,7 @@ func main() {
 
 	defer listener.Close()
 	go StartRedirectServer(srv.GetConfig().Host, srv.GetConfig().HTTPPort)
+	go StartHTTP3Server(srv.GetConfig().Host, srv.GetConfig().TLSPort)
 	if srv.GetConfig().Device != "" {
 		go tcp.SniffTCP(srv.GetConfig().Device, tlsPort, srv)
 	}

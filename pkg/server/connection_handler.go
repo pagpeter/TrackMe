@@ -7,11 +7,13 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"net/http"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/pagpeter/trackme/pkg/http"
+	"github.com/pagpeter/quic-go/http3"
+	trackmehttp "github.com/pagpeter/trackme/pkg/http"
 	"github.com/pagpeter/trackme/pkg/tls"
 	"github.com/pagpeter/trackme/pkg/types"
 	"github.com/pagpeter/trackme/pkg/utils"
@@ -194,7 +196,7 @@ func (srv *Server) HandleTLSConnection(conn net.Conn) bool {
 
 	// Check if the first line is HTTP/2
 	if string(request) == HTTP2_PREAMBLE {
-		srv.handleHTTP2(conn, tlsDetails)
+		srv.handleHTTP2(conn, &tlsDetails)
 	} else {
 		// Read the rest of the request
 		r2 := make([]byte, 1024-l)
@@ -209,7 +211,7 @@ func (srv *Server) HandleTLSConnection(conn net.Conn) bool {
 		// Parse and handle the request
 		details := parseHTTP1(request)
 		details.IP = conn.RemoteAddr().String()
-		details.TLS = tlsDetails
+		details.TLS = &tlsDetails
 		srv.respondToHTTP1(conn, details)
 	}
 	return true
@@ -246,6 +248,7 @@ func (srv *Server) respondToHTTP1(conn net.Conn, resp types.Response) {
 		res1 += "Access-Control-Allow-Headers: *\r\n"
 	}
 	res1 += "Server: TrackMe\r\n"
+	res1 += "Alt-Svc: h3=\":443\"; ma=86400\r\n"
 	res1 += "\r\n"
 	res1 += string(res)
 	res1 += "\r\n\r\n"
@@ -263,7 +266,7 @@ func (srv *Server) respondToHTTP1(conn net.Conn, resp types.Response) {
 }
 
 // https://stackoverflow.com/questions/52002623/golang-tcp-server-how-to-write-http2-data
-func (srv *Server) handleHTTP2(conn net.Conn, tlsFingerprint types.TLSDetails) {
+func (srv *Server) handleHTTP2(conn net.Conn, tlsFingerprint *types.TLSDetails) {
 	// make a new framer to encode/decode frames
 	fr := http2.NewFramer(conn, conn)
 	c := make(chan types.ParsedFrame)
@@ -342,8 +345,8 @@ func (srv *Server) handleHTTP2(conn net.Conn, tlsFingerprint types.TLSDetails) {
 		UserAgent:   userAgent,
 		Http2: &types.Http2Details{
 			SendFrames:            frames,
-			AkamaiFingerprint:     http.GetAkamaiFingerprint(frames),
-			AkamaiFingerprintHash: utils.GetMD5Hash(http.GetAkamaiFingerprint(frames)),
+			AkamaiFingerprint:     trackmehttp.GetAkamaiFingerprint(frames),
+			AkamaiFingerprintHash: utils.GetMD5Hash(trackmehttp.GetAkamaiFingerprint(frames)),
 		},
 		TLS: tlsFingerprint,
 	}
@@ -363,6 +366,7 @@ func (srv *Server) handleHTTP2(conn net.Conn, tlsFingerprint types.TLSDetails) {
 	encoder.WriteField(hpack.HeaderField{Name: "server", Value: "TrackMe.peet.ws"})
 	encoder.WriteField(hpack.HeaderField{Name: "content-length", Value: strconv.Itoa(len(res))})
 	encoder.WriteField(hpack.HeaderField{Name: "content-type", Value: ctype})
+	encoder.WriteField(hpack.HeaderField{Name: "alt-svc", Value: "h3=\":443\"; ma=86400"})
 	if isAdmin {
 		encoder.WriteField(hpack.HeaderField{Name: "access-control-allow-origin", Value: "*"})
 		encoder.WriteField(hpack.HeaderField{Name: "access-control-allow-methods", Value: "*"})
@@ -385,4 +389,59 @@ func (srv *Server) handleHTTP2(conn net.Conn, tlsFingerprint types.TLSDetails) {
 
 	time.Sleep(time.Millisecond * 500)
 	conn.Close()
+}
+
+// HandleHTTP3 handles HTTP/3 requests and returns a simple "Hello, World!" response
+func (srv *Server) HandleHTTP3() http.Handler {
+	mux := http.NewServeMux()
+
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+
+		if h3w, ok := w.(*http3.ResponseWriter); ok {
+			h3c := h3w.Connection()
+			h3state := h3c.ConnectionState()
+
+			h3c.Settings()
+
+			// Safely extract connection state and settings
+			var used0RTT, supportsDatagrams, supportsStreamResetPartialDelivery bool
+			var version uint32
+			var gso bool
+			var settings types.Http3Settings
+
+			used0RTT = h3state.Used0RTT
+			supportsDatagrams = h3state.SupportsDatagrams
+			supportsStreamResetPartialDelivery = h3state.SupportsStreamResetPartialDelivery
+			version = uint32(h3state.Version)
+			gso = h3state.GSO
+			if h3c != nil && h3c.Settings() != nil {
+				settings = types.Http3Settings(*h3c.Settings())
+			}
+
+			resp := types.Response{
+				IP:          r.RemoteAddr,
+				HTTPVersion: "h3",
+				Path:        r.URL.Path,
+				Method:      r.Method,
+				UserAgent:   r.Header.Get("User-Agent"),
+				Http3: &types.Http3Details{
+					Information:                        "HTTP/3 support is work-in-progress. Use https://fp.impersonate.pro/api/http3 in the meantime.",
+					Used0RTT:                           used0RTT,
+					SupportsDatagrams:                  supportsDatagrams,
+					SupportsStreamResetPartialDelivery: supportsStreamResetPartialDelivery,
+					Version:                            version,
+					GSO:                                gso,
+					Settings:                           settings,
+				},
+			}
+
+			res, ctype := Router(r.URL.Path, resp, srv)
+
+			w.Header().Set("Content-Type", ctype)
+			w.Header().Set("Server", "TrackMe")
+			w.Write([]byte(res))
+		}
+	})
+
+	return mux
 }

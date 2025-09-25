@@ -26,10 +26,14 @@ func Router(path string, res types.Response, srv *Server) ([]byte, string) {
 	if v, ok := srv.GetTCPFingerprints().Load(res.IP); ok {
 		res.TCPIP = v.(types.TCPIPDetails)
 	}
-	res.TLS.JA4 = tls.CalculateJa4(res.TLS)
-	res.TLS.JA4_r = tls.CalculateJa4_r(res.TLS)
 	res.Donate = "Please consider donating to keep this API running. Visit https://tls.peet.ws"
-	Log(fmt.Sprintf("%v %v %v %v %v", cleanIP(res.IP), res.Method, res.HTTPVersion, res.Path, res.TLS.JA3Hash))
+	if res.TLS != nil {
+		res.TLS.JA4 = tls.CalculateJa4(res.TLS)
+		res.TLS.JA4_r = tls.CalculateJa4_r(res.TLS)
+		Log(fmt.Sprintf("%v %v %v %v %v", cleanIP(res.IP), res.Method, res.HTTPVersion, res.Path, res.TLS.JA3Hash))
+	}
+	Log(fmt.Sprintf("%v %v %v %v %v", cleanIP(res.IP), res.Method, res.HTTPVersion, res.Path, "-"))
+
 	// if GetUserAgent(res) == "" {
 	//	return []byte("{\"error\": \"No user-agent\"}"), "text/html"
 	// }

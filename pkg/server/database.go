@@ -50,25 +50,25 @@ type ByUserAgent struct {
 }
 
 func SaveRequest(req types.Response, srv *Server) {
-	reqLog := RequestLog{
-		JA3:       req.TLS.JA3,
-		PeetPrint: req.TLS.PeetPrint,
-		Time:      time.Now().Unix(),
-	}
-
-	if req.HTTPVersion == "h2" {
-		reqLog.H2 = req.Http2.AkamaiFingerprint
-	} else if req.HTTPVersion == "http/1.1" {
-		reqLog.H2 = "-"
-	}
-	if srv.GetConfig().LogIPs {
-		parts := strings.Split(req.IP, ":")
-		ip := strings.Join(parts[0:len(parts)-1], ":")
-		reqLog.IP = ip
-	}
-	reqLog.UserAgent = GetUserAgent(req)
-
 	if srv.IsConnectedToDB() && srv.State.Config.LogToDB {
+		reqLog := RequestLog{
+			JA3:       req.TLS.JA3,
+			PeetPrint: req.TLS.PeetPrint,
+			Time:      time.Now().Unix(),
+		}
+
+		if req.HTTPVersion == "h2" {
+			reqLog.H2 = req.Http2.AkamaiFingerprint
+		} else if req.HTTPVersion == "http/1.1" {
+			reqLog.H2 = "-"
+		}
+		if srv.GetConfig().LogIPs {
+			parts := strings.Split(req.IP, ":")
+			ip := strings.Join(parts[0:len(parts)-1], ":")
+			reqLog.IP = ip
+		}
+		reqLog.UserAgent = GetUserAgent(req)
+
 		_, err := srv.GetMongoCollection().InsertOne(srv.GetMongoContext(), reqLog)
 		if err != nil {
 			log.Println(err)

@@ -10,7 +10,7 @@ import (
 	"github.com/pagpeter/trackme/pkg/utils"
 )
 
-func ja4a(tls types.TLSDetails) string {
+func ja4a(tls *types.TLSDetails) string {
 	proto := "t" // we dont support quic (q), only tcp (t)
 
 	tlsVersionMapping := map[string]string{
@@ -37,19 +37,19 @@ func ja4a(tls types.TLSDetails) string {
 	return fmt.Sprintf("%v%v%v%v%v%v", proto, tlsVersion, sniMode, numSuites, numExtensions, firstALPN)
 }
 
-func ja4b_r(tls types.TLSDetails) string {
+func ja4b_r(tls *types.TLSDetails) string {
 	suites := strings.Split(strings.Split(tls.JA3, ",")[1], "-")
 	parsed := utils.ToHexAll(suites, false, true)
 	// fmt.Println("ja4b:", strings.Join(parsed, ","))
 	return strings.Join(parsed, ",")
 }
 
-func ja4b(tls types.TLSDetails) string {
+func ja4b(tls *types.TLSDetails) string {
 	result := ja4b_r(tls)
 	return utils.SHA256trunc(result)
 }
 
-func ja4c_r(tls types.TLSDetails) string {
+func ja4c_r(tls *types.TLSDetails) string {
 	// Get extensions and signature algorithms
 	extensions := strings.Split(strings.Split(tls.JA3, ",")[2], "-")
 	sigAlgs := strings.Split(strings.Split(tls.PeetPrint, "|")[3], "-")
@@ -83,15 +83,15 @@ func ja4c_r(tls types.TLSDetails) string {
 	return parsed
 }
 
-func ja4c(tls types.TLSDetails) string {
+func ja4c(tls *types.TLSDetails) string {
 	result := ja4c_r(tls)
 	return utils.SHA256trunc(result)
 }
 
-func CalculateJa4(tls types.TLSDetails) string {
+func CalculateJa4(tls *types.TLSDetails) string {
 	return ja4a(tls) + "_" + ja4b(tls) + "_" + ja4c(tls)
 }
 
-func CalculateJa4_r(tls types.TLSDetails) string {
+func CalculateJa4_r(tls *types.TLSDetails) string {
 	return ja4a(tls) + "_" + ja4b_r(tls) + "_" + ja4c_r(tls)
 }
