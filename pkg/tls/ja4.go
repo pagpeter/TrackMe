@@ -54,13 +54,13 @@ func ja4c_r(tls *types.TLSDetails) string {
 	extensions := strings.Split(strings.Split(tls.JA3, ",")[2], "-")
 	sigAlgs := strings.Split(strings.Split(tls.PeetPrint, "|")[3], "-")
 
-	// Convert extensions to hex, filter GREASE and padding, and sort
+	// Convert extensions to hex, filter GREASE, and sort
 	parsedExt := []string{}
 	for _, ext := range extensions {
 		num, _ := strconv.Atoi(ext)
 		hexStr := fmt.Sprintf("%04x", num)
-		// Skip if it's a GREASE value or padding extension
-		if types.IsGrease("0x"+strings.ToUpper(hexStr)) || hexStr == "0010" || hexStr == "0000" || hexStr == "0015" {
+		// Skip if it's a GREASE value
+		if types.IsGrease("0x"+strings.ToUpper(hexStr)) || hexStr == "0010" || hexStr == "0000" {
 			continue
 		}
 		parsedExt = append(parsedExt, hexStr)
