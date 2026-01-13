@@ -439,6 +439,7 @@ func (srv *Server) HandleHTTP3() http.Handler {
 
 			w.Header().Set("Content-Type", ctype)
 			w.Header().Set("Server", "TrackMe")
+			w.Header().Set("Alt-Svc", `h3=":443"; ma=86400`)
 			w.Write([]byte(res))
 		}
 	})

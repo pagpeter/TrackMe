@@ -115,7 +115,7 @@ func timeoutHandleTLSConnection(conn net.Conn) bool {
 	}
 }
 
-func StartHTTP3Server(host, port string) {
+func StartHTTP3Server(host string, port int) {
 	// Use the server's HTTP/3 handler
 	handler := srv.HandleHTTP3()
 
@@ -125,16 +125,18 @@ func StartHTTP3Server(host, port string) {
 		NextProtos:   []string{"h3"},
 	})
 
+	addr := fmt.Sprintf("%s:%d", host, port)
+
 	h3Server := &http3.Server{
 		Handler:   handler,
-		Addr:      host + ":" + port,
+		Addr:      addr,
 		TLSConfig: h3TLSConfig,
 		QUICConfig: &quic.Config{
 			Allow0RTT: true,
 		},
 	}
 
-	log.Println("Starting HTTP/3 server on", host+":"+port)
+	log.Println("Starting HTTP/3 server on", addr)
 	err := h3Server.ListenAndServe()
 	if err != nil {
 		log.Printf("HTTP/3 server error: %v", err)
@@ -187,7 +189,9 @@ func main() {
 
 	defer listener.Close()
 	go StartRedirectServer(srv.GetConfig().Host, srv.GetConfig().HTTPPort)
-	go StartHTTP3Server(srv.GetConfig().Host, srv.GetConfig().TLSPort)
+	if srv.GetConfig().EnableQUIC {
+		go StartHTTP3Server(srv.GetConfig().Host, tlsPort)
+	}
 	if srv.GetConfig().Device != "" {
 		go tcp.SniffTCP(srv.GetConfig().Device, tlsPort, srv)
 	}

@@ -179,6 +179,7 @@ type Config struct {
 	HTTPRedirect string `json:"http_redirect"`
 	Device       string `json:"device"`
 	CorsKey      string `json:"cors_key"`
+	EnableQUIC   bool   `json:"enable_quic"`
 }
 
 func (c *Config) LoadFromFile() error {
@@ -208,6 +209,7 @@ func (c *Config) LoadFromFile() error {
 	c.HTTPRedirect = tmp.HTTPRedirect
 	c.Device = tmp.Device
 	c.CorsKey = tmp.CorsKey
+	c.EnableQUIC = tmp.EnableQUIC
 	return nil
 }
 
@@ -233,4 +235,5 @@ func (c *Config) MakeDefault() {
 	c.LogIPs = false
 	c.HTTPRedirect = "https://tls.peet.ws"
 	c.CorsKey = "X-CORS"
+	c.EnableQUIC = true
 }
