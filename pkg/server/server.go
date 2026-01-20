@@ -1,22 +1,16 @@
 package server
 
 import (
-	"context"
 	"strings"
 	"sync"
 
 	"github.com/pagpeter/trackme/pkg/types"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
 // State holds all the global state previously scattered across the application
 type State struct {
 	Config          *types.Config
-	ConnectedToDB   bool
 	TCPFingerprints sync.Map
-	MongoClient     *mongo.Client
-	MongoCollection *mongo.Collection
-	MongoContext    context.Context
 	Local           bool
 }
 
@@ -30,9 +24,7 @@ func NewServer() *Server {
 	return &Server{
 		State: &State{
 			Config:          &types.Config{},
-			ConnectedToDB:   false,
 			TCPFingerprints: sync.Map{},
-			MongoContext:    context.TODO(),
 		},
 	}
 }
@@ -42,31 +34,9 @@ func (s *Server) GetConfig() *types.Config {
 	return s.State.Config
 }
 
-// IsConnectedToDB returns whether the database connection is active
-func (s *Server) IsConnectedToDB() bool {
-	return s.State.ConnectedToDB
-}
-
 // GetTCPFingerprints returns the TCP fingerprints map
 func (s *Server) GetTCPFingerprints() *sync.Map {
 	return &s.State.TCPFingerprints
-}
-
-// GetMongoCollection returns the MongoDB collection
-func (s *Server) GetMongoCollection() *mongo.Collection {
-	return s.State.MongoCollection
-}
-
-// GetMongoContext returns the MongoDB context
-func (s *Server) GetMongoContext() context.Context {
-	return s.State.MongoContext
-}
-
-// SetMongoConnection sets the database connection details
-func (s *Server) SetMongoConnection(client *mongo.Client, collection *mongo.Collection) {
-	s.State.MongoClient = client
-	s.State.MongoCollection = collection
-	s.State.ConnectedToDB = true
 }
 
 // GetAdmin returns the CORS key configuration

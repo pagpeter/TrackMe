@@ -88,13 +88,6 @@
         groups.forEach((curve, i) => {
           curveTable.insertRow(i + 1).innerHTML = `<td>${curve}</td>`;
         });
-
-        document.getElementById(
-          "h2-link"
-        ).href = `/explore?type=h2&by=${data.http2?.akamai_fingerprint || ''}`;
-        document.getElementById(
-          "ja3-link"
-        ).href = `/explore?type=ja3&by=${data.tls.ja3}`;
       };
 
       const toggleTheme = () => {
@@ -119,7 +112,6 @@
 
     <div class="flex flex-wrap">
       <a
-        id="ja3-link"
         class="bg-gray-100 dark:bg-gray-900 rounded-md shadow p-3 m-3 hover:bg-gray-50 dark:hover:bg-black min-w-fit max-w-full grow"
       >
         <h2 class="font-bold">JA3</h2>
@@ -127,14 +119,12 @@
         <p class="text-sm break-all" id="ja3">Loading...</p>
       </a>
       <div
-        id="h2-link"
         class="bg-gray-100 dark:bg-gray-900 rounded-md shadow p-3 m-3 hover:bg-gray-50 dark:hover:bg-black min-w-fit max-w-full grow"
       >
         <h2 class="font-bold">JA4</h2>
         <p class="text-2xl break-all" id="ja4">Loading...</p>
     </div>
       <a
-        id="h2-link"
         class="bg-gray-100 dark:bg-gray-900 rounded-md shadow p-3 m-3 hover:bg-gray-50 dark:hover:bg-black min-w-fit max-w-full grow"
       >
         <h2 class="font-bold">Akamai HTTP/2 fingerprint</h2>
@@ -142,7 +132,6 @@
         <p class="text-sm break-all" id="akamai">Loading...</p>
       </a>
       <a
-        id="h2-link"
         class="bg-gray-100 dark:bg-gray-900 rounded-md shadow p-3 m-3 hover:bg-gray-50 dark:hover:bg-black min-w-fit max-w-full grow"
       >
         <h2 class="font-bold">PeetPrint</h2>

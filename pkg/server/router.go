@@ -21,8 +21,8 @@ func cleanIP(ip string) string {
 	return strings.Replace(strings.Replace(ip, "]", "", -1), "[", "", -1)
 }
 
-// Router returns bytes and content type that should be sent to the client
-func Router(path string, res types.Response, srv *Server) ([]byte, string) {
+// Router returns bytes, content type, and error that should be sent to the client
+func Router(path string, res types.Response, srv *Server) ([]byte, string, error) {
 	if v, ok := srv.GetTCPFingerprints().Load(res.IP); ok {
 		res.TCPIP = v.(types.TCPIPDetails)
 	}
@@ -31,14 +31,8 @@ func Router(path string, res types.Response, srv *Server) ([]byte, string) {
 		res.TLS.JA4 = tls.CalculateJa4(res.TLS)
 		res.TLS.JA4_r = tls.CalculateJa4_r(res.TLS)
 		Log(fmt.Sprintf("%v %v %v %v %v", cleanIP(res.IP), res.Method, res.HTTPVersion, res.Path, res.TLS.JA3Hash))
-	}
-	Log(fmt.Sprintf("%v %v %v %v %v", cleanIP(res.IP), res.Method, res.HTTPVersion, res.Path, "-"))
-
-	// if GetUserAgent(res) == "" {
-	//	return []byte("{\"error\": \"No user-agent\"}"), "text/html"
-	// }
-	if srv.GetConfig().LogToDB && res.Path != "/favicon.ico" {
-		SaveRequest(res, srv)
+	} else {
+		Log(fmt.Sprintf("%v %v %v %v %v", cleanIP(res.IP), res.Method, res.HTTPVersion, res.Path, "-"))
 	}
 
 	u, err := url.Parse("https://tls.peet.ws" + path)
@@ -46,16 +40,22 @@ func Router(path string, res types.Response, srv *Server) ([]byte, string) {
 	if err != nil || u == nil {
 		m = make(map[string][]string)
 	} else {
-		m, _ = url.ParseQuery(u.RawQuery)
+		m, err = url.ParseQuery(u.RawQuery)
+		if err != nil {
+			m = make(map[string][]string)
+		}
 	}
 
-	paths := getAllPaths(srv)
+	paths := getAllPaths()
 	if u != nil {
 		if val, ok := paths[u.Path]; ok {
 			return val(res, m)
 		}
 	}
 	// 404
-	b, _ := utils.ReadFile("static/404.html")
-	return []byte(strings.ReplaceAll(string(b), "/*DATA*/", fmt.Sprintf("%v", GetTotalRequestCount(srv)))), "text/html"
+	b, err := utils.ReadFile("static/404.html")
+	if err != nil {
+		return []byte(`{"error": "page not found"}`), "application/json", nil
+	}
+	return []byte(b), "text/html", nil
 }

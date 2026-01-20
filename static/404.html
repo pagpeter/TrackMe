@@ -22,18 +22,12 @@
         transition-duration: 150ms;
       }
     </style>
-    <script>
-      const track = () => {
-        document.getElementById("total").innerText = `/*DATA*/` + " people"
-      };
-    </script>
   </head>
 
-  <body class="m-5 dark:bg-gray-800 dark:text-gray-50  mb-4" onload="track()">
+  <body class="m-5 dark:bg-gray-800 dark:text-gray-50 mb-4">
     <h1 class="text-4xl mb-3 font-black">TrackMe - fingerprinting API</h1>
 
     <h2 class="text-3xl mb-3">You did not find the correct page (404)</h2>
-    <h2 class="text-3xl mb-3" id="joke">That's not very good, because <span class="font-black" id="total">some</span> already found a working page!<br> Thats the total number of requests this site received.</h2>
     <u><a class="text-3xl mb-3" href="/">Go back to a working site</a>  </u>
   </div>
   </body>

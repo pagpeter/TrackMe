@@ -5,8 +5,6 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"io/ioutil"
-	"log"
 	"net/url"
 	"os"
 	"sort"
@@ -80,10 +78,9 @@ func GetMD5Hash(text string) string {
 }
 
 func ReadFile(filename string) ([]byte, error) {
-	body, err := ioutil.ReadFile(filename)
+	body, err := os.ReadFile(filename)
 	if err != nil {
-		log.Printf("unable to read file: %v\n", err)
-		return nil, err
+		return nil, fmt.Errorf("unable to read file %s: %w", filename, err)
 	}
 	return body, nil
 }

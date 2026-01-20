@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/url"
 	"strings"
@@ -10,27 +11,37 @@ import (
 	"github.com/pagpeter/trackme/pkg/utils"
 )
 
-func staticFile(file string) func(types.Response, url.Values) ([]byte, string) {
-	return func(types.Response, url.Values) ([]byte, string) {
-		b, _ := utils.ReadFile(file)
-		return b, "text/html"
+// RouteHandler is the function signature for route handlers
+type RouteHandler func(types.Response, url.Values) ([]byte, string, error)
+
+var (
+	ErrTLSNotAvailable = errors.New("TLS details not available")
+)
+
+func staticFile(file string) RouteHandler {
+	return func(types.Response, url.Values) ([]byte, string, error) {
+		b, err := utils.ReadFile(file)
+		if err != nil {
+			return nil, "", fmt.Errorf("failed to read file %s: %w", file, err)
+		}
+		return b, "text/html", nil
 	}
 }
 
-func apiAll(res types.Response, _ url.Values) ([]byte, string) {
-	return []byte(res.ToJson()), "application/json"
+func apiAll(res types.Response, _ url.Values) ([]byte, string, error) {
+	return []byte(res.ToJson()), "application/json", nil
 }
 
-func apiTLS(res types.Response, _ url.Values) ([]byte, string) {
+func apiTLS(res types.Response, _ url.Values) ([]byte, string, error) {
 	return []byte(types.Response{
 		TLS: res.TLS,
-	}.ToJson()), "application/json"
+	}.ToJson()), "application/json", nil
 }
 
-func apiClean(res types.Response, _ url.Values) ([]byte, string) {
+func apiClean(res types.Response, _ url.Values) ([]byte, string, error) {
 	akamai := "-"
 	hash := "-"
-	if res.HTTPVersion == "h2" {
+	if res.HTTPVersion == "h2" && res.Http2 != nil {
 		akamai = res.Http2.AkamaiFingerprint
 		hash = utils.GetMD5Hash(res.Http2.AkamaiFingerprint)
 	}
@@ -49,100 +60,35 @@ func apiClean(res types.Response, _ url.Values) ([]byte, string) {
 		smallRes.PeetPrintHash = res.TLS.PeetPrintHash
 	}
 
-	return []byte(smallRes.ToJson()), "application/json"
+	return []byte(smallRes.ToJson()), "application/json", nil
 }
 
-func apiRaw(res types.Response, _ url.Values) ([]byte, string) {
-	return []byte(fmt.Sprintf(`{"raw": "%s", "raw_b64": "%s"}`, res.TLS.RawBytes, res.TLS.RawB64)), "application/json"
-}
-
-func apiRequestCount(srv *Server) func(types.Response, url.Values) ([]byte, string) {
-	return func(_ types.Response, _ url.Values) ([]byte, string) {
-		if !srv.IsConnectedToDB() {
-			return []byte("{\"error\": \"Not connected to database.\"}"), "application/json"
-		}
-		return []byte(fmt.Sprintf(`{"total_requests": %v}`, GetTotalRequestCount(srv))), "application/json"
+func apiRaw(res types.Response, _ url.Values) ([]byte, string, error) {
+	if res.TLS == nil {
+		return nil, "", ErrTLSNotAvailable
 	}
+	return []byte(fmt.Sprintf(`{"raw": "%s", "raw_b64": "%s"}`, res.TLS.RawBytes, res.TLS.RawB64)), "application/json", nil
 }
 
-func apiSearchJA3(srv *Server) func(types.Response, url.Values) ([]byte, string) {
-	return func(_ types.Response, u url.Values) ([]byte, string) {
-		if !srv.IsConnectedToDB() {
-			return []byte("{\"error\": \"Not connected to database.\"}"), "application/json"
-		}
-		by := utils.GetParam("by", u)
-		if by == "" {
-			return []byte("{\"error\": \"No 'by' param present\"}"), "application/json"
-		}
-		res := GetByJa3(by, srv)
-		j, _ := json.MarshalIndent(res, "", "\t")
-		return j, "application/json"
+func index(r types.Response, v url.Values) ([]byte, string, error) {
+	res, ct, err := staticFile("static/index.html")(r, v)
+	if err != nil {
+		return nil, "", err
 	}
-}
-
-func apiSearchH2(srv *Server) func(types.Response, url.Values) ([]byte, string) {
-	return func(_ types.Response, u url.Values) ([]byte, string) {
-		if !srv.IsConnectedToDB() {
-			return []byte("{\"error\": \"Not connected to database.\"}"), "application/json"
-		}
-		by := utils.GetParam("by", u)
-		if by == "" {
-			return []byte("{\"error\": \"No 'by' param present\"}"), "application/json"
-		}
-		res := GetByH2(by, srv)
-		j, _ := json.MarshalIndent(res, "", "\t")
-		return j, "application/json"
+	data, err := json.Marshal(r)
+	if err != nil {
+		return nil, "", fmt.Errorf("failed to marshal response: %w", err)
 	}
+	return []byte(strings.ReplaceAll(string(res), "/*DATA*/", string(data))), ct, nil
 }
 
-func apiSearchPeetPrint(srv *Server) func(types.Response, url.Values) ([]byte, string) {
-	return func(_ types.Response, u url.Values) ([]byte, string) {
-		if !srv.IsConnectedToDB() {
-			return []byte("{\"error\": \"Not connected to database.\"}"), "application/json"
-		}
-		by := utils.GetParam("by", u)
-		if by == "" {
-			return []byte("{\"error\": \"No 'by' param present\"}"), "application/json"
-		}
-		res := GetByPeetPrint(by, srv)
-		j, _ := json.MarshalIndent(res, "", "\t")
-		return j, "application/json"
-	}
-}
-
-func apiSearchUserAgent(srv *Server) func(types.Response, url.Values) ([]byte, string) {
-	return func(_ types.Response, u url.Values) ([]byte, string) {
-		if !srv.IsConnectedToDB() {
-			return []byte("{\"error\": \"Not connected to database.\"}"), "application/json"
-		}
-		by := utils.GetParam("by", u)
-		if by == "" {
-			return []byte("{\"error\": \"No 'by' param present\"}"), "application/json"
-		}
-		res := GetByUserAgent(by, srv)
-		j, _ := json.MarshalIndent(res, "", "\t")
-		return j, "application/json"
-	}
-}
-
-func index(r types.Response, v url.Values) ([]byte, string) {
-	res, ct := staticFile("static/index.html")(r, v)
-	data, _ := json.Marshal(r)
-	return []byte(strings.ReplaceAll(string(res), "/*DATA*/", string(data))), ct
-}
-
-func getAllPaths(srv *Server) map[string]func(types.Response, url.Values) ([]byte, string) {
-	return map[string]func(types.Response, url.Values) ([]byte, string){
-		"/":                     index,
-		"/explore":              staticFile("static/explore.html"),
-		"/api/all":              apiAll,
-		"/api/tls":              apiTLS,
-		"/api/clean":            apiClean,
-		"/api/raw":              apiRaw,
-		"/api/request-count":    apiRequestCount(srv),
-		"/api/search-ja3":       apiSearchJA3(srv),
-		"/api/search-h2":        apiSearchH2(srv),
-		"/api/search-peetprint": apiSearchPeetPrint(srv),
-		"/api/search-useragent": apiSearchUserAgent(srv),
+func getAllPaths() map[string]RouteHandler {
+	return map[string]RouteHandler{
+		"/":          index,
+		"/explore":   staticFile("static/explore.html"),
+		"/api/all":   apiAll,
+		"/api/tls":   apiTLS,
+		"/api/clean": apiClean,
+		"/api/raw":   apiRaw,
 	}
 }

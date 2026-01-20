@@ -6,10 +6,7 @@
   "key_file": "certs/key.pem",
   "host": "0.0.0.0",
   "http_redirect": "https://tls.peet.ws",
-  "mongo_url": "",
-  "mongo_database": "TrackMe",
-  "mongo_collection": "requests",
-  "mongo_log_ips": false,
   "device": "eth0",
-  "cors_key": "X-CORS"
+  "cors_key": "X-CORS",
+  "enable_quic": true
 }

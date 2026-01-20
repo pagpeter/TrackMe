@@ -85,7 +85,6 @@ type TCPDetails struct {
 	TimestampEchoReply int    `json:"timestamp_echo_reply,omitempty"`
 	URP                int    `json:"urp,omitempty"`
 	Window             int    `json:"window,omitempty"`
-	// WindowSize         int    `json:"window_size,omitempty"`
 }
 type TCPIPDetails struct {
 	CapLen    int        `json:"cap_length,omitempty"`
@@ -166,16 +165,11 @@ type ParsedFrame struct {
 }
 
 type Config struct {
-	LogToDB      bool   `json:"log_to_db"`
 	TLSPort      string `json:"tls_port"`
 	HTTPPort     string `json:"http_port"`
 	CertFile     string `json:"cert_file"`
 	KeyFile      string `json:"key_file"`
 	Host         string `json:"host"`
-	MongoURL     string `json:"mongo_url"`
-	Collection   string `json:"mongo_collection"`
-	DB           string `json:"mongo_database"`
-	LogIPs       bool   `json:"mongo_log_ips"`
 	HTTPRedirect string `json:"http_redirect"`
 	Device       string `json:"device"`
 	CorsKey      string `json:"cors_key"`
@@ -184,28 +178,22 @@ type Config struct {
 
 func (c *Config) LoadFromFile() error {
 	data, err := os.ReadFile("config.json")
-	fmt.Println(string(data))
 	if err != nil {
 		fmt.Println("No config file found: generating one", err)
 		c.MakeDefault()
 		return c.WriteToFile("config.json")
 	}
+
 	var tmp Config
-	err = json.Unmarshal(data, &tmp)
-	if err != nil {
-		return err
+	if err := json.Unmarshal(data, &tmp); err != nil {
+		return fmt.Errorf("failed to parse config.json: %w", err)
 	}
 
-	c.LogToDB = tmp.LogToDB
 	c.Host = tmp.Host
 	c.TLSPort = tmp.TLSPort
 	c.HTTPPort = tmp.HTTPPort
 	c.CertFile = tmp.CertFile
 	c.KeyFile = tmp.KeyFile
-	c.MongoURL = tmp.MongoURL
-	c.Collection = tmp.Collection
-	c.DB = tmp.DB
-	c.LogIPs = tmp.LogIPs
 	c.HTTPRedirect = tmp.HTTPRedirect
 	c.Device = tmp.Device
 	c.CorsKey = tmp.CorsKey
@@ -216,23 +204,20 @@ func (c *Config) LoadFromFile() error {
 func (c *Config) WriteToFile(file string) error {
 	j, err := json.MarshalIndent(c, "", "  ")
 	if err != nil {
-		log.Println("Error marshalling config", err)
-		return err
+		return fmt.Errorf("failed to marshal config: %w", err)
 	}
-	return os.WriteFile(file, j, 0644)
+	if err := os.WriteFile(file, j, 0644); err != nil {
+		return fmt.Errorf("failed to write config file: %w", err)
+	}
+	return nil
 }
 
 func (c *Config) MakeDefault() {
-	c.LogToDB = true
 	c.Host = ""
 	c.TLSPort = "443"
 	c.HTTPPort = "80"
 	c.CertFile = "certs/chain.pem"
 	c.KeyFile = "certs/key.pem"
-	c.MongoURL = ""
-	c.Collection = "requests"
-	c.DB = "TrackMe"
-	c.LogIPs = false
 	c.HTTPRedirect = "https://tls.peet.ws"
 	c.CorsKey = "X-CORS"
 	c.EnableQUIC = true

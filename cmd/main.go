@@ -17,9 +17,6 @@ import (
 	"github.com/pagpeter/trackme/pkg/tcp"
 	"github.com/pagpeter/trackme/pkg/utils"
 	utls "github.com/wwhtrbbtt/utls"
-
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 var cert tls.Certificate
@@ -57,28 +54,9 @@ func init() {
 	// Initialize server and load config
 	srv = server.NewServer()
 
-	err := srv.GetConfig().LoadFromFile()
-	if err != nil {
+	if err := srv.GetConfig().LoadFromFile(); err != nil {
 		log.Fatal(err)
 	}
-
-	if len(srv.GetConfig().MongoURL) == 0 { // Don't attempt to setup mongo if its not populated in the config
-		return
-	}
-
-	clientOptions := options.Client().ApplyURI(srv.GetConfig().MongoURL)
-	client, err := mongo.Connect(srv.GetMongoContext(), clientOptions)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	err = client.Ping(srv.GetMongoContext(), nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Println(srv.GetConfig().DB, srv.GetConfig().Collection)
-	collection := client.Database(srv.GetConfig().DB).Collection(srv.GetConfig().Collection)
-	srv.SetMongoConnection(client, collection)
 }
 
 func redirect(w http.ResponseWriter, r *http.Request) {
@@ -95,23 +73,22 @@ func StartRedirectServer(host, port string) {
 	log.Println("Listening on", host+":"+port)
 
 	http.HandleFunc("/", redirect)
-	err := http.ListenAndServe(host+":"+port, nil)
-	if err != nil {
+	if err := http.ListenAndServe(host+":"+port, nil); err != nil {
 		log.Fatal("ListenAndServe: ", err)
 	}
 }
 
 // Timeout function
-func timeoutHandleTLSConnection(conn net.Conn) bool {
-	result := make(chan bool)
+func timeoutHandleTLSConnection(conn net.Conn) error {
+	result := make(chan error)
 	go func() {
 		result <- srv.HandleTLSConnection(conn)
 	}()
 	select {
 	case <-time.After(15 * time.Second):
-		return false
-	case tmp := <-result:
-		return tmp
+		return fmt.Errorf("connection timed out")
+	case err := <-result:
+		return err
 	}
 }
 
@@ -137,8 +114,7 @@ func StartHTTP3Server(host string, port int) {
 	}
 
 	log.Println("Starting HTTP/3 server on", addr)
-	err := h3Server.ListenAndServe()
-	if err != nil {
+	if err := h3Server.ListenAndServe(); err != nil {
 		log.Printf("HTTP/3 server error: %v", err)
 	}
 }
@@ -206,7 +182,6 @@ func main() {
 			}()
 
 			conn, err := listener.Accept()
-			//fmt.Println(reflect.TypeOf(conn))
 			if err != nil {
 				log.Println("Error accepting connection", err)
 				return
@@ -217,26 +192,32 @@ func main() {
 			}
 			if utils.IsIPBlocked(ip) {
 				server.Log("Request from IP " + ip + " blocked")
-				conn.Write([]byte("Don't waste proxies"))
-				conn.Close()
+				if _, err := conn.Write([]byte("Don't waste proxies")); err != nil {
+					log.Println("Error writing to blocked connection:", err)
+				}
+				if err := conn.Close(); err != nil {
+					log.Println("Error closing blocked connection:", err)
+				}
 			} else {
 				go func() {
 					defer func() {
 						if r := recover(); r != nil {
 							logCrash(r)
 							log.Printf("Recovered from panic in connection handler for IP %s", ip)
-							conn.Close()
+							if err := conn.Close(); err != nil {
+								log.Println("Error closing connection after panic:", err)
+							}
 						}
 					}()
 
-					success := timeoutHandleTLSConnection(conn)
-					if !success {
-						server.Log("Request aborted - " + ip)
-						conn.Close()
+					if err := timeoutHandleTLSConnection(conn); err != nil {
+						server.Log(fmt.Sprintf("Request failed for %s: %v", ip, err))
+						if err := conn.Close(); err != nil {
+							log.Println("Error closing failed connection:", err)
+						}
 					}
 				}()
 			}
 		}()
 	}
-
 }
