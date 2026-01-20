@@ -11,7 +11,11 @@ import (
 )
 
 func ja4a(tls *types.TLSDetails) string {
-	proto := "t" // we dont support quic (q), only tcp (t)
+	return ja4aWithProto(tls, "t") // default to TCP
+}
+
+func ja4aWithProto(tls *types.TLSDetails, proto string) string {
+	// proto: "t" for TCP, "q" for QUIC
 
 	tlsVersionMapping := map[string]string{
 		"769": "10", // TLS 1.0
@@ -25,6 +29,7 @@ func ja4a(tls *types.TLSDetails) string {
 		"1.1": "h1", // HTTP/1
 		"1.0": "h1", // HTTP/1
 		"0.9": "h1", // HTTP/1
+		"3":   "h3", // HTTP/3
 	}
 
 	tlsVersion := getOrReturnOG(tls.NegotiatedVesion, tlsVersionMapping)
@@ -94,4 +99,14 @@ func CalculateJa4(tls *types.TLSDetails) string {
 
 func CalculateJa4_r(tls *types.TLSDetails) string {
 	return ja4a(tls) + "_" + ja4b_r(tls) + "_" + ja4c_r(tls)
+}
+
+// CalculateJa4QUIC calculates JA4 fingerprint for QUIC/HTTP3 connections
+func CalculateJa4QUIC(tls *types.TLSDetails) string {
+	return ja4aWithProto(tls, "q") + "_" + ja4b(tls) + "_" + ja4c(tls)
+}
+
+// CalculateJa4QUIC_r calculates JA4_r fingerprint for QUIC/HTTP3 connections
+func CalculateJa4QUIC_r(tls *types.TLSDetails) string {
+	return ja4aWithProto(tls, "q") + "_" + ja4b_r(tls) + "_" + ja4c_r(tls)
 }

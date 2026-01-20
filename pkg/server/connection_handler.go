@@ -440,6 +440,32 @@ func (srv *Server) HandleHTTP3() http.Handler {
 
 		h3state := h3c.ConnectionState()
 
+		// Extract TLS fingerprint from QUIC ClientHello
+		var tlsDetails *types.TLSDetails
+		if len(h3state.ClientHello) > 0 {
+			clientHelloHex := hex.EncodeToString(h3state.ClientHello)
+			parsedClientHello := tls.ParseClientHello(clientHelloHex)
+			JA3Data := tls.CalculateJA3(parsedClientHello)
+			peetfp, peetprintHash := tls.CalculatePeetPrint(parsedClientHello, JA3Data)
+
+			rawB64 := base64.StdEncoding.EncodeToString(h3state.ClientHello)
+
+			tlsDetails = &types.TLSDetails{
+				Ciphers:          JA3Data.ReadableCiphers,
+				Extensions:       parsedClientHello.Extensions,
+				RecordVersion:    JA3Data.Version,
+				NegotiatedVesion: fmt.Sprintf("%v", h3state.TLS.Version),
+				JA3:              JA3Data.JA3,
+				JA3Hash:          JA3Data.JA3Hash,
+				PeetPrint:        peetfp,
+				PeetPrintHash:    peetprintHash,
+				SessionID:        parsedClientHello.SessionID,
+				ClientRandom:     parsedClientHello.ClientRandom,
+				RawBytes:         clientHelloHex,
+				RawB64:           rawB64,
+			}
+		}
+
 		// Extract settings for fingerprinting
 		var settings []types.Http3SettingPair
 		if h3c.Settings() != nil {
@@ -477,6 +503,7 @@ func (srv *Server) HandleHTTP3() http.Handler {
 			Path:        r.URL.Path,
 			Method:      r.Method,
 			UserAgent:   r.Header.Get("User-Agent"),
+			TLS:         tlsDetails,
 			Http3: &types.Http3Details{
 				Used0RTT:                           h3state.Used0RTT,
 				SupportsDatagrams:                  h3state.SupportsDatagrams,

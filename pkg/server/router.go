@@ -28,8 +28,14 @@ func Router(path string, res types.Response, srv *Server) ([]byte, string, error
 	}
 	res.Donate = "Please consider donating to keep this API running. Visit https://tls.peet.ws"
 	if res.TLS != nil {
-		res.TLS.JA4 = tls.CalculateJa4(res.TLS)
-		res.TLS.JA4_r = tls.CalculateJa4_r(res.TLS)
+		// Use QUIC JA4 for HTTP/3 connections
+		if res.HTTPVersion == "h3" {
+			res.TLS.JA4 = tls.CalculateJa4QUIC(res.TLS)
+			res.TLS.JA4_r = tls.CalculateJa4QUIC_r(res.TLS)
+		} else {
+			res.TLS.JA4 = tls.CalculateJa4(res.TLS)
+			res.TLS.JA4_r = tls.CalculateJa4_r(res.TLS)
+		}
 		Log(fmt.Sprintf("%v %v %v %v %v", cleanIP(res.IP), res.Method, res.HTTPVersion, res.Path, res.TLS.JA3Hash))
 	} else {
 		Log(fmt.Sprintf("%v %v %v %v %v", cleanIP(res.IP), res.Method, res.HTTPVersion, res.Path, "-"))

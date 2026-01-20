@@ -4,7 +4,7 @@ go 1.24
 
 require (
 	github.com/google/gopacket v1.1.19
-	github.com/pagpeter/quic-go v0.0.0-20260120140548-3842a5e2aec8
+	github.com/pagpeter/quic-go v0.0.0-20260120150435-f7313458a4ce
 	github.com/wwhtrbbtt/utls v0.0.0-20220918194152-45ee2a20799c
 	golang.org/x/net v0.43.0
 )
