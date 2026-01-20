@@ -440,11 +440,36 @@ func (srv *Server) HandleHTTP3() http.Handler {
 
 		h3state := h3c.ConnectionState()
 
-		// Safely extract connection state and settings
-		var settings types.Http3Settings
+		// Extract settings for fingerprinting
+		var settings []types.Http3SettingPair
 		if h3c.Settings() != nil {
-			settings = types.Http3Settings(*h3c.Settings())
+			for _, pair := range h3c.Settings().RawSettings {
+				settings = append(settings, types.Http3SettingPair{
+					ID:    pair.ID,
+					Name:  trackmehttp.GetHTTP3SettingName(pair.ID),
+					Value: pair.Value,
+				})
+			}
 		}
+
+		// Extract headers in order (pseudo-headers first, then regular headers)
+		var headers []string
+		// Add pseudo-headers in the order they would appear
+		headers = append(headers, fmt.Sprintf(":method: %s", r.Method))
+		headers = append(headers, fmt.Sprintf(":authority: %s", r.Host))
+		headers = append(headers, ":scheme: https")
+		headers = append(headers, fmt.Sprintf(":path: %s", r.URL.RequestURI()))
+		// Add regular headers
+		for name, values := range r.Header {
+			for _, value := range values {
+				headers = append(headers, fmt.Sprintf("%s: %s", strings.ToLower(name), value))
+			}
+		}
+
+		// Generate fingerprint
+		headerOrder := trackmehttp.GetHTTP3HeaderOrder(headers)
+		fingerprint := trackmehttp.GetHTTP3SettingsFingerprint(settings, headerOrder)
+		fingerprintHash := trackmehttp.GetHTTP3FingerprintHash(fingerprint)
 
 		resp := types.Response{
 			IP:          r.RemoteAddr,
@@ -453,13 +478,15 @@ func (srv *Server) HandleHTTP3() http.Handler {
 			Method:      r.Method,
 			UserAgent:   r.Header.Get("User-Agent"),
 			Http3: &types.Http3Details{
-				Information:                        "HTTP/3 support is work-in-progress. Use https://fp.impersonate.pro/api/http3 in the meantime.",
 				Used0RTT:                           h3state.Used0RTT,
 				SupportsDatagrams:                  h3state.SupportsDatagrams,
 				SupportsStreamResetPartialDelivery: h3state.SupportsStreamResetPartialDelivery,
 				Version:                            uint32(h3state.Version),
 				GSO:                                h3state.GSO,
 				Settings:                           settings,
+				AkamaiFingerprint:                  fingerprint,
+				AkamaiFingerprintHash:              fingerprintHash,
+				Headers:                            headers,
 			},
 		}
 

@@ -39,19 +39,29 @@ type Http2Details struct {
 }
 
 type Http3Details struct {
-	Information                        string `json:"important_info"`
-	Used0RTT                           bool   `json:"used_0rtt"`
-	SupportsDatagrams                  bool   `json:"supports_datagrams"`
-	SupportsStreamResetPartialDelivery bool   `json:"supports_stream_reset_partial_delivery"`
-	Version                            uint32 `json:"version"`
-	GSO                                bool   `json:"gso"`
-	Settings                           any    `json:"settings"`
+	Used0RTT                           bool               `json:"used_0rtt"`
+	SupportsDatagrams                  bool               `json:"supports_datagrams"`
+	SupportsStreamResetPartialDelivery bool               `json:"supports_stream_reset_partial_delivery"`
+	Version                            uint32             `json:"version"`
+	GSO                                bool               `json:"gso"`
+	Settings                           []Http3SettingPair `json:"settings"`
+	AkamaiFingerprint                  string             `json:"akamai_fingerprint"`
+	AkamaiFingerprintHash              string             `json:"akamai_fingerprint_hash"`
+	Headers                            []string           `json:"headers,omitempty"`
+}
+
+// Http3SettingPair represents a single HTTP/3 setting for fingerprinting
+type Http3SettingPair struct {
+	ID    uint64 `json:"id"`
+	Name  string `json:"name"`
+	Value uint64 `json:"value"`
 }
 
 type Http3Settings struct {
-	EnableDatagrams       bool              `json:"enable_datagrams"`
-	EnableExtendedConnect bool              `json:"enable_extended_connect"`
-	Other                 map[uint64]uint64 `json:"other"`
+	EnableDatagrams       bool               `json:"enable_datagrams"`
+	EnableExtendedConnect bool               `json:"enable_extended_connect"`
+	Other                 map[uint64]uint64  `json:"other,omitempty"`
+	RawSettings           []Http3SettingPair `json:"settings,omitempty"`
 }
 
 type IPDetails struct {

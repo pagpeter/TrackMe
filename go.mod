@@ -4,10 +4,12 @@ go 1.24
 
 require (
 	github.com/google/gopacket v1.1.19
-	github.com/pagpeter/quic-go v0.0.0-20250925165446-d2572d94b238
+	github.com/pagpeter/quic-go v0.0.0-20260120140548-3842a5e2aec8
 	github.com/wwhtrbbtt/utls v0.0.0-20220918194152-45ee2a20799c
 	golang.org/x/net v0.43.0
 )
+
+// replace github.com/pagpeter/quic-go => ../quic-go
 
 require (
 	github.com/andybalholm/brotli v1.1.1 // indirect

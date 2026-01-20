@@ -12,6 +12,8 @@ github.com/klauspost/compress v1.17.11 h1:In6xLpyWOi1+C7tXUUWv2ot1QvBjxevKAaI6IX
 github.com/klauspost/compress v1.17.11/go.mod h1:pMDklpSncoRMuLFrf1W9Ss9KT+0rH90U12bZKk7uwG0=
 github.com/pagpeter/quic-go v0.0.0-20250925165446-d2572d94b238 h1:hBHAZTkxkKD77xgv7Q0cyFyyFmvLNnTqE5aWoYW1U7k=
 github.com/pagpeter/quic-go v0.0.0-20250925165446-d2572d94b238/go.mod h1:EJQW9gTvp3XGR6qPANdXlU55yxrA8rww5atbR2LVI9U=
+github.com/pagpeter/quic-go v0.0.0-20260120140548-3842a5e2aec8 h1:YuDoIYpkJ5lp2OALocBFcwrFOMMTHjklOUecjJqGxW8=
+github.com/pagpeter/quic-go v0.0.0-20260120140548-3842a5e2aec8/go.mod h1:EJQW9gTvp3XGR6qPANdXlU55yxrA8rww5atbR2LVI9U=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/quic-go/qpack v0.5.1 h1:giqksBPnT/HDtZ6VhtFKgoLOWmlyo9Ei6u9PqzIMbhI=
