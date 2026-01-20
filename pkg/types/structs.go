@@ -138,6 +138,7 @@ type SmallResponse struct {
 	AkamaiHash    string `json:"akamai_hash"`
 	PeetPrint     string `json:"peetprint"`
 	PeetPrintHash string `json:"peetprint_hash"`
+	HTTPVersion   string `json:"http_version"`
 }
 
 func (res SmallResponse) ToJson() string {

@@ -44,11 +44,15 @@ func apiClean(res types.Response, _ url.Values) ([]byte, string, error) {
 	if res.HTTPVersion == "h2" && res.Http2 != nil {
 		akamai = res.Http2.AkamaiFingerprint
 		hash = utils.GetMD5Hash(res.Http2.AkamaiFingerprint)
+	} else if res.HTTPVersion == "h3" && res.Http3 != nil {
+		akamai = res.Http3.AkamaiFingerprint
+		hash = res.Http3.AkamaiFingerprintHash
 	}
 
 	smallRes := types.SmallResponse{
-		Akamai:     akamai,
-		AkamaiHash: hash,
+		Akamai:      akamai,
+		AkamaiHash:  hash,
+		HTTPVersion: res.HTTPVersion,
 	}
 
 	if res.TLS != nil {

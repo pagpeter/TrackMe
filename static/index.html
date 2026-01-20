@@ -51,8 +51,17 @@
         d.getElementById("ttl").innerText = data.tcpip?.ip?.ttl || "-";
 
         d.getElementById("akamai-hash").innerText =
-          data.http2?.akamai_fingerprint_hash || "-";
-        d.getElementById("akamai").innerText = data.http2?.akamai_fingerprint || "-";
+          data.http3?.akamai_fingerprint_hash || data.http2?.akamai_fingerprint_hash || "-";
+        d.getElementById("akamai").innerText =
+          data.http3?.akamai_fingerprint || data.http2?.akamai_fingerprint || "-";
+        // Update Akamai label based on protocol
+        if (data.http_version == "h3") {
+          d.getElementById("akamai-label").innerText = "Akamai HTTP/3 fingerprint";
+        } else if (data.http_version == "h2") {
+          d.getElementById("akamai-label").innerText = "Akamai HTTP/2 fingerprint";
+        } else {
+          d.getElementById("akamai-label").innerText = "Akamai HTTP fingerprint";
+        }
 
         d.getElementById("peetprint-hash").innerText = data.tls.peetprint_hash;
         d.getElementById("peetprint").innerText = data.tls.peetprint;
@@ -60,11 +69,14 @@
         d.getElementById("tls-version").innerText =
           data.tls.tls_version_negotiated;
         d.getElementById("http-version").innerText =
-          data.http_version == "h2" ? "HTTP/2" : "HTTP/1.1";
+          data.http_version == "h3" ? "HTTP/3" : (data.http_version == "h2" ? "HTTP/2" : "HTTP/1.1");
         d.getElementById("tls-versions").innerText = versions.join(", ");
         d.getElementById("http-versions").innerText = protos.join(", ");
         if (data.http_version == "h2" && data.http2) {
           d.getElementById("h2-frames").innerText = data.http2.sent_frames.length;
+        } else if (data.http_version == "h3" && data.http3) {
+          d.getElementById("h2-frames").innerText = data.http3.settings?.length || "N/A";
+          d.getElementById("h2-frames-label").innerText = "HTTP/3 settings";
         } else {
           d.getElementById("h2-frames").innerText = "N/A";
         }
@@ -127,7 +139,7 @@
       <a
         class="bg-gray-100 dark:bg-gray-900 rounded-md shadow p-3 m-3 hover:bg-gray-50 dark:hover:bg-black min-w-fit max-w-full grow"
       >
-        <h2 class="font-bold">Akamai HTTP/2 fingerprint</h2>
+        <h2 class="font-bold" id="akamai-label">Akamai HTTP fingerprint</h2>
         <p class="text-2xl break-all" id="akamai-hash">Loading...</p>
         <p class="text-sm break-all" id="akamai">Loading...</p>
       </a>
@@ -160,7 +172,7 @@
       <div
         class="bg-green-100 dark:bg-green-900 dark:hover:bg-green-800 rounded-md shadow p-3 m-3 hover:bg-green-50 min-w-fit grow"
       >
-        <h2 class="font-bold">Total http/2 frames</h2>
+        <h2 class="font-bold" id="h2-frames-label">Total http/2 frames</h2>
         <p class="text-2xl" id="h2-frames">Loading...</p>
       </div>
       <div
