@@ -1,8 +1,9 @@
 package tcp
 
 import (
-	"fmt"
 	"log"
+	"net"
+	"strconv"
 	"time"
 
 	"github.com/google/gopacket"
@@ -78,7 +79,7 @@ func SniffTCP(device string, tlsPort int, srv *server.Server) {
 					Window:       int(tcp.Window),
 				},
 			}
-			src := fmt.Sprintf("%s:%v", pack.IP.SrcIP, pack.SrcPort)
+			src := net.JoinHostPort(pack.IP.SrcIP, strconv.Itoa(pack.SrcPort))
 			srv.GetTCPFingerprints().Store(src, pack)
 		}
 	}
