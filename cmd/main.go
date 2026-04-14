@@ -169,7 +169,12 @@ func main() {
 		go StartHTTP3Server(srv.GetConfig().Host, tlsPort)
 	}
 	if srv.GetConfig().Device != "" {
-		go tcp.SniffTCP(srv.GetConfig().Device, tlsPort, srv)
+		if srv.GetConfig().UseEBPF {
+			log.Println("Starting eBPF SYN capture on " + srv.GetConfig().Device)
+			go tcp.SniffEBPF(srv.GetConfig().Device, tlsPort, srv, "")
+		} else {
+			go tcp.SniffTCP(srv.GetConfig().Device, tlsPort, srv)
+		}
 	}
 
 	for {

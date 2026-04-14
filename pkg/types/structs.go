@@ -95,6 +95,7 @@ type TCPDetails struct {
 	TimestampEchoReply int    `json:"timestamp_echo_reply,omitempty"`
 	URP                int    `json:"urp,omitempty"`
 	Window             int    `json:"window,omitempty"`
+	WindowScale        int    `json:"window_scale,omitempty"`
 }
 type TCPIPDetails struct {
 	CapLen    int        `json:"cap_length,omitempty"`
@@ -185,6 +186,7 @@ type Config struct {
 	Device       string `json:"device"`
 	CorsKey      string `json:"cors_key"`
 	EnableQUIC   bool   `json:"enable_quic"`
+	UseEBPF      bool   `json:"use_ebpf"`
 }
 
 func (c *Config) LoadFromFile() error {
@@ -209,6 +211,7 @@ func (c *Config) LoadFromFile() error {
 	c.Device = tmp.Device
 	c.CorsKey = tmp.CorsKey
 	c.EnableQUIC = tmp.EnableQUIC
+	c.UseEBPF = tmp.UseEBPF
 	return nil
 }
 
