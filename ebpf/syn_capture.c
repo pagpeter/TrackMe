@@ -244,7 +244,6 @@ int syn_capture_socket(struct __sk_buff *skb) {
         return 0;
     }
 
-    // Read TCP header
     struct tcphdr tcp;
     if (bpf_skb_load_bytes(skb, tcp_off, &tcp, sizeof(tcp)) < 0) return 0;
 
@@ -285,22 +284,26 @@ int syn_capture_socket(struct __sk_buff *skb) {
     if (opts_len > MAX_TCP_OPTIONS_RAW) opts_len = MAX_TCP_OPTIONS_RAW;
 
     // Descending constant-size loads (verifier needs constant size arg)
+    // Try exact size first, then descend. Most SYN packets have ~20 bytes
+    // of options so the exact match usually hits on the first try.
+    if (opts_len >= 4) {
 #define TRY_OPTS(N) \
     if (ev->tcp_options_len == 0 && opts_len >= (N)) { \
         if (bpf_skb_load_bytes(skb, opts_off, ev->tcp_options_raw, (N)) == 0) \
             ev->tcp_options_len = (N); \
     }
-    TRY_OPTS(40)
-    TRY_OPTS(36)
-    TRY_OPTS(32)
-    TRY_OPTS(28)
-    TRY_OPTS(24)
-    TRY_OPTS(20)
-    TRY_OPTS(16)
-    TRY_OPTS(12)
-    TRY_OPTS(8)
-    TRY_OPTS(4)
+        TRY_OPTS(40)
+        TRY_OPTS(36)
+        TRY_OPTS(32)
+        TRY_OPTS(28)
+        TRY_OPTS(24)
+        TRY_OPTS(20)
+        TRY_OPTS(16)
+        TRY_OPTS(12)
+        TRY_OPTS(8)
+        TRY_OPTS(4)
 #undef TRY_OPTS
+    }
 
     ev->syn_ts_ns = bpf_ktime_get_ns();
     bpf_ringbuf_submit(ev, 0);

@@ -32,6 +32,13 @@ var (
 	timeout      time.Duration = 1 * time.Millisecond
 )
 
+// Shared TCP option representation used by both pcap and eBPF paths.
+type tcpOption struct {
+	kind    uint8
+	intVal  int
+	intVal2 int
+}
+
 func optKindName(kind uint8) string {
 	switch kind {
 	case optKindEOL:
@@ -51,6 +58,122 @@ func optKindName(kind uint8) string {
 	default:
 		return fmt.Sprintf("?%d", kind)
 	}
+}
+
+// parseRawOptions walks raw TCP option bytes and returns parsed options.
+// Used by both the eBPF path (kernel raw bytes) and pcap path (via adapter).
+func parseRawOptions(raw []byte) []tcpOption {
+	var opts []tcpOption
+	i := 0
+	for i < len(raw) {
+		kind := raw[i]
+		switch kind {
+		case optKindEOL:
+			opts = append(opts, tcpOption{kind: kind})
+			return opts
+		case optKindNOP:
+			opts = append(opts, tcpOption{kind: kind})
+			i++
+			continue
+		default:
+			if i+1 >= len(raw) {
+				return opts
+			}
+			optLen := int(raw[i+1])
+			if optLen < 2 || i+optLen > len(raw) {
+				return opts
+			}
+			o := tcpOption{kind: kind}
+			data := raw[i+2 : i+optLen]
+
+			switch kind {
+			case optKindMSS:
+				if len(data) >= 2 {
+					o.intVal = int(binary.BigEndian.Uint16(data[:2]))
+				}
+			case optKindWindowScale:
+				if len(data) >= 1 {
+					o.intVal = int(data[0])
+				}
+			case optKindTimestamps:
+				if len(data) >= 8 {
+					o.intVal = int(binary.BigEndian.Uint32(data[:4]))
+					o.intVal2 = int(binary.BigEndian.Uint32(data[4:8]))
+				}
+			}
+
+			opts = append(opts, o)
+			i += optLen
+		}
+	}
+	return opts
+}
+
+// gopacketToRaw converts gopacket's TCP options to raw bytes for unified parsing.
+func gopacketToRaw(options []layers.TCPOption) []byte {
+	var buf []byte
+	for _, opt := range options {
+		kind := uint8(opt.OptionType)
+		if kind == optKindEOL {
+			buf = append(buf, 0)
+			break
+		}
+		if kind == optKindNOP {
+			buf = append(buf, 1)
+			continue
+		}
+		buf = append(buf, kind, opt.OptionLength)
+		buf = append(buf, opt.OptionData...)
+	}
+	return buf
+}
+
+func formatOptions(opts []tcpOption) string {
+	var parts []string
+	for _, o := range opts {
+		switch o.kind {
+		case optKindEOL:
+			parts = append(parts, "EOL")
+		case optKindNOP:
+			parts = append(parts, "NOP")
+		case optKindMSS:
+			parts = append(parts, fmt.Sprintf("MSS:%d", o.intVal))
+		case optKindWindowScale:
+			parts = append(parts, fmt.Sprintf("WS:%d", o.intVal))
+		case optKindSACKPerm:
+			parts = append(parts, "SACK_PERM")
+		case optKindSACK:
+			parts = append(parts, "SACK")
+		case optKindTimestamps:
+			parts = append(parts, fmt.Sprintf("TS:%d:%d", o.intVal, o.intVal2))
+		default:
+			parts = append(parts, fmt.Sprintf("?%d", o.kind))
+		}
+	}
+	return strings.Join(parts, ",")
+}
+
+func formatOptionsOrder(opts []tcpOption) string {
+	var parts []string
+	for _, o := range opts {
+		parts = append(parts, optKindName(o.kind))
+	}
+	return strings.Join(parts, ",")
+}
+
+func extractOptionValues(opts []tcpOption) (mss, windowScale, timestamp, tsEchoReply int) {
+	for _, o := range opts {
+		switch o.kind {
+		case optKindMSS:
+			mss = o.intVal
+		case optKindWindowScale:
+			windowScale = o.intVal
+		case optKindTimestamps:
+			timestamp = o.intVal
+			tsEchoReply = o.intVal2
+		}
+	}
+	return
 }
 
 func parseIP(packet gopacket.Packet) *types.IPDetails {
@@ -132,84 +255,6 @@ func tcpFlagsToInt(tcp *layers.TCP) int {
 	return flags
 }
 
-func parseTCPOptions(options []layers.TCPOption) string {
-	if len(options) == 0 {
-		return ""
-	}
-
-	var parts []string
-	for _, opt := range options {
-		kind := uint8(opt.OptionType)
-		switch kind {
-		case optKindEOL:
-			parts = append(parts, "EOL")
-		case optKindNOP:
-			parts = append(parts, "NOP")
-		case optKindMSS:
-			if len(opt.OptionData) >= 2 {
-				mss := binary.BigEndian.Uint16(opt.OptionData[:2])
-				parts = append(parts, fmt.Sprintf("MSS:%d", mss))
-			} else {
-				parts = append(parts, "MSS:?")
-			}
-		case optKindWindowScale:
-			if len(opt.OptionData) >= 1 {
-				parts = append(parts, fmt.Sprintf("WS:%d", opt.OptionData[0]))
-			} else {
-				parts = append(parts, "WS:?")
-			}
-		case optKindSACKPerm:
-			parts = append(parts, "SACK_PERM")
-		case optKindSACK:
-			parts = append(parts, "SACK")
-		case optKindTimestamps:
-			if len(opt.OptionData) >= 8 {
-				tsVal := binary.BigEndian.Uint32(opt.OptionData[:4])
-				tsEcr := binary.BigEndian.Uint32(opt.OptionData[4:8])
-				parts = append(parts, fmt.Sprintf("TS:%d:%d", tsVal, tsEcr))
-			} else {
-				parts = append(parts, "TS:?")
-			}
-		default:
-			parts = append(parts, fmt.Sprintf("?%d", kind))
-		}
-	}
-	return strings.Join(parts, ",")
-}
-
-func parseTCPOptionsOrder(options []layers.TCPOption) string {
-	if len(options) == 0 {
-		return ""
-	}
-
-	var parts []string
-	for _, opt := range options {
-		parts = append(parts, optKindName(uint8(opt.OptionType)))
-	}
-	return strings.Join(parts, ",")
-}
-
-func extractTCPOptionValues(options []layers.TCPOption) (mss, windowScale, timestamp, tsEchoReply int) {
-	for _, opt := range options {
-		switch uint8(opt.OptionType) {
-		case optKindMSS:
-			if len(opt.OptionData) >= 2 {
-				mss = int(binary.BigEndian.Uint16(opt.OptionData[:2]))
-			}
-		case optKindWindowScale:
-			if len(opt.OptionData) >= 1 {
-				windowScale = int(opt.OptionData[0])
-			}
-		case optKindTimestamps:
-			if len(opt.OptionData) >= 8 {
-				timestamp = int(binary.BigEndian.Uint32(opt.OptionData[:4]))
-				tsEchoReply = int(binary.BigEndian.Uint32(opt.OptionData[4:8]))
-			}
-		}
-	}
-	return
-}
-
 func SniffTCP(device string, tlsPort int, srv *server.Server) {
 	handle, err := pcap.OpenLive(device, snapshot_len, promiscuous, timeout)
 	if err != nil {
@@ -238,12 +283,12 @@ func SniffTCP(device string, tlsPort int, srv *server.Server) {
 
 		tcp := tcpLayer.(*layers.TCP)
 
-		// SYN only
 		if !tcp.SYN || tcp.ACK {
 			continue
 		}
 
-		mss, windowScale, timestamp, tsEchoReply := extractTCPOptionValues(tcp.Options)
+		opts := parseRawOptions(gopacketToRaw(tcp.Options))
+		mss, windowScale, timestamp, tsEchoReply := extractOptionValues(opts)
 
 		pack := types.TCPIPDetails{
 			CapLen:  packet.Metadata().CaptureLength,
@@ -257,8 +302,8 @@ func SniffTCP(device string, tlsPort int, srv *server.Server) {
 				HeaderLength:       int(tcp.DataOffset * 4),
 				MSS:                mss,
 				OFF:                int(tcp.DataOffset),
-				Options:            parseTCPOptions(tcp.Options),
-				OptionsOrder:       parseTCPOptionsOrder(tcp.Options),
+				Options:            formatOptions(opts),
+				OptionsOrder:       formatOptionsOrder(opts),
 				Seq:                int(tcp.Seq),
 				Timestamp:          timestamp,
 				TimestampEchoReply: tsEchoReply,

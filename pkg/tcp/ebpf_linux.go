@@ -7,10 +7,7 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"os"
 	"strconv"
-	"strings"
-	"unsafe"
 
 	"github.com/cilium/ebpf"
 	"github.com/cilium/ebpf/ringbuf"
@@ -36,7 +33,6 @@ type synEvent struct {
 	SynTsNs       uint64
 }
 
-// SniffEBPF captures SYN packets using eBPF instead of pcap.
 func SniffEBPF(device string, tlsPort int, srv *server.Server, ebpfObjPath string) {
 	if ebpfObjPath == "" {
 		ebpfObjPath = "ebpf/syn_capture.o"
@@ -53,7 +49,6 @@ func SniffEBPF(device string, tlsPort int, srv *server.Server, ebpfObjPath strin
 	}
 	defer coll.Close()
 
-	// Set port filter
 	if targetPortMap, ok := coll.Maps["TARGET_PORT"]; ok {
 		port := uint16(tlsPort)
 		if err := targetPortMap.Put(uint32(0), port); err != nil {
@@ -61,7 +56,6 @@ func SniffEBPF(device string, tlsPort int, srv *server.Server, ebpfObjPath strin
 		}
 	}
 
-	// Prefer socket filter (works everywhere), fall back to TC classifier
 	prog := coll.Programs["syn_capture_socket"]
 	if prog == nil {
 		prog = coll.Programs["syn_capture"]
@@ -105,8 +99,7 @@ func SniffEBPF(device string, tlsPort int, srv *server.Server, ebpfObjPath strin
 			continue
 		}
 
-		// C struct is __attribute__((packed)) = 78 bytes, but Go adds
-		// padding before the uint64 field. Parse manually.
+		// C struct is packed (78 bytes), Go struct has padding — decode manually.
 		const packedSize = 78
 		if len(record.RawSample) < packedSize {
 			continue
@@ -120,10 +113,9 @@ func SniffEBPF(device string, tlsPort int, srv *server.Server, ebpfObjPath strin
 	}
 }
 
-// openRawSocket creates an AF_PACKET socket bound to the given interface.
 func openRawSocket(device string) (int, error) {
-	sock, err := unix.Socket(unix.AF_PACKET, unix.SOCK_RAW|unix.SOCK_NONBLOCK|unix.SOCK_CLOEXEC,
-		int(htons(unix.ETH_P_ALL)))
+	proto := htons(unix.ETH_P_ALL)
+	sock, err := unix.Socket(unix.AF_PACKET, unix.SOCK_RAW|unix.SOCK_NONBLOCK|unix.SOCK_CLOEXEC, int(proto))
 	if err != nil {
 		return -1, fmt.Errorf("socket: %w", err)
 	}
@@ -136,7 +128,7 @@ func openRawSocket(device string) (int, error) {
 		}
 
 		sll := unix.SockaddrLinklayer{
-			Protocol: htons(unix.ETH_P_ALL),
+			Protocol: proto,
 			Ifindex:  iface.Index,
 		}
 		if err := unix.Bind(sock, &sll); err != nil {
@@ -149,9 +141,7 @@ func openRawSocket(device string) (int, error) {
 }
 
 func htons(v uint16) uint16 {
-	b := make([]byte, 2)
-	binary.BigEndian.PutUint16(b, v)
-	return *(*uint16)(unsafe.Pointer(&b[0]))
+	return (v << 8) | (v >> 8)
 }
 
 func decodeSynEvent(b []byte) synEvent {
@@ -162,7 +152,6 @@ func decodeSynEvent(b []byte) synEvent {
 	e.IPVersion = b[20]
 	e.IPTTL = b[21]
 	e.IPOptionsLen = b[22]
-	// b[23] = pad
 	e.TCPWindowSize = binary.LittleEndian.Uint16(b[24:26])
 	e.TCPQuirks = binary.LittleEndian.Uint16(b[26:28])
 	e.TCPOptionsLen = b[28]
@@ -173,22 +162,15 @@ func decodeSynEvent(b []byte) synEvent {
 }
 
 func synEventToDetails(e synEvent) types.TCPIPDetails {
-	srcIP := formatAddr(e.SrcAddr[:], e.IPVersion)
-
-	opts := parseRawTCPOptions(e.TCPOptionsRaw[:e.TCPOptionsLen])
-
-	var mss, windowScale, timestamp, tsEchoReply int
-	for _, o := range opts {
-		switch o.kind {
-		case optKindMSS:
-			mss = o.intVal
-		case optKindWindowScale:
-			windowScale = o.intVal
-		case optKindTimestamps:
-			timestamp = o.intVal
-			tsEchoReply = o.intVal2
-		}
+	var srcIP string
+	if e.IPVersion == 4 {
+		srcIP = net.IP(e.SrcAddr[12:16]).String()
+	} else {
+		srcIP = net.IP(e.SrcAddr[:]).String()
 	}
+
+	opts := parseRawOptions(e.TCPOptionsRaw[:e.TCPOptionsLen])
+	mss, windowScale, timestamp, tsEchoReply := extractOptionValues(opts)
 
 	return types.TCPIPDetails{
 		SrcPort: int(e.SrcPort),
@@ -204,108 +186,9 @@ func synEventToDetails(e synEvent) types.TCPIPDetails {
 			WindowScale:        windowScale,
 			Timestamp:          timestamp,
 			TimestampEchoReply: tsEchoReply,
-			Options:            formatParsedOptions(opts),
-			OptionsOrder:       formatParsedOptionsOrder(opts),
-			Flags:              0x02, // SYN
+			Options:            formatOptions(opts),
+			OptionsOrder:       formatOptionsOrder(opts),
+			Flags:              0x02,
 		},
 	}
-}
-
-func formatAddr(addr []byte, ipVersion uint8) string {
-	if ipVersion == 4 {
-		return net.IP(addr[12:16]).String()
-	}
-	return net.IP(addr).String()
-}
-
-type rawOption struct {
-	kind    uint8
-	length  uint8
-	intVal  int
-	intVal2 int
-}
-
-func parseRawTCPOptions(raw []byte) []rawOption {
-	var opts []rawOption
-	i := 0
-	for i < len(raw) {
-		kind := raw[i]
-		switch kind {
-		case optKindEOL:
-			opts = append(opts, rawOption{kind: kind})
-			return opts
-		case optKindNOP:
-			opts = append(opts, rawOption{kind: kind})
-			i++
-			continue
-		default:
-			if i+1 >= len(raw) {
-				return opts
-			}
-			optLen := int(raw[i+1])
-			if optLen < 2 || i+optLen > len(raw) {
-				return opts
-			}
-			o := rawOption{kind: kind, length: uint8(optLen)}
-			data := raw[i+2 : i+optLen]
-
-			switch kind {
-			case optKindMSS:
-				if len(data) >= 2 {
-					o.intVal = int(binary.BigEndian.Uint16(data[:2]))
-				}
-			case optKindWindowScale:
-				if len(data) >= 1 {
-					o.intVal = int(data[0])
-				}
-			case optKindTimestamps:
-				if len(data) >= 8 {
-					o.intVal = int(binary.BigEndian.Uint32(data[:4]))
-					o.intVal2 = int(binary.BigEndian.Uint32(data[4:8]))
-				}
-			}
-
-			opts = append(opts, o)
-			i += optLen
-		}
-	}
-	return opts
-}
-
-func formatParsedOptions(opts []rawOption) string {
-	var parts []string
-	for _, o := range opts {
-		switch o.kind {
-		case optKindEOL:
-			parts = append(parts, "EOL")
-		case optKindNOP:
-			parts = append(parts, "NOP")
-		case optKindMSS:
-			parts = append(parts, fmt.Sprintf("MSS:%d", o.intVal))
-		case optKindWindowScale:
-			parts = append(parts, fmt.Sprintf("WS:%d", o.intVal))
-		case optKindSACKPerm:
-			parts = append(parts, "SACK_PERM")
-		case optKindSACK:
-			parts = append(parts, "SACK")
-		case optKindTimestamps:
-			parts = append(parts, fmt.Sprintf("TS:%d:%d", o.intVal, o.intVal2))
-		default:
-			parts = append(parts, fmt.Sprintf("?%d", o.kind))
-		}
-	}
-	return strings.Join(parts, ",")
-}
-
-func formatParsedOptionsOrder(opts []rawOption) string {
-	var parts []string
-	for _, o := range opts {
-		parts = append(parts, optKindName(o.kind))
-	}
-	return strings.Join(parts, ",")
-}
-
-func EBPFSupported() bool {
-	_, err := os.Stat("/sys/fs/bpf")
-	return err == nil
 }
