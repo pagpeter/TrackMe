@@ -109,7 +109,7 @@ func SniffEBPF(device string, tlsPort int, srv *server.Server, ebpfObjPath strin
 		details := synEventToDetails(event)
 
 		src := net.JoinHostPort(details.IP.SrcIP, strconv.Itoa(details.SrcPort))
-		srv.GetTCPFingerprints().Store(src, details)
+		srv.GetFingerprints().Store(src, details)
 	}
 }
 

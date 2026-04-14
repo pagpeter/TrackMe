@@ -314,6 +314,6 @@ func SniffTCP(device string, tlsPort int, srv *server.Server) {
 		}
 
 		src := net.JoinHostPort(pack.IP.SrcIP, strconv.Itoa(pack.SrcPort))
-		srv.GetTCPFingerprints().Store(src, pack)
+		srv.GetFingerprints().Store(src, pack)
 	}
 }
