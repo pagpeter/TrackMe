@@ -8,7 +8,7 @@ require (
 	github.com/pagpeter/quic-go v0.0.0-20260120153640-0de4e3b8377b
 	github.com/wwhtrbbtt/utls v0.0.0-20220918194152-45ee2a20799c
 	golang.org/x/net v0.46.0
-	golang.org/x/sys v0.43.0
+	golang.org/x/sys v0.37.0
 )
 
 // replace github.com/pagpeter/quic-go => ../quic-go
