@@ -23,7 +23,7 @@ func cleanIP(ip string) string {
 
 // Router returns bytes, content type, and error that should be sent to the client
 func Router(path string, res types.Response, srv *Server) ([]byte, string, error) {
-	if v, ok := srv.GetTCPFingerprints().LoadAndDelete(res.IP); ok {
+	if v, ok := srv.GetTCPFingerprints().Load(res.IP); ok {
 		res.TCPIP = v.(types.TCPIPDetails)
 	}
 	res.Donate = "Please consider donating to keep this API running. Visit https://tls.peet.ws"
