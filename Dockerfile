@@ -1,6 +1,6 @@
 FROM golang:1.24-alpine AS builder
 
-RUN apk add --no-cache build-base libpcap-dev clang llvm linux-headers
+RUN apk add --no-cache build-base libpcap-dev clang llvm linux-headers libbpf-dev
 
 WORKDIR /app
 
@@ -13,9 +13,9 @@ COPY pkg/ pkg/
 COPY ebpf/ ebpf/
 COPY static/ static/
 
-RUN cd ebpf && clang -O2 -g -target bpf -Wall \
+RUN cd ebpf && clang -O2 -g -target bpf -Wall -Werror \
     -I/usr/include \
-    -c syn_capture.c -o syn_capture.o 2>&1 || true
+    -c syn_capture.c -o syn_capture.o
 
 RUN CGO_ENABLED=1 go build -o trackme ./cmd/
 

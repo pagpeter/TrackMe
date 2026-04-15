@@ -1,7 +1,6 @@
 CLANG   ?= clang
 CFLAGS  := -O2 -g -target bpf -Wall -Werror
 
-# BPF target needs arch-specific headers (asm/types.h etc.)
 ARCH_INCLUDE := $(shell uname -m | sed 's/x86_64/x86_64-linux-gnu/;s/aarch64/aarch64-linux-gnu/')
 INCLUDE ?= -I/usr/include -I/usr/include/$(ARCH_INCLUDE)
 
@@ -9,7 +8,7 @@ INCLUDE ?= -I/usr/include -I/usr/include/$(ARCH_INCLUDE)
 
 all: syn_capture.o
 
-syn_capture.o: syn_capture.c
+syn_capture.o: syn_capture.c syn_capture.h
 	$(CLANG) $(CFLAGS) $(INCLUDE) -c $< -o $@
 
 clean:

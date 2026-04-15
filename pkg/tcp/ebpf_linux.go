@@ -10,13 +10,14 @@ import (
 	"strconv"
 
 	"github.com/cilium/ebpf"
+	"github.com/cilium/ebpf/link"
 	"github.com/cilium/ebpf/ringbuf"
 	"github.com/pagpeter/trackme/pkg/server"
 	"github.com/pagpeter/trackme/pkg/types"
 	"golang.org/x/sys/unix"
 )
 
-// Must match struct syn_event in ebpf/syn_capture.c
+// Must match struct syn_event in ebpf/syn_capture.h
 type synEvent struct {
 	SrcAddr       [16]byte
 	SrcPort       uint16
@@ -43,51 +44,70 @@ func SniffEBPF(device string, tlsPort int, srv *server.Server, ebpfObjPath strin
 		log.Fatalf("ebpf: failed to load %s: %v", ebpfObjPath, err)
 	}
 
+	// .rodata global — avoids per-packet map lookup for port filtering.
+	port := uint16(tlsPort)
+	if v, ok := spec.Variables["target_port"]; ok {
+		if err := v.Set(port); err != nil {
+			log.Printf("ebpf: warning: failed to set target_port: %v", err)
+		}
+	}
+
 	coll, err := ebpf.NewCollection(spec)
 	if err != nil {
 		log.Fatalf("ebpf: failed to create collection: %v", err)
 	}
 	defer coll.Close()
 
-	if targetPortMap, ok := coll.Maps["TARGET_PORT"]; ok {
-		port := uint16(tlsPort)
-		if err := targetPortMap.Put(uint32(0), port); err != nil {
-			log.Printf("ebpf: warning: failed to set TARGET_PORT: %v", err)
+	// Try XDP first, fall back to socket filter.
+	attached := false
+	if xdpProg := coll.Programs["syn_capture_xdp"]; xdpProg != nil {
+		iface, err := net.InterfaceByName(device)
+		if err == nil {
+			xdpLink, err := link.AttachXDP(link.XDPOptions{
+				Program:   xdpProg,
+				Interface: iface.Index,
+			})
+			if err == nil {
+				defer xdpLink.Close()
+				log.Printf("ebpf: XDP attached to %s (port %d)", device, tlsPort)
+				attached = true
+			} else {
+				log.Printf("ebpf: XDP failed, falling back: %v", err)
+			}
 		}
 	}
 
-	prog := coll.Programs["syn_capture_socket"]
-	if prog == nil {
-		prog = coll.Programs["syn_capture"]
-	}
-	if prog == nil {
-		log.Fatal("ebpf: no capture program found in object file")
-	}
+	if !attached {
+		prog := coll.Programs["syn_capture_socket"]
+		if prog == nil {
+			prog = coll.Programs["syn_capture"]
+		}
+		if prog == nil {
+			log.Fatal("ebpf: no capture program found")
+		}
 
-	sock, err := openRawSocket(device)
-	if err != nil {
-		log.Fatalf("ebpf: failed to open raw socket on %s: %v", device, err)
-	}
-	defer unix.Close(sock)
+		sock, err := openRawSocket(device)
+		if err != nil {
+			log.Fatalf("ebpf: raw socket on %s: %v", device, err)
+		}
+		defer unix.Close(sock)
 
-	if err := unix.SetsockoptInt(sock, unix.SOL_SOCKET, unix.SO_ATTACH_BPF, prog.FD()); err != nil {
-		log.Fatalf("ebpf: failed to attach BPF to socket: %v", err)
+		if err := unix.SetsockoptInt(sock, unix.SOL_SOCKET, unix.SO_ATTACH_BPF, prog.FD()); err != nil {
+			log.Fatalf("ebpf: attach BPF: %v", err)
+		}
+		log.Printf("ebpf: socket filter attached to %s (port %d)", device, tlsPort)
 	}
-
-	log.Printf("ebpf: attached SYN capture to %s (port %d)", device, tlsPort)
 
 	synEvents := coll.Maps["SYN_EVENTS"]
 	if synEvents == nil {
-		log.Fatal("ebpf: map 'SYN_EVENTS' not found")
+		log.Fatal("ebpf: SYN_EVENTS map not found")
 	}
 
 	rd, err := ringbuf.NewReader(synEvents)
 	if err != nil {
-		log.Fatalf("ebpf: failed to create ringbuf reader: %v", err)
+		log.Fatalf("ebpf: ringbuf reader: %v", err)
 	}
 	defer rd.Close()
-
-	log.Println("ebpf: reading SYN events")
 
 	for {
 		record, err := rd.Read()
@@ -95,12 +115,11 @@ func SniffEBPF(device string, tlsPort int, srv *server.Server, ebpfObjPath strin
 			if err == ringbuf.ErrClosed {
 				return
 			}
-			log.Printf("ebpf: ringbuf read error: %v", err)
+			log.Printf("ebpf: ringbuf read: %v", err)
 			continue
 		}
 
-		// C struct is packed (78 bytes), Go struct has padding — decode manually.
-		const packedSize = 78
+		const packedSize = 78 // sizeof(struct syn_event)
 		if len(record.RawSample) < packedSize {
 			continue
 		}
@@ -126,7 +145,6 @@ func openRawSocket(device string) (int, error) {
 			unix.Close(sock)
 			return -1, fmt.Errorf("interface %s: %w", device, err)
 		}
-
 		sll := unix.SockaddrLinklayer{
 			Protocol: proto,
 			Ifindex:  iface.Index,
@@ -140,9 +158,7 @@ func openRawSocket(device string) (int, error) {
 	return sock, nil
 }
 
-func htons(v uint16) uint16 {
-	return (v << 8) | (v >> 8)
-}
+func htons(v uint16) uint16 { return (v << 8) | (v >> 8) }
 
 func decodeSynEvent(b []byte) synEvent {
 	var e synEvent
