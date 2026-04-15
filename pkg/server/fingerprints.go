@@ -7,25 +7,45 @@ import (
 	"github.com/pagpeter/trackme/pkg/types"
 )
 
-// FingerprintStore holds captured TCP/IP fingerprints with support for
-// blocking lookups — callers can wait for a SYN capture that hasn't
-// arrived yet (the capture runs async in a separate goroutine).
+const (
+	maxEntries = 10000
+	entryTTL   = 30 * time.Second
+	sweepEvery = 10 * time.Second
+)
+
+type fpEntry struct {
+	val     types.TCPIPDetails
+	created time.Time
+}
+
 type FingerprintStore struct {
 	mu      sync.Mutex
-	entries map[string]types.TCPIPDetails
+	entries map[string]fpEntry
 	waiters map[string][]chan struct{}
 }
 
 func NewFingerprintStore() *FingerprintStore {
-	return &FingerprintStore{
-		entries: make(map[string]types.TCPIPDetails),
+	s := &FingerprintStore{
+		entries: make(map[string]fpEntry, 256),
 		waiters: make(map[string][]chan struct{}),
 	}
+	go s.sweepLoop()
+	return s
 }
 
 func (s *FingerprintStore) Store(key string, val types.TCPIPDetails) {
 	s.mu.Lock()
-	s.entries[key] = val
+	if len(s.entries) >= maxEntries {
+		i := 0
+		for k := range s.entries {
+			delete(s.entries, k)
+			i++
+			if i >= maxEntries/2 {
+				break
+			}
+		}
+	}
+	s.entries[key] = fpEntry{val: val, created: time.Now()}
 	waiting := s.waiters[key]
 	delete(s.waiters, key)
 	s.mu.Unlock()
@@ -35,26 +55,56 @@ func (s *FingerprintStore) Store(key string, val types.TCPIPDetails) {
 	}
 }
 
-// Get returns the fingerprint for key. If not found, blocks up to
-// timeout waiting for the capture goroutine to deliver it.
 func (s *FingerprintStore) Get(key string, timeout time.Duration) (types.TCPIPDetails, bool) {
 	s.mu.Lock()
-	if v, ok := s.entries[key]; ok {
+	if e, ok := s.entries[key]; ok {
 		s.mu.Unlock()
-		return v, true
+		return e.val, true
 	}
 
 	ch := make(chan struct{})
 	s.waiters[key] = append(s.waiters[key], ch)
 	s.mu.Unlock()
 
+	timer := time.NewTimer(timeout)
+	defer timer.Stop()
+
 	select {
 	case <-ch:
 		s.mu.Lock()
-		v, ok := s.entries[key]
+		e, ok := s.entries[key]
 		s.mu.Unlock()
-		return v, ok
-	case <-time.After(timeout):
+		return e.val, ok
+	case <-timer.C:
+		// Remove our waiter so it doesn't leak in the map.
+		s.mu.Lock()
+		if chs, ok := s.waiters[key]; ok {
+			for i, c := range chs {
+				if c == ch {
+					s.waiters[key] = append(chs[:i], chs[i+1:]...)
+					break
+				}
+			}
+			if len(s.waiters[key]) == 0 {
+				delete(s.waiters, key)
+			}
+		}
+		s.mu.Unlock()
 		return types.TCPIPDetails{}, false
+	}
+}
+
+func (s *FingerprintStore) sweepLoop() {
+	t := time.NewTicker(sweepEvery)
+	defer t.Stop()
+	for range t.C {
+		now := time.Now()
+		s.mu.Lock()
+		for k, e := range s.entries {
+			if now.Sub(e.created) > entryTTL {
+				delete(s.entries, k)
+			}
+		}
+		s.mu.Unlock()
 	}
 }

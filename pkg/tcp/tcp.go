@@ -26,13 +26,10 @@ const (
 	optKindTimestamps  = 8
 )
 
-var (
-	snapshot_len int32         = 1500
-	promiscuous  bool          = false
-	timeout      time.Duration = 1 * time.Millisecond
-)
+var optKindNames = [9]string{
+	"EOL", "NOP", "MSS", "WS", "SACK_PERM", "SACK", "", "", "TS",
+}
 
-// Shared TCP option representation used by both pcap and eBPF paths.
 type tcpOption struct {
 	kind    uint8
 	intVal  int
@@ -40,30 +37,14 @@ type tcpOption struct {
 }
 
 func optKindName(kind uint8) string {
-	switch kind {
-	case optKindEOL:
-		return "EOL"
-	case optKindNOP:
-		return "NOP"
-	case optKindMSS:
-		return "MSS"
-	case optKindWindowScale:
-		return "WS"
-	case optKindSACKPerm:
-		return "SACK_PERM"
-	case optKindSACK:
-		return "SACK"
-	case optKindTimestamps:
-		return "TS"
-	default:
-		return fmt.Sprintf("?%d", kind)
+	if int(kind) < len(optKindNames) && optKindNames[kind] != "" {
+		return optKindNames[kind]
 	}
+	return fmt.Sprintf("?%d", kind)
 }
 
-// parseRawOptions walks raw TCP option bytes and returns parsed options.
-// Used by both the eBPF path (kernel raw bytes) and pcap path (via adapter).
 func parseRawOptions(raw []byte) []tcpOption {
-	var opts []tcpOption
+	opts := make([]tcpOption, 0, 8)
 	i := 0
 	for i < len(raw) {
 		kind := raw[i]
@@ -109,7 +90,6 @@ func parseRawOptions(raw []byte) []tcpOption {
 	return opts
 }
 
-// gopacketToRaw converts gopacket's TCP options to raw bytes for unified parsing.
 func gopacketToRaw(options []layers.TCPOption) []byte {
 	var buf []byte
 	for _, opt := range options {
@@ -129,36 +109,50 @@ func gopacketToRaw(options []layers.TCPOption) []byte {
 }
 
 func formatOptions(opts []tcpOption) string {
-	var parts []string
-	for _, o := range opts {
+	var b strings.Builder
+	b.Grow(len(opts) * 12)
+	for i, o := range opts {
+		if i > 0 {
+			b.WriteByte(',')
+		}
 		switch o.kind {
-		case optKindEOL:
-			parts = append(parts, "EOL")
-		case optKindNOP:
-			parts = append(parts, "NOP")
 		case optKindMSS:
-			parts = append(parts, fmt.Sprintf("MSS:%d", o.intVal))
+			b.WriteString("MSS:")
+			b.WriteString(strconv.Itoa(o.intVal))
 		case optKindWindowScale:
-			parts = append(parts, fmt.Sprintf("WS:%d", o.intVal))
-		case optKindSACKPerm:
-			parts = append(parts, "SACK_PERM")
-		case optKindSACK:
-			parts = append(parts, "SACK")
+			b.WriteString("WS:")
+			b.WriteString(strconv.Itoa(o.intVal))
 		case optKindTimestamps:
-			parts = append(parts, fmt.Sprintf("TS:%d:%d", o.intVal, o.intVal2))
+			b.WriteString("TS:")
+			b.WriteString(strconv.Itoa(o.intVal))
+			b.WriteByte(':')
+			b.WriteString(strconv.Itoa(o.intVal2))
+		case optKindSACKPerm:
+			b.WriteString("SACK_PERM")
+		case optKindSACK:
+			b.WriteString("SACK")
+		case optKindEOL:
+			b.WriteString("EOL")
+		case optKindNOP:
+			b.WriteString("NOP")
 		default:
-			parts = append(parts, fmt.Sprintf("?%d", o.kind))
+			b.WriteByte('?')
+			b.WriteString(strconv.Itoa(int(o.kind)))
 		}
 	}
-	return strings.Join(parts, ",")
+	return b.String()
 }
 
 func formatOptionsOrder(opts []tcpOption) string {
-	var parts []string
-	for _, o := range opts {
-		parts = append(parts, optKindName(o.kind))
+	var b strings.Builder
+	b.Grow(len(opts) * 6)
+	for i, o := range opts {
+		if i > 0 {
+			b.WriteByte(',')
+		}
+		b.WriteString(optKindName(o.kind))
 	}
-	return strings.Join(parts, ",")
+	return b.String()
 }
 
 func extractOptionValues(opts []tcpOption) (mss, windowScale, timestamp, tsEchoReply int) {
@@ -256,17 +250,29 @@ func tcpFlagsToInt(tcp *layers.TCP) int {
 }
 
 func SniffTCP(device string, tlsPort int, srv *server.Server) {
-	handle, err := pcap.OpenLive(device, snapshot_len, promiscuous, timeout)
+	var (
+		snapshotLen int32         = 256 // SYN with IP opts + TCP opts can reach ~134 bytes
+		promiscuous bool          = false
+		timeout     time.Duration = 10 * time.Millisecond
+	)
+
+	handle, err := pcap.OpenLive(device, snapshotLen, promiscuous, timeout)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer handle.Close()
 
-	// Filter by port — SYN check is done in userspace since
-	// tcp[tcpflags] doesn't work for IPv6 in classic BPF.
-	filter := fmt.Sprintf("tcp dst port %d", tlsPort)
+	// SYN-only BPF filter. Parens around the bitmask test are required
+	// for portable libpcap parsing; single = is the documented equality op.
+	filter := fmt.Sprintf(
+		"(tcp dst port %d and (tcp[tcpflags] & (tcp-syn|tcp-ack)) = tcp-syn) or "+
+			"(ip6 and tcp dst port %d and (ip6[6+13] & 0x12) = 0x02)",
+		tlsPort, tlsPort)
 	if err := handle.SetBPFFilter(filter); err != nil {
-		log.Printf("Warning: BPF filter failed (%v), falling back to unfiltered capture", err)
+		filter = fmt.Sprintf("tcp dst port %d", tlsPort)
+		if err2 := handle.SetBPFFilter(filter); err2 != nil {
+			log.Printf("pcap: BPF filter failed: %v", err2)
+		}
 	}
 
 	packetSource := gopacket.NewPacketSource(handle, handle.LinkType())
