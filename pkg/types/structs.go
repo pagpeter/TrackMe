@@ -8,10 +8,10 @@ import (
 )
 
 type TLSDetails struct {
-	Ciphers          []string      `json:"ciphers"`
-	Extensions       []interface{} `json:"extensions"`
-	RecordVersion    string        `json:"tls_version_record"`
-	NegotiatedVesion string        `json:"tls_version_negotiated"`
+	Ciphers           []string      `json:"ciphers"`
+	Extensions        []interface{} `json:"extensions"`
+	RecordVersion     string        `json:"tls_version_record"`
+	NegotiatedVersion string        `json:"tls_version_negotiated"`
 
 	JA3     string `json:"ja3"`
 	JA3Hash string `json:"ja3_hash"`

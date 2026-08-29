@@ -38,9 +38,9 @@ After that, just run the binary (`sudo ./TrackMe`)
 
 The site returns 3 different fingerprints: the [JA3](https://engineering.salesforce.com/tls-fingerprinting-with-ja3-and-ja3s-247362855967/), a TLS fingerprint, an HTTP/2 ["akamai-fingerprint"](https://www.blackhat.com/docs/eu-17/materials/eu-17-Shuster-Passive-Fingerprinting-Of-HTTP2-Clients-wp.pdf) (Only works on HTTP/2 connections) and my own custom "PeetPrint".
 
-### Custom Fingerpint ("PeetPrint")
+### Custom Fingerprint ("PeetPrint")
 
-I wanted to extend JA3, so I created my own TLS fingerprint algorithm. It's better suited for fingerprinting TLS1.3 connections, because [JA3 doesn't really do that well](https://github.com/salesforce/ja3/issues/78), and has more datapoints. The designed is inspired by the http/2 fingerprint proposed by akamai.
+I wanted to extend JA3, so I created my own TLS fingerprint algorithm. It's better suited for fingerprinting TLS1.3 connections, because [JA3 doesn't really do that well](https://github.com/salesforce/ja3/issues/78), and has more datapoints. The design is inspired by the http/2 fingerprint proposed by akamai.
 
 It looks like this:
 
@@ -48,21 +48,21 @@ It looks like this:
 supported-tls-versions|supported-protocols|supported-groups|supported-signature-algorithms|psk-key-exchange-mode|certificate-compression-algorithms|cipher-suites|sorted-extensions
 ```
 
-"-" is used as the seperator.
+"-" is used as the separator.
 
-**supported-tls-versions**: Seperated list of supported TLS versions as sent in the `supported_versions` extension.
+**supported-tls-versions**: Separated list of supported TLS versions as sent in the `supported_versions` extension.
 
-**supported-protocols**: Seperated list of supported HTTP versions as sent in the `application_layer_protocol_negotiation` extension. http/1.0 => 1.0, http/1.1 => 1.1, http/2 => 2
+**supported-protocols**: Separated list of supported HTTP versions as sent in the `application_layer_protocol_negotiation` extension. http/1.0 => 1.0, http/1.1 => 1.1, http/2 => 2
 
-**supported-groups**: Seperated list of supported elliptic curve groups as sent in the `supported_groups` extension.
+**supported-groups**: Separated list of supported elliptic curve groups as sent in the `supported_groups` extension.
 
-**supported-signature-algorithms**: Seperated list of supported signatue algorithms as sent in the `signature_algorithms` extension.
+**supported-signature-algorithms**: Separated list of supported signature algorithms as sent in the `signature_algorithms` extension.
 
 **psk-key-exchange-mode** The PSK key exchange mode as specified in the `psk_key_exchange_modes` extension. Usually 0 or 1.
 
-**certificate-compression-algorithms** Seperated list of the certificate compression algorithms as sent in the `compress_certificate` extension.
+**certificate-compression-algorithms** Separated list of the certificate compression algorithms as sent in the `compress_certificate` extension.
 
-**cipher-suites**: Seperated list of the supported cipher suites.
+**cipher-suites**: Separated list of the supported cipher suites.
 
 **sorted-extensions**: Sorted list of the supported extensions. (Sorted because of order randomization used by chrome)
 
@@ -80,7 +80,7 @@ The site exposes a lot of different API endpoints.
 
 ### /api/all
 
-Returns all of the collected data about an request
+Returns all of the collected data about a request
 
 When packet capture is enabled with `device`, `tcpip` also contains the initial
 inbound TCP SYN as `tcp_syn` and a raw p0f-format signature as
@@ -122,7 +122,7 @@ You can also run the server in a docker container using docker-compose.
 
 ```bash
 # generate certs and update your config.json
-docker-compose -up --build
+docker-compose up --build
 # visit https://localhost/api/all
 ```
 
