@@ -32,7 +32,7 @@ func ja4aWithProto(tls *types.TLSDetails, proto string) string {
 		"3":   "h3", // HTTP/3
 	}
 
-	tlsVersion := getOrReturnOG(tls.NegotiatedVesion, tlsVersionMapping)
+	tlsVersion := getOrReturnOG(tls.NegotiatedVersion, tlsVersionMapping)
 
 	sniMode := "d" // IP: i, domain: d
 	numSuites := len(strings.Split(strings.Split(tls.JA3, ",")[1], "-"))

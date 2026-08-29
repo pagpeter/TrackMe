@@ -129,8 +129,8 @@ func parseHTTP2(f *http2.Framer, c chan types.ParsedFrame) {
 			}
 
 			for _, h := range h2Headers {
-  				headerStr := fmt.Sprintf("%s: %s", h.Name, h.Value)
-   	 			p.Headers = append(p.Headers, headerStr)
+				headerStr := fmt.Sprintf("%s: %s", h.Name, h.Value)
+				p.Headers = append(p.Headers, headerStr)
 			}
 			if frame.HasPriority() {
 				prio := types.Priority{}
@@ -169,7 +169,7 @@ func parseHTTP2(f *http2.Framer, c chan types.ParsedFrame) {
 func (srv *Server) HandleTLSConnection(conn net.Conn) error {
 	// Read the first line of the request
 	// We only read the first line to determine if the connection is HTTP1 or HTTP2
-	// If we know that it isnt HTTP2, we can read the rest of the request and then start processing it
+	// If we know that it is not HTTP2, we can read the rest of the request and then start processing it
 	// If we know that it is HTTP2, we start the HTTP2 handler
 
 	l := len([]byte(HTTP2_PREAMBLE))
@@ -198,18 +198,18 @@ func (srv *Server) HandleTLSConnection(conn net.Conn) error {
 	rawB64 := base64.StdEncoding.EncodeToString(rawBytes)
 
 	tlsDetails := types.TLSDetails{
-		Ciphers:          JA3Data.ReadableCiphers,
-		Extensions:       parsedClientHello.Extensions,
-		RecordVersion:    JA3Data.Version,
-		NegotiatedVesion: fmt.Sprintf("%v", conn.(*utls.Conn).ConnectionState().Version),
-		JA3:              JA3Data.JA3,
-		JA3Hash:          JA3Data.JA3Hash,
-		PeetPrint:        peetfp,
-		PeetPrintHash:    peetprintHash,
-		SessionID:        parsedClientHello.SessionID,
-		ClientRandom:     parsedClientHello.ClientRandom,
-		RawBytes:         hs,
-		RawB64:           rawB64,
+		Ciphers:           JA3Data.ReadableCiphers,
+		Extensions:        parsedClientHello.Extensions,
+		RecordVersion:     JA3Data.Version,
+		NegotiatedVersion: fmt.Sprintf("%v", conn.(*utls.Conn).ConnectionState().Version),
+		JA3:               JA3Data.JA3,
+		JA3Hash:           JA3Data.JA3Hash,
+		PeetPrint:         peetfp,
+		PeetPrintHash:     peetprintHash,
+		SessionID:         parsedClientHello.SessionID,
+		ClientRandom:      parsedClientHello.ClientRandom,
+		RawBytes:          hs,
+		RawB64:            rawB64,
 	}
 
 	// Check if the first line is HTTP/2
@@ -449,18 +449,18 @@ func (srv *Server) HandleHTTP3() http.Handler {
 			rawB64 := base64.StdEncoding.EncodeToString(h3state.ClientHello)
 
 			tlsDetails = &types.TLSDetails{
-				Ciphers:          JA3Data.ReadableCiphers,
-				Extensions:       parsedClientHello.Extensions,
-				RecordVersion:    JA3Data.Version,
-				NegotiatedVesion: fmt.Sprintf("%v", h3state.TLS.Version),
-				JA3:              JA3Data.JA3,
-				JA3Hash:          JA3Data.JA3Hash,
-				PeetPrint:        peetfp,
-				PeetPrintHash:    peetprintHash,
-				SessionID:        parsedClientHello.SessionID,
-				ClientRandom:     parsedClientHello.ClientRandom,
-				RawBytes:         clientHelloHex,
-				RawB64:           rawB64,
+				Ciphers:           JA3Data.ReadableCiphers,
+				Extensions:        parsedClientHello.Extensions,
+				RecordVersion:     JA3Data.Version,
+				NegotiatedVersion: fmt.Sprintf("%v", h3state.TLS.Version),
+				JA3:               JA3Data.JA3,
+				JA3Hash:           JA3Data.JA3Hash,
+				PeetPrint:         peetfp,
+				PeetPrintHash:     peetprintHash,
+				SessionID:         parsedClientHello.SessionID,
+				ClientRandom:      parsedClientHello.ClientRandom,
+				RawBytes:          clientHelloHex,
+				RawB64:            rawB64,
 			}
 		}
 
