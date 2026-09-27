@@ -82,7 +82,19 @@ func parseHTTP1(request []byte) types.Response {
 	}
 }
 
-func parseHTTP2(f *http2.Framer, c chan types.ParsedFrame) {
+// parseHTTP2 reads frames and passes them on c until reading fails. It stops
+// as soon as done is closed, since nobody reads c after that: the handler
+// stops at the request's END_STREAM, and a send nobody receives blocks for
+// good.
+func parseHTTP2(f *http2.Framer, c chan<- types.ParsedFrame, done <-chan struct{}) {
+	send := func(p types.ParsedFrame) bool {
+		select {
+		case c <- p:
+			return true
+		case <-done:
+			return false
+		}
+	}
 	for {
 		frame, err := f.ReadFrame()
 		if err != nil {
@@ -90,7 +102,7 @@ func parseHTTP2(f *http2.Framer, c chan types.ParsedFrame) {
 			if strings.HasSuffix(err.Error(), "unknown certificate") {
 				r = "ERROR"
 			}
-			c <- types.ParsedFrame{Type: r}
+			send(types.ParsedFrame{Type: r})
 			return
 		}
 
@@ -125,6 +137,7 @@ func parseHTTP2(f *http2.Framer, c chan types.ParsedFrame) {
 			d.SetEmitEnabled(true)
 			h2Headers, err := d.DecodeFull(frame.HeaderBlockFragment())
 			if err != nil {
+				send(types.ParsedFrame{Type: "ERROR_CLOSE"})
 				return
 			}
 
@@ -162,7 +175,9 @@ func parseHTTP2(f *http2.Framer, c chan types.ParsedFrame) {
 			p.GoAway.DebugData = frame.DebugData()
 		}
 
-		c <- p
+		if !send(p) {
+			return
+		}
 	}
 }
 
@@ -309,7 +324,9 @@ func (srv *Server) handleHTTP2(conn net.Conn, tlsFingerprint *types.TLSDetails) 
 	var headerFrame types.ParsedFrame
 	var isAdmin bool
 
-	go parseHTTP2(fr, c)
+	done := make(chan struct{})
+	defer close(done)
+	go parseHTTP2(fr, c, done)
 
 	for {
 		frame = <-c
